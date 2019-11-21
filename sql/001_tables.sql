@@ -106,6 +106,7 @@ CREATE TABLE AlignmentObject (
   Source                text NOT NULL, 
   EducationalFramework  text DEFAULT '' NOT NULL, 
   ObjectKey             text NOT NULL, 
+  TargetUrl             text NOT NULL,
   PRIMARY KEY (Id));
 
 CREATE TABLE LearningResourceType (

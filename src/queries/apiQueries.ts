@@ -593,7 +593,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                         queries.push(await t.any(query));
                     }
                 }
-                const cs = new pgp.helpers.ColumnSet(["alignmenttype", "targetname", "source", "educationalmaterialid", "objectkey", "educationalframework"], {table: "alignmentobject"});
+                const cs = new pgp.helpers.ColumnSet(["alignmenttype", "targetname", "source", "educationalmaterialid", "objectkey", "educationalframework", "targeturl"], {table: "alignmentobject"});
                 // data input values:
                 // console.log(arr);
                 const values: any = [];
@@ -602,7 +602,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 }
                 arr.forEach(async (element: any) =>  {
                     console.log(element.educationalFramework);
-                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework) };
+                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework), targeturl : element.targeturl };
                     values.push(obj);
                 });
                 // console.log(arr);
