@@ -10,20 +10,39 @@ const db = connection.db;
 
 async function addLinkToMaterial(req: Request , res: Response , next: NextFunction) {
     try {
-        db.task(async (t: any) => {
+        db.tx(async (t: any) => {
             const queries: any = [];
             let query;
-            console.log(req.body.materials);
-            const materials = req.body.materials;
-            for (const element of materials) {
-                query = "insert into material (link, educationalmaterialid) values ($1,$2) returning id, link;";
-                const data = await db.one(query, [element.link, req.params.materialId]);
-                queries.push(data);
+            query = "insert into material (link, educationalmaterialid, materiallanguagekey) values ($1,$2,$3) returning id, link;";
+            const data = await t.one(query, [req.body.link, req.params.materialId, req.body.language]);
+            queries.push(data);
+            const displayName = req.body.displayName;
+            query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
+            if (displayName.fi === null) {
+                queries.push(await t.none(query, ["", "fi", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.fi, "fi", data.id, req.params.materialId]));
+            }
+            if (displayName.sv === null) {
+                queries.push(await t.none(query, ["", "sv", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.sv, "sv", data.id, req.params.materialId]));
+            }
+            if (displayName.en === null) {
+                queries.push(await t.none(query, ["", "en", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.en, "en", data.id, req.params.materialId]));
             }
             return t.batch(queries);
         })
         .then((result: any) => {
-            const response = {"materials" : result};
+            const response = {
+                "id": req.params.materialId,
+                "link" : result[0]
+            };
             res.status(200).json(response);
         })
         .catch((err: Error) => {
@@ -118,7 +137,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
-        query = "select m.id, m.materiallanguage as language, m.materiallanguagekey as key, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -136,6 +155,11 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
 
         query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
         response = await t.oneOrNone(query, [req.params.id]);
+        queries.push(response);
+
+        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and obsoleted = 0;";
+        response = await t.any(query, [req.params.id]);
+        console.log(query, [req.params.id]);
         queries.push(response);
 
         return t.batch(queries);
@@ -182,6 +206,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.materialDisplayName = data[17];
         jsonObj.educationalRoles = data[18];
         jsonObj.thumbnail = data[19];
+        jsonObj.attachments = data[20];
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -644,7 +669,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             for (const element of arr) {
                 query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
                 // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                const slug = createSlug(element.displayName.fi);
+                // const slug = createSlug(element.displayName.fi);
                 console.log(element.displayName.fi);
                 console.log(query, [element.displayName.fi, "fi", element.id, req.params.id]);
                 if (element.displayName.fi === null) {

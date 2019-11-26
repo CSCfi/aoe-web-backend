@@ -80,7 +80,6 @@ CREATE TABLE Material (
   EducationalMaterialId int8 NOT NULL, 
   Obsoleted             int4 DEFAULT 0 NOT NULL, 
   Priority              int4 DEFAULT 0 NOT NULL, 
-  MaterialLanguage      text DEFAULT '' NOT NULL, 
   MaterialLanguageKey   lang DEFAULT 'fi' NOT NULL, 
   PRIMARY KEY (Id));
 
