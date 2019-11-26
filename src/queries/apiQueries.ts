@@ -169,6 +169,26 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         if (data[0][0] === undefined) {
             return res.status(200).json(jsonObj);
         }
+        // add displayname object to material object
+        for (const element of data[15]) {
+            const nameobj = {"fi" : "",
+                            "sv" : "",
+                            "en" : ""};
+            for (const element2 of data[17]) {
+                if (element2.materialid === element.id) {
+                    if (element2.language === "fi") {
+                        nameobj.fi = element2.displayname;
+                    }
+                    else if (element2.language === "sv") {
+                        nameobj.sv = element2.displayname;
+                    }
+                    else if (element2.language === "en") {
+                        nameobj.en = element2.displayname;
+                    }
+                }
+            }
+            element.displayName = nameobj;
+        }
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[15];
         jsonObj.owner = data[16];
@@ -203,7 +223,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.accessibilityHazards = data[6];
         jsonObj.license = data[0][0].licensecode;
         jsonObj.isBasedOn = data[12];
-        jsonObj.materialDisplayName = data[17];
+        // jsonObj.materialDisplayName = data[17];
         jsonObj.educationalRoles = data[18];
         jsonObj.thumbnail = data[19];
         jsonObj.attachments = data[20];
