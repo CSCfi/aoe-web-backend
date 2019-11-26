@@ -211,7 +211,7 @@ async function uploadFileToMaterial(req: Request, res: Response) {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
-            upload.single("attachment")(req , res, async function(err: any) {
+            upload.single("file")(req , res, async function(err: any) {
                 try {
                     if (err) {
                         console.log(err);
