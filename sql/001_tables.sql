@@ -80,7 +80,6 @@ CREATE TABLE Material (
   EducationalMaterialId int8 NOT NULL, 
   Obsoleted             int4 DEFAULT 0 NOT NULL, 
   Priority              int4 DEFAULT 0 NOT NULL, 
-  MaterialLanguage      text DEFAULT '' NOT NULL, 
   MaterialLanguageKey   lang DEFAULT 'fi' NOT NULL, 
   PRIMARY KEY (Id));
 
@@ -106,6 +105,7 @@ CREATE TABLE AlignmentObject (
   Source                text NOT NULL, 
   EducationalFramework  text DEFAULT '' NOT NULL, 
   ObjectKey             text NOT NULL, 
+  TargetUrl             text NOT NULL,
   PRIMARY KEY (Id));
 
 CREATE TABLE LearningResourceType (
@@ -298,7 +298,37 @@ CREATE TABLE Thumbnail (
   FileBucket            text NOT NULL, 
   PRIMARY KEY (Id));
 
+CREATE TABLE Attachment (
+  Id                BIGSERIAL NOT NULL, 
+  FilePath         text NOT NULL, 
+  OriginalFileName text NOT NULL, 
+  FileSize         int4 NOT NULL, 
+  MimeType         text NOT NULL, 
+  Format           text NOT NULL, 
+  FileKey          text NOT NULL, 
+  FileBucket       text NOT NULL, 
+  DefaultFile      bool NOT NULL, 
+  Kind             text NOT NULL, 
+  Label            text NOT NULL, 
+  Srclang          text NOT NULL, 
+  MaterialId       int8 NOT NULL, 
+  PRIMARY KEY (Id));
 
+CREATE TABLE TemporaryAttachment (
+  Id                BIGSERIAL NOT NULL, 
+  FilePath         text NOT NULL, 
+  OriginalFileName text NOT NULL, 
+  Filesize         int4 NOT NULL, 
+  Mimetype         text NOT NULL, 
+  Format           text NOT NULL, 
+  FileName         text NOT NULL, 
+  CreatedAt        timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL, 
+  MaterialId       int8 NOT NULL, 
+  DefaultFile      bool NOT NULL, 
+  Kind             text NOT NULL, 
+  Label            text NOT NULL, 
+  Srclang          text NOT NULL, 
+  PRIMARY KEY (Id));
 
 ALTER TABLE AlignmentObject ADD CONSTRAINT FKAlignmentObject FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id) ON DELETE Cascade;
 ALTER TABLE EducationalMaterial ADD CONSTRAINT FKEducationalMaterial FOREIGN KEY (UsersUserName) REFERENCES Users (UserName) ON DELETE Restrict;

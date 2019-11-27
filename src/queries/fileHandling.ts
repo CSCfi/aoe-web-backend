@@ -23,17 +23,87 @@ const storage = multer.diskStorage({ // notice you are calling the multer.diskSt
 });
 const upload = multer({"storage": storage
                     , "limits": {"fileSize": Number(process.env.FILE_SIZE_LIMIT)}
+                    , "preservePath" : true
                     }); // provide the return value from
 // Database connection
 const connection = require("./../db");
 const db = connection.db;
+
+async function uploadAttachmentToMaterial(req: Request, res: Response) {
+    try {
+        console.log(req.body);
+        const contentType = req.headers["content-type"];
+        if (contentType.startsWith("multipart/form-data")) {
+        upload.single("attachment")(req , res, async function(err: any) {
+            try {
+                if (err) {
+                    console.log(err);
+                    if (err.code === "LIMIT_FILE_SIZE") return res.status(413).send(err.message);
+                    else {
+                        console.trace(err);
+                        return res.status(500).send("Failure in file upload");
+                    }
+                }
+                const file = (<any>req).file;
+                console.log("fil: " + file);
+                if (!file) {
+                    return res.status(400).send("No file sent");
+                }
+                console.log("req.params.id: " + req.params.materialId);
+                // const emresp = await insertDataToEducationalMaterialTable(req);
+                const metadata = JSON.parse(req.body.attachmentDetails);
+                console.log(metadata);
+                const material = [];
+                const materialid = [];
+                let result = [];
+                if (typeof file !== "undefined") {
+                        result = await insertDataToTempAttachmentTable(file, req.params.materialId, metadata);
+                        console.log("result: " + JSON.stringify(result[0]));
+                    }
+                // return 200 if success and continue sending files to pouta
+                const resp: any = {};
+                res.status(200).json({"status" : "ok"});
+                try {
+                    if (typeof file !== "undefined") {
+                        const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
+                        await insertDataToAttachmentTable(file, req.params.materialId, obj.Key, obj.Bucket, obj.Location, metadata);
+                        await deleteDataToTempAttachmentTable(file.filename, result[0].id);
+                        fs.unlink("./" + file.path, (err: any) => {
+                            if (err) {
+                            console.error(err);
+                            }
+                        });
+                    }
+                }
+                catch (ex) {
+                    console.log(ex);
+                    console.log("error while sending files to pouta: " + JSON.stringify((<any>req).files));
+                }
+            } catch (e) {
+                console.log(e);
+                if ( ! res.headersSent) {
+                    return res.status(500).send("Failure in file upload");
+                }
+            }
+        }
+        );
+    }
+    else {
+        res.status(400).send("Not found");
+    }
+}
+catch (err) {
+    console.log(err);
+    res.status(500).send("error");
+}
+}
 
 async function uploadMaterial(req: Request, res: Response) {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
-            upload.array("myFiles")(req , res, async function(err: any) {
+            upload.single("file")(req , res, async function(err: any) {
                 try {
                     if (err) {
                         console.log(err);
@@ -43,51 +113,81 @@ async function uploadMaterial(req: Request, res: Response) {
                             return res.status(500).send("Failure in file upload");
                         }
                     }
-                    const files = (<any>req).files;
-                    // const links = req.body.myFiles;
-                    console.log("files: " + files);
-                    // console.log("links: " + links);
-                    if (files === "undefined") {
-                        return res.status(400).send("No file sent");
-                    }
-                    const emresp = await insertDataToEducationalMaterialTable(req);
-                    const material = [];
-                    const materialid = [];
-                    if (typeof files !== "undefined") {
-                        for (let i = 0; i < files.length; i++) {
-                            const id = await insertDataToMaterialTable(emresp[0].id, "");
-                            material.push({"id" : id.id, "createFrom" : files[i].originalname});
-                            materialid.push(id);
-                            const result = await insertDataToTempRecordTable(files[i], id.id);
-                            }
-                        }
-                    console.log(materialid);
-                    // return 200 if success and continue sending files to pouta
+                    const file = (<any>req).file;
                     const resp: any = {};
-                    resp.id = emresp[0].id;
-                    resp.material = material;
-                    res.status(200).json(resp);
-                    console.log(files);
-                    console.log(req.body);
-                    try {
-                        if (typeof files !== "undefined") {
-                            for (let i = 0; i < files.length; i++) {
-                                console.log(materialid[i].id);
-                                const obj: any = await uploadFileToStorage(("./" + files[i].path), files[i].filename, process.env.BUCKET_NAME);
-                                await insertDataToRecordTable(files[i], materialid[i].id, obj.Key, obj.Bucket, obj.Location);
-                                await deleteDataFromTempRecordTable(files[i].filename, materialid[i].id);
-                                fs.unlink("./" + files[i].path, (err: any) => {
-                                    if (err) {
-                                    console.error(err);
-                                    }
-                                });
+// send educationalmaterialid if no file send for link material creation.
+                    if (!file) {
+                        await db.tx(async (t: any) => {
+                            return await insertDataToEducationalMaterialTable(req, t);
+                        })
+                        .then((data: any) => {
+                            resp.id = data.id;
+                            return res.status(200).json(resp);
+                        })
+                        .catch((err: Error) => {
+                            console.log(err);
+                            return res.status(500).json({"Error" : "Failure in file upload"});
+                        });
+                    }
+                    else {
+                        let materialid: String;
+                        const fileDetails = JSON.parse(req.body.fileDetails);
+                        const material: any = [];
+                        db.tx(async (t: any) => {
+                            const queries = [];
+                            const emresp = await insertDataToEducationalMaterialTable(req, t);
+                            queries.push(emresp);
+                            const id = await insertDataToMaterialTable(t, emresp.id, "", fileDetails.language);
+                            queries.push(id);
+                            material.push({"id" : id.id, "createFrom" : file.originalname});
+                            materialid = id.id;
+                            let result = await insertDataToDisplayName(t, emresp.id, id.id, fileDetails);
+                            queries.push(result);
+                            result = await insertDataToTempRecordTable(t, file, id.id);
+                            queries.push(result);
+                            return t.batch(queries);
+                        })
+                        .then( async (data: any) => {
+                            // return 200 if success and continue sending files to pouta
+                            resp.id = data[0].id;
+                            resp.material = material;
+                            res.status(200).json(resp);
+                            try {
+                                if (typeof file !== "undefined") {
+                                    console.log(materialid);
+                                    const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
+                                    await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    await deleteDataFromTempRecordTable(file.filename, materialid);
+                                    fs.unlink("./" + file.path, (err: any) => {
+                                        if (err) {
+                                        console.error(err);
+                                        }
+                                    });
+                                }
                             }
+                            catch (ex) {
+                                console.log(ex);
+                                console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
+                            }
+
+                    }
+                    )
+                    .catch((err: Error) => {
+                        console.log(err);
+                        if ( ! res.headersSent) {
+                            res.status(500).send("Failure in file upload");
                         }
+                        fs.unlink("./" + file.path, (err: any) => {
+                            if (err) {
+                            console.error(err);
+                            }
+                            else {
+                                console.log("file removed");
+                            }
+                        });
+                    });
                     }
-                    catch (ex) {
-                        console.log(ex);
-                        console.log("error while sending files to pouta: " + JSON.stringify((<any>req).files));
-                    }
+
                 } catch (e) {
                     console.log(e);
                     if ( ! res.headersSent) {
@@ -110,9 +210,8 @@ async function uploadMaterial(req: Request, res: Response) {
 async function uploadFileToMaterial(req: Request, res: Response) {
     try {
         const contentType = req.headers["content-type"];
-
         if (contentType.startsWith("multipart/form-data")) {
-            upload.array("myFiles", 12)(req , res, async function(err: any) {
+            upload.single("file")(req , res, async function(err: any) {
                 try {
                     if (err) {
                         console.log(err);
@@ -122,42 +221,66 @@ async function uploadFileToMaterial(req: Request, res: Response) {
                             return res.status(500).send("Failure in file upload");
                         }
                     }
-                    const files = (<any>req).files;
-                    // const links = req.body.myFiles;
-                    if (files === "undefined" || files.length == 0) {
+                    const file = (<any>req).file;
+                    const resp: any = {};
+                    if (!file) {
                         return res.status(400).send("No file sent");
                     }
-                    const material = [];
-                    const materialid = [];
-                    if (typeof files !== "undefined") {
-                        for (let i = 0; i < files.length; i++) {
-                            const id = await insertDataToMaterialTable(req.params.materialId, "");
-                            material.push({"id" : id.id, "createFrom" : files[i].originalname});
-                            materialid.push(id);
-                            const result = await insertDataToTempRecordTable(files[i], id.id);
+                    else {
+                        let materialid: String;
+                        const fileDetails = JSON.parse(req.body.fileDetails);
+                        const material: any = [];
+                        db.tx(async (t: any) => {
+                            const queries = [];
+                            const id = await insertDataToMaterialTable(t, req.params.materialId, "", fileDetails.language);
+                            queries.push(id);
+                            material.push({"id" : id.id, "createFrom" : file.originalname});
+                            materialid = id.id;
+                            let result = await insertDataToDisplayName(t, req.params.materialId, id.id, fileDetails);
+                            queries.push(result);
+                            result = await insertDataToTempRecordTable(t, file, id.id);
+                            queries.push(result);
+                            return t.batch(queries);
+                        })
+                        .then( async (data: any) => {
+                            // return 200 if success and continue sending files to pouta
+                            resp.id = req.params.materialId;
+                            resp.material = material;
+                            res.status(200).json(resp);
+                            try {
+                                if (typeof file !== "undefined") {
+                                    console.log(materialid);
+                                    const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
+                                    await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    await deleteDataFromTempRecordTable(file.filename, materialid);
+                                    fs.unlink("./" + file.path, (err: any) => {
+                                        if (err) {
+                                        console.error(err);
+                                        }
+                                    });
+                                }
                             }
-                        }
-                    const resp: any = {};
-                    resp.id = req.params.materialI;
-                    resp.material = material;
-                    res.status(200).json(resp);
-                    try {
-                        if (typeof files !== "undefined") {
-                            for (let i = 0; i < files.length; i++) {
-                                const obj: any = await uploadFileToStorage(("./" + files[i].path), files[i].filename, process.env.BUCKET_NAME);
-                                await insertDataToRecordTable(files[i], materialid[i].id, obj.Key, obj.Bucket, obj.Location);
-                                await deleteDataFromTempRecordTable(files[i].filename, materialid[i].id);
-                                fs.unlink("./" + files[i].path, (err: any) => {
-                                    if (err) {
-                                    console.error(err);
-                                    }
-                                });
+                            catch (ex) {
+                                console.log(ex);
+                                console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
                             }
-                        }
+
                     }
-                    catch (ex) {
-                        console.log(ex);
-                        console.log("error while sending files to pouta: " + JSON.stringify((<any>req).files));
+                    )
+                    .catch((err: Error) => {
+                        console.log(err);
+                        if ( ! res.headersSent) {
+                            res.status(500).send("Failure in file upload");
+                        }
+                        fs.unlink("./" + file.path, (err: any) => {
+                            if (err) {
+                            console.error(err);
+                            }
+                            else {
+                                console.log("file removed");
+                            }
+                        });
+                    });
                     }
                 } catch (e) {
                     console.log(e);
@@ -213,20 +336,61 @@ async function checkTemporaryRecordQueue() {
     }
 }
 
-async function insertDataToEducationalMaterialTable(req: Request) {
+async function insertDataToEducationalMaterialTable(req: Request, t: any) {
     const query = "insert into educationalmaterial (Usersusername)" +
                     " values ($1) returning id;";
-    const data = await db.any(query, [req.body.username]);
+    const data = await t.one(query, [req.body.username]);
+    console.log(data.id);
     return data;
 }
 
-async function insertDataToMaterialTable(materialID: String, location: any) {
+async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
+    const queries = [];
+    const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
+    if (fileDetails.fi === null) {
+        queries.push(await t.none(query, ["", "fi", materialid, educationalmaterialid]));
+    }
+    else {
+        queries.push(await t.none(query, [fileDetails.displayName.fi, "fi", materialid, educationalmaterialid]));
+    }
+    if (fileDetails.sv === null) {
+        queries.push(await t.none(query, ["", "sv", materialid, educationalmaterialid]));
+    }
+    else {
+        queries.push(await t.none(query, [fileDetails.displayName.sv, "sv", materialid, educationalmaterialid]));
+    }
+    if (fileDetails.en === null) {
+        queries.push(await t.none(query, ["", "en", materialid, educationalmaterialid]));
+    }
+    else {
+        queries.push(await t.none(query, [fileDetails.displayName.en, "en", materialid, educationalmaterialid]));
+    }
+    return queries;
+}
+
+async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String) {
     let query;
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
-    query = "insert into material (link, educationalmaterialid) values ($1,$2) returning id;";
+    query = "insert into material (link, educationalmaterialid, materiallanguagekey) values ($1,$2,$3) returning id;";
     console.log(query);
-    const data = await db.one(query, [location, materialID]);
+    const data = await t.one(query, [location, materialID, language]);
+    return data;
+}
+
+async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
+    let query;
+    query = "insert into attachment (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, materialid, defaultfile, kind, label, srclang) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id;";
+    console.log(query);
+    const data = await db.one(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID, metadata.default, metadata.kind, metadata.label, metadata.srclang]);
+    return data;
+}
+
+async function insertDataToTempAttachmentTable(files: any, materialId: any, metadata: any) {
+    let query;
+    query = "insert into temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, materialid, defaultfile, kind, label, srclang) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id;";
+    console.log(query);
+    const data = await db.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype, files.encoding, materialId, metadata.default, metadata.kind, metadata.label, metadata.srclang]);
     return data;
 }
 
@@ -237,12 +401,11 @@ async function insertDataToRecordTable(files: any, materialID: any, fileKey: any
     const data = await db.any(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID]);
 }
 
-async function insertDataToTempRecordTable(files: any, materialId: any) {
+async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {
     let query;
     query = "insert into temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, materialid) values ($1,$2,$3,$4,$5,$6,$7) returning id;";
     console.log(query);
-    console.log(materialId);
-    const data = await db.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype, files.encoding, materialId]);
+    const data = await t.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype, files.encoding, materialId]);
     return data;
 }
 
@@ -253,6 +416,15 @@ async function deleteDataFromTempRecordTable(filename: any, materialId: any) {
     const data = await db.any(query, [filename, materialId]);
     return data;
 }
+
+async function deleteDataToTempAttachmentTable(filename: any, materialId: any) {
+    let query;
+    query = "delete from temporaryattachment where filename = $1 and id = $2;";
+    console.log(query, [filename, materialId]);
+    const data = await db.any(query, [filename, materialId]);
+    return data;
+}
+
 
 async function uploadFileToStorage(filePath: String, filename: String, bucketName: String) {
     return new Promise(async (resolve, reject) => {
@@ -456,5 +628,6 @@ module.exports = {
     downloadFileFromStorage : downloadFileFromStorage,
     downloadMaterialFile : downloadMaterialFile,
     checkTemporaryRecordQueue : checkTemporaryRecordQueue,
-    uploadBase64FileToStorage : uploadBase64FileToStorage
+    uploadBase64FileToStorage : uploadBase64FileToStorage,
+    uploadAttachmentToMaterial : uploadAttachmentToMaterial
 };

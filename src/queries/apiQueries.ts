@@ -10,20 +10,39 @@ const db = connection.db;
 
 async function addLinkToMaterial(req: Request , res: Response , next: NextFunction) {
     try {
-        db.task(async (t: any) => {
+        db.tx(async (t: any) => {
             const queries: any = [];
             let query;
-            console.log(req.body.materials);
-            const materials = req.body.materials;
-            for (const element of materials) {
-                query = "insert into material (link, educationalmaterialid) values ($1,$2) returning id, link;";
-                const data = await db.one(query, [element.link, req.params.materialId]);
-                queries.push(data);
+            query = "insert into material (link, educationalmaterialid, materiallanguagekey) values ($1,$2,$3) returning id, link;";
+            const data = await t.one(query, [req.body.link, req.params.materialId, req.body.language]);
+            queries.push(data);
+            const displayName = req.body.displayName;
+            query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
+            if (displayName.fi === null) {
+                queries.push(await t.none(query, ["", "fi", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.fi, "fi", data.id, req.params.materialId]));
+            }
+            if (displayName.sv === null) {
+                queries.push(await t.none(query, ["", "sv", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.sv, "sv", data.id, req.params.materialId]));
+            }
+            if (displayName.en === null) {
+                queries.push(await t.none(query, ["", "en", data.id, req.params.materialId]));
+            }
+            else {
+                queries.push(await t.none(query, [displayName.en, "en", data.id, req.params.materialId]));
             }
             return t.batch(queries);
         })
         .then((result: any) => {
-            const response = {"materials" : result};
+            const response = {
+                "id": req.params.materialId,
+                "link" : result[0]
+            };
             res.status(200).json(response);
         })
         .catch((err: Error) => {
@@ -118,7 +137,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
-        query = "select m.id, m.materiallanguage as language, m.materiallanguagekey as key, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -138,12 +157,37 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.oneOrNone(query, [req.params.id]);
         queries.push(response);
 
+        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and obsoleted = 0;";
+        response = await t.any(query, [req.params.id]);
+        console.log(query, [req.params.id]);
+        queries.push(response);
+
         return t.batch(queries);
     })
     .then((data: any) => {
         const jsonObj: any = {};
         if (data[0][0] === undefined) {
             return res.status(200).json(jsonObj);
+        }
+        // add displayname object to material object
+        for (const element of data[15]) {
+            const nameobj = {"fi" : "",
+                            "sv" : "",
+                            "en" : ""};
+            for (const element2 of data[17]) {
+                if (element2.materialid === element.id) {
+                    if (element2.language === "fi") {
+                        nameobj.fi = element2.displayname;
+                    }
+                    else if (element2.language === "sv") {
+                        nameobj.sv = element2.displayname;
+                    }
+                    else if (element2.language === "en") {
+                        nameobj.en = element2.displayname;
+                    }
+                }
+            }
+            element.displayName = nameobj;
         }
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[15];
@@ -179,9 +223,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.accessibilityHazards = data[6];
         jsonObj.license = data[0][0].licensecode;
         jsonObj.isBasedOn = data[12];
-        jsonObj.materialDisplayName = data[17];
+        // jsonObj.materialDisplayName = data[17];
         jsonObj.educationalRoles = data[18];
         jsonObj.thumbnail = data[19];
+        jsonObj.attachments = data[20];
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -593,7 +638,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                         queries.push(await t.any(query));
                     }
                 }
-                const cs = new pgp.helpers.ColumnSet(["alignmenttype", "targetname", "source", "educationalmaterialid", "objectkey", "educationalframework"], {table: "alignmentobject"});
+                const cs = new pgp.helpers.ColumnSet(["alignmenttype", "targetname", "source", "educationalmaterialid", "objectkey", "educationalframework", "targeturl"], {table: "alignmentobject"});
                 // data input values:
                 // console.log(arr);
                 const values: any = [];
@@ -602,7 +647,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 }
                 arr.forEach(async (element: any) =>  {
                     console.log(element.educationalFramework);
-                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework) };
+                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework), targeturl : element.targeturl };
                     values.push(obj);
                 });
                 // console.log(arr);
@@ -644,7 +689,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             for (const element of arr) {
                 query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
                 // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                const slug = createSlug(element.displayName.fi);
+                // const slug = createSlug(element.displayName.fi);
                 console.log(element.displayName.fi);
                 console.log(query, [element.displayName.fi, "fi", element.id, req.params.id]);
                 if (element.displayName.fi === null) {

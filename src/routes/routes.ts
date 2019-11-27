@@ -37,6 +37,7 @@ const passport = require("passport");
 router.post("/material/file", fh.uploadMaterial);
 router.post("/material/file/:materialId", fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", db.addLinkToMaterial);
+router.post("/material/attachment/:materialId", fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", thumbnail.uploadImage);
 router.post("/uploadBase64Image/:id", thumbnail.uploadbase64Image);
 

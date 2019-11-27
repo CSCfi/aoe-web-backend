@@ -38,7 +38,7 @@ async function getMaterialMetaData(req: Request , res: Response) {
             console.log(query, params);
             return t.map(query, params, async (q: any) => {
             const m: any = [];
-            t.map("select m.id, m.materiallanguage as language, m.materiallanguagekey as key, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
+            t.map("select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
                 t.any("select * from materialdisplayname where materialid = $1;", q2.id)
                     .then((data: any) => {
                         q2.materialdisplayname = data;
@@ -146,7 +146,7 @@ async function buildTree(t: any) {
     " from educationalmaterial as em order by em.id asc;", [], async (q: any) => {
         console.log("tämä on: " + t);
         const m: any = [];
-        t.map("select m.id, m.materiallanguage as language, m.materiallanguagekey as key, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
+        t.map("select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
             t.any("select * from materialdisplayname where materialid = $1;", q2.id)
                 .then((data: any) => {
                     q2.materialdisplayname = data;
