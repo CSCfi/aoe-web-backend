@@ -653,7 +653,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 console.log(values);
                 query = pgp.helpers.insert(values, cs) + " ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
                 console.log(query);
-                queries.push(t.any(query));
+                queries.push(await t.any(query));
                 // for (const element of arr) {
                 //     query = "INSERT INTO alignmentobject (alignmentType, targetName, source, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
                 //     console.log(query);
