@@ -36,10 +36,13 @@ function isUser(req: Request) {
         }
 }
 
-async function hasAccesstoPublication(id: any, req: Request) {
-    const query = "SELECT UsersUserName from EducationalMaterial WHERE id = " + id + "";
-    const result = await db.oneOrNone(query);
-    if (req.session.userdata.oidcid === result) {
+async function hasAccesstoPublication(id: number, req: Request) {
+    // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
+    // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
+    const params = {"id": id};
+    const query = "SELECT UsersUserName from EducationalMaterial WHERE id = ${id}";
+    const result = await db.oneOrNone(query, params);
+    if (req.session.passport.user.uid === result) {
         return true;
     }
     else {
@@ -47,11 +50,42 @@ async function hasAccesstoPublication(id: any, req: Request) {
     }
 }
 
+async function InsertUserToDatabase(userinfo: object) {
+    console.log("The userinfo in function at authservice: " + userinfo);
+    const uid = userinfo["uid"];
+    const nameparsed = userinfo["given_name"] + " " + userinfo["family_name"];
+    const email = userinfo["email"];
+    const query = "SELECT * from Users";
+
+    // Tähän tulee se query, en muista miten multiple insertit meni, jos ehdit tehdä tän niin loistavaa
+    // Teen sen muuten maanantaina
+    // const query = "INSERT ";
+    // await db.oneOrNone(query);
+    const result = await db.any(query);
+    result.forEach( element => {
+        if (element.UserName === uid ) {
+            console.log("User already exists, proceed without doing anything");
+        }
+        else {
+            const params2 = {"uid": uid, "nameparsed": nameparsed, "email": email};
+            // Tää query line jäi vähän vajaaksi, en pysty testailla lokaaalisti ku eri kanta, mutta periaatteessa tossa vaan
+            // Tulee se multiple insert ja ylhäällä on parametrit
+            const query2 = "INSERT INTO USERS";
+            db.insert(query2, params2);
+        }
+
+    });
+
+
+
+
+}
 
 module.exports = {
     isUser: isUser,
     getUserData: getUserData,
     hasAccesstoPublication,
-    checkAuthenticated: checkAuthenticated
+    checkAuthenticated: checkAuthenticated,
+    InsertUserToDatabase: InsertUserToDatabase
     // hasAccess: hasAccess,
 };

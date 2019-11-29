@@ -4,6 +4,7 @@ import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
 const util = require("util");
+const ah = require("./services/authService");
 import expressValidator from "express-validator";
 const passport = require("passport");
 const flash = require("connect-flash");
@@ -30,11 +31,14 @@ const RedisStore = require("connect-redis")(session);
 const Issuer  = require("openid-client").Issuer;
 const Strategy = require("openid-client").Strategy;
 
+app.set("trust proxy", 1);
 app.use(session({
-  store: new RedisStore(),
-  resave: false,
-  saveUninitialized: true,
-  secret: "bla bla bla"
+  // store: new RedisStore(),
+  // resave: false,
+  // saveUninitialized: true,
+  secret: "testing",
+  httpOnly: false,
+  credentials: "include",
 }));
 
 
@@ -109,8 +113,13 @@ Issuer.discover("https://test-user-auth.csc.fi")
             console.log("id_token", tokenset.id_token);
             console.log("claims", tokenset.claims());
             console.log("userinfo", userinfo);
+            console.log("Typeof userinfo: " + typeof(userinfo));
             console.log("expires_in" , tokenset.expires_in);
             redisclient.set("test", JSON.stringify(userinfo));
+
+            // Tässä se laukaisee sen insertin
+            ah.InsertUserToDatabase(userinfo);
+
             // req.session.expires_in = tokenset.expires_in;
             // res.sendStatus(200);
             // used to serialize the user for the session
