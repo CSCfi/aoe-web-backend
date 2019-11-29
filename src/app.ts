@@ -17,6 +17,10 @@ const session = require("express-session");
 // API keys and Passport configuration
 // import * as passportConfig from "./config/passport";
 const cors = require("cors");
+const corsOptions = {
+  origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
 const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
@@ -184,7 +188,7 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(compression());
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(bodyParser.json({extended: true, limit: "1mb"}));
 app.use(bodyParser.urlencoded({extended: true, limit: "1mb"}));
 app.set("port", 3000);
