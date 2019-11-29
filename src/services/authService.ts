@@ -13,8 +13,8 @@ function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
 
 function getUserData(req: Request, res: Response) {
 
- res.status(200).json(JSON.stringify(req.session.passport.user));
- console.log("The req session in getuserdata: " + JSON.stringify(req.session));
+ res.status(200).json(req.session.passport.user);
+//  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
 function isUser(req: Request) {
