@@ -34,35 +34,35 @@ const passport = require("passport");
 //     res.send(200);
 // });
 // router.post("/authtest", ah.authtest);
-router.post("/material/file", fh.uploadMaterial);
-router.post("/material/file/:materialId", fh.uploadFileToMaterial);
-router.post("/material/link/:materialId", db.addLinkToMaterial);
-router.post("/material/attachment/:materialId", fh.uploadAttachmentToMaterial);
-router.post("/uploadImage/:id", thumbnail.uploadImage);
-router.post("/uploadBase64Image/:id", thumbnail.uploadbase64Image);
+router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
+router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
+router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadAttachmentToMaterial);
+router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
+router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
 
 // router.get("/logintest", ah.authservice);
 router.get("/userdata", ah.getUserData);
 router.get("/material", db.getMaterial);
-router.get("/material/:id", ah.checkAuthenticated, db.getMaterialData);
+router.get("/material/:id", db.getMaterialData);
 router.get("/material/user/:username", db.getUserMaterial);
-router.put("/material/:id", db.updateMaterial);
+router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.updateMaterial);
 // delete educational material
-router.delete("/material/:id", db.deleteMaterial);
+router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 // delete link or record from educationalmaterial
-router.delete("/material/file/:materialid/:fileid", db.deleteRecord);
+router.delete("/material/file/:materialid/:fileid", ah.hasAccessToPublicaticationMW, ah.checkAuthenticated, db.deleteRecord);
 // router.post("/material", db.postMaterial);
 
-router.post("/createUser", db.createUser);
-router.put("/user/:id", db.updateUser);
-router.get("/user/:id", db.getUser);
-router.put("/termsOfUsage/:id", db.updateTermsOfUsage);
+// router.post("/createUser", db.createUser);
+router.put("/user/:id", ah.checkAuthenticated, db.updateUser);
+router.get("/user/:id", ah.checkAuthenticated, db.getUser);
+router.put("/termsOfUsage/:id", ah.checkAuthenticated, db.updateTermsOfUsage);
 
-router.post("/upload", fh.uploadFileToStorage);
+// router.post("/upload", ah.checkAuthenticated, fh.uploadFileToStorage);
 router.get("/download/:key", fh.downloadFile);
 router.get("/material/file/:materialId", fh.downloadMaterialFile);
 
-router.post("/uploadXlsx" , handler.uploadXlsx);
+// router.post("/uploadXlsx" , handler.uploadXlsx);
 
 // oaj-pmh
 router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);

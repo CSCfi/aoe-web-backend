@@ -3,14 +3,15 @@ import compression from "compression";  // compresses requests
 import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
+// Load environment variables from .env file, where API keys and passwords are configured
+dotenv.config({ path: ".env.example" });
 const util = require("util");
 const ah = require("./services/authService");
 import expressValidator from "express-validator";
 const passport = require("passport");
 const flash = require("connect-flash");
 const session = require("express-session");
-// Load environment variables from .env file, where API keys and passwords are configured
-dotenv.config({ path: ".env.example" });
+
 
 // const ah = require("./queries/authservice");
 // API keys and Passport configuration
@@ -33,7 +34,7 @@ const Strategy = require("openid-client").Strategy;
 
 app.set("trust proxy", 1);
 app.use(session({
-  // store: new RedisStore(),
+  store: new RedisStore(),
   // resave: false,
   // saveUninitialized: true,
   secret: "testing",
@@ -118,14 +119,16 @@ Issuer.discover("https://test-user-auth.csc.fi")
             redisclient.set("test", JSON.stringify(userinfo));
 
             // Tässä se laukaisee sen insertin
-            ah.InsertUserToDatabase(userinfo);
-
-            // req.session.expires_in = tokenset.expires_in;
-            // res.sendStatus(200);
-            // used to serialize the user for the session
-            // console.log(userinfo.uid);
-            const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-            return done(undefined, {uid: userinfo.uid, name: nameparsed, email: userinfo.email});
+            ah.InsertUserToDatabase(userinfo)
+            .then(() => {
+              const nameparsed = userinfo.given_name + " " + userinfo.family_name;
+              return done(undefined, {uid: userinfo.uid, name: nameparsed, email: userinfo.email});
+            })
+            .catch((err: Error) => {
+              console.log(err);
+              return done("Login error", undefined);
+            }
+            );
         }));
     });
     app.use(flash());
