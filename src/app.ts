@@ -39,11 +39,12 @@ const Strategy = require("openid-client").Strategy;
 app.set("trust proxy", 1);
 app.use(session({
   store: new RedisStore(),
-  // resave: false,
-  // saveUninitialized: true,
+  resave: false,
+  saveUninitialized: true,
   secret: "testing",
   httpOnly: false,
   credentials: "include",
+  cookie: { maxAge: 60 * 60 * 1000 }
 }));
 
 
