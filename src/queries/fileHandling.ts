@@ -339,7 +339,7 @@ async function checkTemporaryRecordQueue() {
 async function insertDataToEducationalMaterialTable(req: Request, t: any) {
     const query = "insert into educationalmaterial (Usersusername)" +
                     " values ($1) returning id;";
-    const data = await t.one(query, [req.body.username]);
+    const data = await t.one(query, [req.session.passport.user.uid]);
     console.log(data.id);
     return data;
 }

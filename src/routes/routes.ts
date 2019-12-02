@@ -50,13 +50,13 @@ router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicatication
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 // delete link or record from educationalmaterial
-router.delete("/material/file/:materialid/:fileid", ah.hasAccessToPublicaticationMW, ah.checkAuthenticated, db.deleteRecord);
+router.delete("/material/file/:materialid/:fileid", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteRecord);
 // router.post("/material", db.postMaterial);
 
 // router.post("/createUser", db.createUser);
-router.put("/user/:id", ah.checkAuthenticated, db.updateUser);
-router.get("/user/:id", ah.checkAuthenticated, db.getUser);
-router.put("/termsOfUsage/:id", ah.checkAuthenticated, db.updateTermsOfUsage);
+router.put("/user", ah.checkAuthenticated, db.updateUser);
+router.get("/user", ah.checkAuthenticated, db.getUser);
+router.put("/termsOfUsage", ah.checkAuthenticated, db.updateTermsOfUsage);
 
 // router.post("/upload", ah.checkAuthenticated, fh.uploadFileToStorage);
 router.get("/download/:key", fh.downloadFile);

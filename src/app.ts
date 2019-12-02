@@ -120,7 +120,6 @@ Issuer.discover("https://test-user-auth.csc.fi")
             console.log("userinfo", userinfo);
             console.log("Typeof userinfo: " + typeof(userinfo));
             console.log("expires_in" , tokenset.expires_in);
-            redisclient.set("test", JSON.stringify(userinfo));
 
             // Tässä se laukaisee sen insertin
             ah.InsertUserToDatabase(userinfo)

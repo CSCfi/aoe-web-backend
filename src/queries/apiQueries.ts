@@ -241,7 +241,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
             const params: any = [];
             let query;
             query = "SELECT id, licensecode as license FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1' limit 1000;";
-            params.push(req.params.username);
+            params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);
@@ -847,7 +847,7 @@ async function updateUser(req: Request , res: Response , next: NextFunction) {
         let query;
         query = "update users set (firstname, lastname, preferredlanguage,preferredtargetname,preferredalignmenttype ) = ($1,$2,$3,$4,$5) where username = $6;";
         console.log(query);
-        const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.preferredlanguage, req.body.preferredtargetname, req.body.preferredalignmenttype, req.params.id]);
+        const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.preferredlanguage, req.body.preferredtargetname, req.body.preferredalignmenttype, req.session.passport.user.uid]);
         res.status(200).json("user updated");
     }
     catch (err ) {
@@ -861,7 +861,7 @@ async function updateTermsOfUsage(req: Request , res: Response , next: NextFunct
         let query;
         query = "update users set termsofusage = '1' where username = $1;";
         console.log(query);
-        const data = await db.any(query, [req.params.id]);
+        const data = await db.any(query, [req.session.passport.user.uid]);
         res.status(200).json("terms of usage updated");
     }
     catch (err ) {
@@ -875,7 +875,7 @@ async function getUser(req: Request , res: Response , next: NextFunction) {
         let query;
         query = "SELECT * FROM users where username = $1;";
         console.log(query);
-        const data = await db.any(query, [req.params.id]);
+        const data = await db.any(query, [req.session.passport.user.uid]);
         res.status(200).json(data);
     }
     catch (err ) {
