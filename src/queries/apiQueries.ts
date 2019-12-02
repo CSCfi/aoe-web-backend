@@ -329,7 +329,6 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         const queries: any = [];
         // let params = req.params;
         const materialname = req.body.name;
-        const slug = req.body.slug;
         const nameparams = [];
         let response;
         console.log("updateMaterial request body:");
@@ -345,23 +344,23 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
                     "UPDATE SET materialname = $1 , slug = $3;";
             console.log(query);
-            if (materialname.fi === null || slug.fi === null) {
+            if (materialname.fi === null) {
                 queries.push(await t.any(query, ["", "fi", "", req.params.id]));
             }
             else {
-                queries.push(await t.any(query, [materialname.fi, "fi", slug.fi, req.params.id]));
+                queries.push(await t.any(query, [materialname.fi, "fi", "", req.params.id]));
             }
-            if (materialname.sv === null || slug.sv === null) {
+            if (materialname.sv === null) {
                 queries.push(await t.any(query, ["", "sv", "", req.params.id]));
             }
             else {
-                queries.push(await t.any(query, [materialname.sv, "sv", slug.sv, req.params.id]));
+                queries.push(await t.any(query, [materialname.sv, "sv", "", req.params.id]));
             }
-            if (materialname.en === null || slug.en === null) {
+            if (materialname.en === null) {
                 queries.push(await t.any(query, ["", "en", "", req.params.id]));
             }
             else {
-                queries.push(await t.any(query, [materialname.en, "en", slug.en, req.params.id]));
+                queries.push(await t.any(query, [materialname.en, "en", "", req.params.id]));
             }
         }
 
@@ -381,19 +380,19 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
                     "UPDATE SET description = $1;";
             console.log(query);
-            if (description.fi === null || slug.fi === null) {
+            if (description.fi === null) {
                 queries.push(await t.any(query, ["", "fi", req.params.id]));
             }
             else {
                 queries.push(await t.any(query, [description.fi, "fi", req.params.id]));
             }
-            if (description.sv === null || slug.sv === null) {
+            if (description.sv === null) {
                 queries.push(await t.any(query, ["", "sv", req.params.id]));
             }
             else {
                 queries.push(await t.any(query, [description.sv, "sv", req.params.id]));
             }
-            if (description.en === null || slug.en === null) {
+            if (description.en === null) {
                 queries.push(await t.any(query, ["", "en", req.params.id]));
             }
             else {
@@ -654,7 +653,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 console.log(values);
                 query = pgp.helpers.insert(values, cs) + " ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
                 console.log(query);
-                queries.push(t.any(query));
+                queries.push(await t.any(query));
                 // for (const element of arr) {
                 //     query = "INSERT INTO alignmentobject (alignmentType, targetName, source, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
                 //     console.log(query);
@@ -710,9 +709,9 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 else {
                     queries.push(await t.any(query, [element.displayName.en, "en", element.id, req.params.id]));
                 }
-                query = "UPDATE material SET materiallanguage = $1, materiallanguagekey = $2 WHERE id = $3 AND educationalmaterialid = $4";
-                console.log("update material name: " + query, [element.language.value, element.language.key, element.id, req.params.id]);
-                queries.push(await t.any(query, [element.language.value, element.language.key, element.id, req.params.id]));
+                query = "UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3";
+                console.log("update material name: " + query, [element.language.key, element.id, req.params.id]);
+                queries.push(await t.any(query, [element.language.key, element.id, req.params.id]));
             }
         }
 // accessibilityFeatures
