@@ -11,9 +11,11 @@ function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
     }
 }
 
-function getUserData(req: Request, res: Response) {
-
- res.status(200).json(req.session.passport.user);
+async function getUserData(req: Request, res: Response) {
+    const query = "SELECT termsofusage FROM users WHERE username = $1;";
+    const termsofusage = await db.oneOrNone(query, [req.session.passport.user.uid]);
+    res.status(200).json({"userdata" : req.session.passport.user,
+                            "termsofusage" : termsofusage.termsofusage});
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 

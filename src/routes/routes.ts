@@ -42,7 +42,7 @@ router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicatica
 router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
 
 // router.get("/logintest", ah.authservice);
-router.get("/userdata", ah.getUserData);
+router.get("/userdata", ah.checkAuthenticated, ah.getUserData);
 router.get("/material", db.getMaterial);
 router.get("/material/:id", db.getMaterialData);
 router.get("/material/user/:username", db.getUserMaterial);
