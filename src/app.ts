@@ -1,13 +1,14 @@
-import express, { Response, Request, NextFunction } from "express";
+import express, {Response, Request, NextFunction} from "express";
 import compression from "compression";  // compresses requests
 import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
 // Load environment variables from .env file, where API keys and passwords are configured
-dotenv.config({ path: ".env.example" });
+dotenv.config({path: ".env.example"});
 const util = require("util");
 const ah = require("./services/authService");
 import expressValidator from "express-validator";
+
 const passport = require("passport");
 const flash = require("connect-flash");
 const session = require("express-session");
@@ -18,14 +19,16 @@ const session = require("express-session");
 // import * as passportConfig from "./config/passport";
 const cors = require("cors");
 const corsOptions = {
-  origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+    origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 const app = express();
 const morgan = require("morgan");
 const bodyParser = require("body-parser");
 
 import * as homeController from "./controllers/home";
+
 const apiRouter = require("./routes/routes");
 // Create Express server
 const redis = require("redis");
@@ -33,20 +36,19 @@ const redisclient = redis.createClient();
 const RedisStore = require("connect-redis")(session);
 
 // setInterval(() => ah.authIssuer(), 30000);
-const Issuer  = require("openid-client").Issuer;
+const Issuer = require("openid-client").Issuer;
 const Strategy = require("openid-client").Strategy;
 
 app.set("trust proxy", 1);
 app.use(session({
-  store: new RedisStore(),
-  resave: false,
-  saveUninitialized: true,
-  secret: "testing",
-  httpOnly: false,
-  credentials: "include",
-  cookie: { maxAge: 60 * 60 * 1000 }
+    store: new RedisStore(),
+    resave: false,
+    saveUninitialized: true,
+    secret: "testing",
+    httpOnly: false,
+    credentials: "include",
+    cookie: {maxAge: 60 * 60 * 1000}
 }));
-
 
 
 // used to deserialize the user
@@ -92,19 +94,19 @@ app.use(session({
 
 // app.get("/secure/redirect", passport.authenticate("oidc", {successRedirect: "/", failureRedirect: "/login"}));
 // ** ENDS HERE **
-passport.serializeUser(function(user, done) {
-  done(undefined, user);
+passport.serializeUser(function (user, done) {
+    done(undefined, user);
 // where is this user.id going? Are we supposed to access this anywhere?
 });
 
 passport.deserializeUser((userinfo, done) => {
-  done(undefined, {user: userinfo.id});
+    done(undefined, {user: userinfo.id});
 });
 
 // One possible implementation below.
 // ** STARTS HERE **
 Issuer.discover("https://test-user-auth.csc.fi")
-    .then( function(testIssuer , req: Request) {
+    .then(function (testIssuer, req: Request) {
         const client = new testIssuer.Client({
             client_id: "bfb7ab6dda3f493fb321233a7e55953f965391ec",
             client_secret: "ba761d78e42754edb2853fcaca8497acc54f8d05",
@@ -112,30 +114,30 @@ Issuer.discover("https://test-user-auth.csc.fi")
             response_type: "code",
         });
         console.log("Discovered issuer %s %O", testIssuer.issuer, testIssuer.metadata);
-        passport.use("oidc", new Strategy({ client }, (tokenset: any, userinfo: any, done: any, next: NextFunction) => {
-           // **NEVER GET HERE**
+        passport.use("oidc", new Strategy({client}, (tokenset: any, userinfo: any, done: any, next: NextFunction) => {
+            // **NEVER GET HERE**
             console.log("tokenset", tokenset);
             console.log("access_token", tokenset.access_token);
             console.log("id_token", tokenset.id_token);
             console.log("claims", tokenset.claims());
             console.log("userinfo", userinfo);
-            console.log("Typeof userinfo: " + typeof(userinfo));
-            console.log("expires_in" , tokenset.expires_in);
+            console.log("Typeof userinfo: " + typeof (userinfo));
+            console.log("expires_in", tokenset.expires_in);
 
             // Tässä se laukaisee sen insertin
             ah.InsertUserToDatabase(userinfo)
-            .then(() => {
-              const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-              return done(undefined, {uid: userinfo.uid, name: nameparsed, email: userinfo.email});
-            })
-            .catch((err: Error) => {
-              console.log(err);
-              return done("Login error", undefined);
-            }
-            );
+                .then(() => {
+                    const nameparsed = userinfo.given_name + " " + userinfo.family_name;
+                    return done(undefined, {uid: userinfo.uid, name: nameparsed, email: userinfo.email});
+                })
+                .catch((err: Error) => {
+                        console.log(err);
+                        return done("Login error", undefined);
+                    }
+                );
         }));
     });
-    app.use(flash());
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -145,12 +147,22 @@ app.use(passport.session());
 //     res.json({"hello": "world", "user": "test" + JSON.stringify(req.body)});
 //     console.log(util.inspect(req));
 // });
-app.get("/login", passport.authenticate("oidc", {successRedirect: "/", failureRedirect: "/login", failureFlash: true, scope: "openid profile offline_access"}));
-app.get("/secure/redirect", function(req: Request, res: Response, next: NextFunction) {
-  console.log("here");
-  next();
-}
- , passport.authenticate("oidc", {"callback": true, failureRedirect: process.env.FAILURE_REDIRECT_URI, failureFlash: true, successRedirect: process.env.SUCCESS_REDIRECT_URI})
+app.get("/login", passport.authenticate("oidc", {
+    successRedirect: "/",
+    failureRedirect: "/login",
+    failureFlash: true,
+    scope: "openid profile offline_access"
+}));
+app.get("/secure/redirect", function (req: Request, res: Response, next: NextFunction) {
+        console.log("here");
+        next();
+    }
+    , passport.authenticate("oidc", {
+        "callback": true,
+        failureRedirect: process.env.FAILURE_REDIRECT_URI,
+        failureFlash: true,
+        successRedirect: process.env.SUCCESS_REDIRECT_URI
+    })
 // passport.authenticate("oidc", function(err, user, info) {
 //   if (err) {
 //     console.log(err);
@@ -167,16 +179,6 @@ app.get("/secure/redirect", function(req: Request, res: Response, next: NextFunc
 //   res.sendStatus(200);
 //  })(req, res, next);
 );
-
-
-
-
-
-
-
-
-
-
 
 
 // Connect to MongoDB
