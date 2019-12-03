@@ -45,7 +45,7 @@ router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPubli
 router.get("/userdata", ah.checkAuthenticated, ah.getUserData);
 router.get("/material", db.getMaterial);
 router.get("/material/:id", db.getMaterialData);
-router.get("/material/user/:username", db.getUserMaterial);
+router.get("/usermaterial", ah.checkAuthenticated, db.getUserMaterial);
 router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.updateMaterial);
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
