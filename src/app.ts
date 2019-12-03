@@ -19,6 +19,7 @@ const session = require("express-session");
 // import * as passportConfig from "./config/passport";
 const cors = require("cors");
 const corsOptions = {
+    credentials: true,
     origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
