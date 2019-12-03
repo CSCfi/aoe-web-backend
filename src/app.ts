@@ -106,12 +106,12 @@ passport.deserializeUser((userinfo, done) => {
 
 // One possible implementation below.
 // ** STARTS HERE **
-Issuer.discover("https://test-user-auth.csc.fi")
+Issuer.discover(process.env.PROXY_URI)
     .then(function (testIssuer, req: Request) {
         const client = new testIssuer.Client({
-            client_id: "bfb7ab6dda3f493fb321233a7e55953f965391ec",
-            client_secret: "ba761d78e42754edb2853fcaca8497acc54f8d05",
-            redirect_uri: process.env.REDIRECT_URI, // "https://10.10.10.10:3000/secure/redirect", // secure/redirect
+            client_id: process.env.CLIENT_ID,
+            client_secret: process.env.CLIENT_SECRET,
+            redirect_uri: process.env.REDIRECT_URI,
             response_type: "code",
         });
         console.log("Discovered issuer %s %O", testIssuer.issuer, testIssuer.metadata);
