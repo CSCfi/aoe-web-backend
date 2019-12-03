@@ -1,4 +1,4 @@
-import express, {Response, Request, NextFunction} from "express";
+import express, { Response, Request, NextFunction } from "express";
 import compression from "compression";  // compresses requests
 import lusca from "lusca";
 import dotenv from "dotenv";
@@ -20,7 +20,7 @@ const session = require("express-session");
 const cors = require("cors");
 const corsOptions = {
     origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 const app = express();
