@@ -191,15 +191,11 @@ app.use(compression());
  */
 const corsOptions = {
     credentials: true,
-    origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://86.50.27.30:80"],
+    origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://aoe.fi", "https://86.50.27.30:80"],
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", req.get("origin"));
-    next();
-});
 
 app.use(bodyParser.json({extended: true, limit: "1mb"}));
 app.use(bodyParser.urlencoded({extended: true, limit: "1mb"}));
