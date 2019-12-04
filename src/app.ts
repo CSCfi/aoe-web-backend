@@ -191,7 +191,7 @@ app.use(compression());
  */
 const corsOptions = {
     credentials: true,
-    origin: ["http://localhost:4200", "https://demo.aoe.fi", "https://aoe.fi", "https://86.50.27.30:80"],
+    origin: ["https://demo.aoe.fi", "https://aoe.fi", "https://86.50.27.30:80"],
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     optionsSuccessStatus: 200
 };
