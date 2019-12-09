@@ -190,7 +190,6 @@ app.use(compression());
  * CORS configuration
  */
 const corsOptions = {
-    credentials: true,
     origin: ["https://demo.aoe.fi", "https://aoe.fi", "https://86.50.27.30:80"],
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     optionsSuccessStatus: 200
