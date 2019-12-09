@@ -312,6 +312,17 @@ async function fileToStorage(file: any, materialid: String) {
     });
 }
 
+async function attachmentFileToStorage(file: any, metadata: any, materialid: string) {
+    const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
+    await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
+    await deleteDataToTempAttachmentTable(file.filename, materialid);
+    fs.unlink("./" + file.path, (err: any) => {
+        if (err) {
+        console.error(err);
+        }
+    });
+}
+
 async function checkTemporaryRecordQueue() {
     try {
         // take hour of
@@ -328,7 +339,47 @@ async function checkTemporaryRecordQueue() {
                 "encoding" : element.format,
                 "filename" : element.filename
             };
-            await fileToStorage(file, element.materialid);
+            try {
+                await fileToStorage(file, element.materialid);
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+async function checkTemporaryAttachmentQueue() {
+    try {
+        // take hour of
+        const ts = Date.now() - 1000 * 60 * 60;
+        console.log("checkTemporaryAttachmentQueue");
+        const query = "Select * From temporaryattachment where extract(epoch from createdat)*1000 < $1 limit 1000;";
+        const data = await db.any(query, [ts]);
+        for (const element of data) {
+            const metadata = {
+                "default" : element.defaultfile,
+                "kind" : element.kind,
+                "label" :  element.label,
+                "srclang" : element.srclang
+            };
+            const file = {
+                "originalname" : element.originalfilename,
+                "path" : element.filepath,
+                "size" : element.filesize,
+                "mimetype" : element.mimetype,
+                "encoding" : element.format,
+                "filename" : element.filename
+            };
+            try {
+                await attachmentFileToStorage(file, metadata, element.id);
+            }
+            catch (error) {
+                console.log(error);
+            }
         }
     }
     catch (error) {
@@ -441,7 +492,10 @@ async function uploadFileToStorage(filePath: String, filename: String, bucketNam
             // const bucketName = process.env.BUCKET_NAME;
             const key = filename;
             fs.readFile(filePath, async (err: any, data: any) => {
-                if (err) console.error(err);
+                if (err) {
+                    console.error(err);
+                    return reject(new Error(err));
+                }
             try {
                 const params = {
                     Bucket: bucketName,
@@ -629,5 +683,6 @@ module.exports = {
     downloadMaterialFile : downloadMaterialFile,
     checkTemporaryRecordQueue : checkTemporaryRecordQueue,
     uploadBase64FileToStorage : uploadBase64FileToStorage,
-    uploadAttachmentToMaterial : uploadAttachmentToMaterial
+    uploadAttachmentToMaterial : uploadAttachmentToMaterial,
+    checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue
 };

@@ -37,7 +37,7 @@ const passport = require("passport");
 router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
 router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
-router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadAttachmentToMaterial);
+router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
 router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
 

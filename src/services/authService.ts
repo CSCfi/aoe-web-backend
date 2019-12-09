@@ -79,6 +79,28 @@ async function hasAccessToPublicaticationMW(req: Request, res: Response, next: N
     const result = await db.oneOrNone(query, [id]);
     console.log(req.session.passport.user.uid);
     console.log(result);
+    if (!result) {
+        console.log("No result found for id " + id);
+        return res.sendStatus(401);
+    }
+    if (req.session.passport.user.uid === result.usersusername) {
+        return next();
+    }
+    else {
+        res.sendStatus(401);
+    }
+}
+
+async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {
+    const id = req.params.materialId;
+    const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = $1";
+    const result = await db.oneOrNone(query, [id]);
+    console.log(req.session.passport.user.uid);
+    console.log(result);
+    if (!result) {
+        console.log("No result found for id " + id);
+        return res.sendStatus(401);
+    }
     if (req.session.passport.user.uid === result.usersusername) {
         return next();
     }
@@ -93,6 +115,7 @@ module.exports = {
     hasAccesstoPublication,
     checkAuthenticated: checkAuthenticated,
     InsertUserToDatabase: InsertUserToDatabase,
-    hasAccessToPublicaticationMW: hasAccessToPublicaticationMW
+    hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
+    hasAccessToMaterial: hasAccessToMaterial
     // hasAccess: hasAccess,
 };
