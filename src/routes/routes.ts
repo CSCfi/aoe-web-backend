@@ -62,6 +62,8 @@ router.put("/termsOfUsage", ah.checkAuthenticated, db.updateTermsOfUsage);
 router.get("/download/:key", fh.downloadFile);
 router.get("/material/file/:materialId", fh.downloadMaterialFile);
 
+router.get("/logout", ah.logout);
+
 // router.post("/uploadXlsx" , handler.uploadXlsx);
 
 // oaj-pmh

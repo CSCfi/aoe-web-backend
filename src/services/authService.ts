@@ -86,13 +86,17 @@ async function hasAccessToPublicaticationMW(req: Request, res: Response, next: N
         res.sendStatus(401);
     }
 }
-
+function logout(req: Request, res: Response) {
+    req.logout();
+    res.redirect("/");
+}
 module.exports = {
     isUser: isUser,
     getUserData: getUserData,
     hasAccesstoPublication,
     checkAuthenticated: checkAuthenticated,
     InsertUserToDatabase: InsertUserToDatabase,
-    hasAccessToPublicaticationMW: hasAccessToPublicaticationMW
+    hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
+    logout: logout,
     // hasAccess: hasAccess,
 };
