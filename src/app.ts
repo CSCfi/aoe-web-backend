@@ -39,10 +39,11 @@ app.use(session({
     store: new RedisStore(),
     resave: false,
     saveUninitialized: true,
-    secret: "testing",
-    httpOnly: false,
+    secret: process.env.SESSION_SECRET,
     credentials: "include",
-    cookie: {maxAge: 60 * 60 * 1000}
+    cookie: {
+        httpOnly: true,
+        maxAge: 60 * 60 * 1000}
 }));
 
 
