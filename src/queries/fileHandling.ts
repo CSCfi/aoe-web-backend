@@ -6,6 +6,7 @@ globalLog.initialize();
 
 const fs = require("fs");
 const path = require("path");
+const contentDisposition = require("content-disposition");
 
 // File upload dependencies
 const multer  = require("multer");
@@ -610,7 +611,7 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     Key: key
                 };
                 res.attachment(key);
-                res.header("Content-Disposition", "attachment; filename=" + response.originalfilename);
+                res.header("Content-Disposition", contentDisposition(response.originalfilename));
                 const fileStream = s3.getObject(params).createReadStream();
                 fileStream.pipe(res);
             }
