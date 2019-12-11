@@ -4,7 +4,7 @@ import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
 // Load environment variables from .env file, where API keys and passwords are configured
-dotenv.config({path: ".env.example"});
+dotenv.config({path: ".env"});
 const util = require("util");
 const ah = require("./services/authService");
 import expressValidator from "express-validator";
@@ -31,9 +31,36 @@ const redisclient = redis.createClient();
 const RedisStore = require("connect-redis")(session);
 
 // setInterval(() => ah.authIssuer(), 30000);
+const { custom } = require("openid-client");
+custom.setHttpOptionsDefaults({
+  timeout: 5000,
+  retry: 2,
+  clock_tolerance : 5,
+//   hooks: {
+//     beforeRequest: [
+//       (options) => {
+//         console.log("--> %s %s", options.method.toUpperCase(), options.href);
+//         console.log("--> HEADERS %o", options.headers);
+//         if (options.body) {
+//           console.log("--> BODY %s", options.body);
+//         }
+//       },
+//     ],
+//     afterResponse: [
+//       (response) => {
+//         console.log("<-- %i FROM %s %s", response.statusCode, response.request.gotOptions.method.toUpperCase(), response.request.gotOptions.href);
+//         console.log("<-- HEADERS %o", response.headers);
+//         if (response.body) {
+//           console.log("<-- BODY %s", response.body);
+//         }
+//         return response;
+//       },
+//     ],
+//   },
+});
+
 const Issuer = require("openid-client").Issuer;
 const Strategy = require("openid-client").Strategy;
-
 app.set("trust proxy", 1);
 app.use(session({
     store: new RedisStore(),
