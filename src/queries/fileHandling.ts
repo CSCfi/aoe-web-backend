@@ -639,10 +639,13 @@ async function downloadMaterialFile(req: Request, res: Response) {
             archiveFiles.push(element.originalfilename);
         }
         console.log(keys, req.params.materialId);
+        // res.set("content-type", "application/zip");
+        res.header("Content-Disposition", "attachment; filename=materials.zip");
         const data = await downloadAndZipFromStorage(req, res, keys, archiveFiles);
-        res.status(200).send(data);
+        // res.status(200).send(data);
     }
     catch (err) {
+        console.log(err);
         res.status(400).send("Failed to download file");
     }
 }
