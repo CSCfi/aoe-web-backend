@@ -46,6 +46,7 @@ router.get("/userdata", ah.checkAuthenticated, ah.getUserData);
 router.get("/material", db.getMaterial);
 router.get("/material/:id", db.getMaterialData);
 router.get("/usermaterial", ah.checkAuthenticated, db.getUserMaterial);
+router.get("/recentmaterial", db.getRecentMaterial);
 router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.updateMaterial);
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
