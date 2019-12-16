@@ -36,6 +36,8 @@ async function addLinkToMaterial(req: Request , res: Response , next: NextFuncti
             else {
                 queries.push(await t.none(query, [displayName.en, "en", data.id, req.params.materialId]));
             }
+            query = "update educationalmaterial set updatedat = now() where id = $1;";
+            queries.push(await db.none(query, [req.params.materialId]));
             return t.batch(queries);
         })
         .then((result: any) => {
@@ -286,7 +288,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license FROM educationalmaterial WHERE obsoleted != '1' ORDER BY educationalmaterial.updatedAt DESC LIMIT 6;";
+            query = "SELECT id, licensecode as license FROM educationalmaterial WHERE obsoleted != '1' AND publishedat IS NOT NULL ORDER BY educationalmaterial.updatedAt DESC LIMIT 6;";
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);
@@ -412,9 +414,9 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         // material
         console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
-        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14) where id=$6;";
+        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,publishedat) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
         console.log(query, [req.body.expires, dnow, req.body.timeRequired, req.body.typicalAgeRange.typicalAgeRangeMin, req.body.typicalAgeRange.typicalAgeRangeMax, req.params.id, req.body.license]);
-        queries.push(await t.any(query, [((req.body.expires == undefined) ? "9999-01-01T00:00:00+00:00" : req.body.expires), dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((req.body.typicalAgeRange.typicalAgeRangeMin == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMin), ((req.body.typicalAgeRange.typicalAgeRangeMax == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches]));
+        queries.push(await t.any(query, [((req.body.expires == undefined) ? "9999-01-01T00:00:00+00:00" : req.body.expires), dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((req.body.typicalAgeRange.typicalAgeRangeMin == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMin), ((req.body.typicalAgeRange.typicalAgeRangeMax == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, ((req.body.publishedAt == undefined) ? dnow : req.body.publishedAt)]));
 // description
         console.log("inserting description");
         const description = req.body.description;
