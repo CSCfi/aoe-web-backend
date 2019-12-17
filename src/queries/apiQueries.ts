@@ -13,8 +13,8 @@ async function addLinkToMaterial(req: Request , res: Response , next: NextFuncti
         db.tx(async (t: any) => {
             const queries: any = [];
             let query;
-            query = "insert into material (link, educationalmaterialid, materiallanguagekey) values ($1,$2,$3) returning id, link;";
-            const data = await t.one(query, [req.body.link, req.params.materialId, req.body.language]);
+            query = "insert into material (link, educationalmaterialid, materiallanguagekey, priority) values ($1,$2,$3,$4) returning id, link;";
+            const data = await t.one(query, [req.body.link, req.params.materialId, req.body.language, req.body.priority]);
             queries.push(data);
             const displayName = req.body.displayName;
             query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
@@ -139,7 +139,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
-        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -858,6 +858,18 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
                     console.log(query, [element.key, element.value, req.params.id]);
                     queries.push(await t.any(query, [element.key, element.value, req.params.id]));
+                }
+            }
+            // update fileOrder
+            console.log("inserting fileOrder");
+            params = [];
+            arr = req.body.fileOrder;
+            console.log(arr);
+            if (arr) {
+                for (const element of arr) {
+                    query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
+                    console.log(query, [element.priority, element.id, req.params.id]);
+                    queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
                 }
             }
         return t.batch(queries);
