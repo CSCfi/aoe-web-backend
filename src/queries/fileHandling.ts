@@ -433,7 +433,7 @@ async function insertDataToMaterialTable(t: any, materialID: String, location: a
 async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
     const queries = [];
     let query;
-    db.tx(async (t: any) => {
+    await db.tx(async (t: any) => {
         query = "update educationalmaterial set updatedat = now() where id = (select educationalmaterialid from material where id = $1);";
         queries.push(await db.none(query, [materialID]));
         query = "insert into attachment (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, materialid, defaultfile, kind, label, srclang) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id;";
@@ -441,7 +441,9 @@ async function insertDataToAttachmentTable(files: any, materialID: any, fileKey:
         queries.push(await db.one(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID, metadata.default, metadata.kind, metadata.label, metadata.srclang]));
         return t.batch(queries);
     }
-    );
+    ).catch((err: Error) => {
+        throw err;
+    });
 }
 
 async function insertDataToTempAttachmentTable(files: any, materialId: any, metadata: any) {
@@ -455,7 +457,7 @@ async function insertDataToTempAttachmentTable(files: any, materialId: any, meta
 async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String) {
     const queries = [];
     let query;
-    db.tx(async (t: any) => {
+    await db.tx(async (t: any) => {
         query = "update educationalmaterial set updatedat = now() where id = (select educationalmaterialid from material where id = $1);";
         queries.push(await db.none(query, [materialID]));
         query = "insert into record (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, materialid) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id;";
@@ -463,7 +465,9 @@ async function insertDataToRecordTable(files: any, materialID: any, fileKey: any
         queries.push(await db.any(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID]));
         return t.batch(queries);
     }
-    );
+    ).catch((err: Error) => {
+        throw err;
+    });
 }
 
 async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {
