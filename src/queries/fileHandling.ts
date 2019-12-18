@@ -138,7 +138,7 @@ async function uploadMaterial(req: Request, res: Response) {
                             const queries = [];
                             const emresp = await insertDataToEducationalMaterialTable(req, t);
                             queries.push(emresp);
-                            const id = await insertDataToMaterialTable(t, emresp.id, "", fileDetails.language);
+                            const id = await insertDataToMaterialTable(t, emresp.id, "", fileDetails.language, fileDetails.priority);
                             queries.push(id);
                             material.push({"id" : id.id, "createFrom" : file.originalname});
                             materialid = id.id;
@@ -233,7 +233,7 @@ async function uploadFileToMaterial(req: Request, res: Response) {
                         const material: any = [];
                         db.tx(async (t: any) => {
                             const queries = [];
-                            const id = await insertDataToMaterialTable(t, req.params.materialId, "", fileDetails.language);
+                            const id = await insertDataToMaterialTable(t, req.params.materialId, "", fileDetails.language, fileDetails.priority);
                             queries.push(id);
                             material.push({"id" : id.id, "createFrom" : file.originalname});
                             materialid = id.id;
@@ -420,13 +420,13 @@ async function insertDataToDisplayName(t: any, educationalmaterialid: String, ma
     return queries;
 }
 
-async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String) {
+async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String, priority: number) {
     let query;
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
-    query = "insert into material (link, educationalmaterialid, materiallanguagekey) values ($1,$2,$3) returning id;";
+    query = "insert into material (link, educationalmaterialid, materiallanguagekey, priority) values ($1,$2,$3,$4) returning id;";
     console.log(query);
-    const data = await t.one(query, [location, materialID, language]);
+    const data = await t.one(query, [location, materialID, language, priority]);
     return data;
 }
 
