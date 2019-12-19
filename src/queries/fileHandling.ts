@@ -600,41 +600,48 @@ async function downloadFile(req: Request, res: Response) {
         res.status(200).send(data);
     }
     catch (err) {
-        res.status(400).send("Failed to download file");
+        console.log(err);
+        if (!res.headersSent) {
+            res.status(400).send("Failed to download file");
+        }
     }
 }
 
 async function downloadFileFromStorage(req: Request, res: Response) {
-    return new Promise(async resolve => {
+    return new Promise(async (resolve) => {
         try {
             const query = "select originalfilename from record where filekey = $1;";
             console.log(query);
             const response = await db.oneOrNone(query, [req.params.key]);
-            console.log(response);
-            const config = {
-                accessKeyId: process.env.USER_KEY,
-                secretAccessKey: process.env.USER_SECRET,
-                endpoint: process.env.POUTA_END_POINT,
-                region: process.env.REGION
-                };
-            AWS.config.update(config);
-            const s3 = new AWS.S3();
-            const bucketName = process.env.BUCKET_NAME;
-            // const filename = req.body.key;
-            const key = req.params.key;
-            try {
-                const params = {
-                    Bucket: bucketName,
-                    Key: key
-                };
-                res.attachment(key);
-                res.header("Content-Disposition", contentDisposition(response.originalfilename));
-                const fileStream = s3.getObject(params).createReadStream();
-                fileStream.pipe(res);
+            if (!response) {
+                res.status(404).send("Not found");
             }
-            catch (err) {
-                console.log(err);
-                res.status(500).send(err);
+            else {
+                const config = {
+                    accessKeyId: process.env.USER_KEY,
+                    secretAccessKey: process.env.USER_SECRET,
+                    endpoint: process.env.POUTA_END_POINT,
+                    region: process.env.REGION
+                    };
+                AWS.config.update(config);
+                const s3 = new AWS.S3();
+                const bucketName = process.env.BUCKET_NAME;
+                // const filename = req.body.key;
+                const key = req.params.key;
+                try {
+                    const params = {
+                        Bucket: bucketName,
+                        Key: key
+                    };
+                    res.attachment(key);
+                    res.header("Content-Disposition", contentDisposition(response.originalfilename));
+                    const fileStream = s3.getObject(params).createReadStream();
+                    fileStream.pipe(res);
+                }
+                catch (err) {
+                    console.log(err);
+                    res.status(500).send(err);
+                }
             }
         }
         catch (err) {
@@ -649,17 +656,21 @@ async function downloadMaterialFile(req: Request, res: Response) {
         const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1;";
         console.log(query);
         const response = await db.any(query, [req.params.materialId]);
-        const keys = [];
-        const archiveFiles = [];
-        for (const element of response) {
-            keys.push(element.filekey);
-            archiveFiles.push(element.originalfilename);
+        if (response.length < 1) {
+            res.status(404).send("Not found");
         }
-        console.log(keys, req.params.materialId);
-        // res.set("content-type", "application/zip");
-        res.header("Content-Disposition", "attachment; filename=materials.zip");
-        const data = await downloadAndZipFromStorage(req, res, keys, archiveFiles);
-        // res.status(200).send(data);
+        else {
+            const keys = [];
+            const archiveFiles = [];
+            for (const element of response) {
+                keys.push(element.filekey);
+                archiveFiles.push(element.originalfilename);
+            }
+            console.log(keys, req.params.materialId);
+            // res.set("content-type", "application/zip");
+            res.header("Content-Disposition", "attachment; filename=materials.zip");
+            const data = await downloadAndZipFromStorage(req, res, keys, archiveFiles);
+        }
     }
     catch (err) {
         console.log(err);
