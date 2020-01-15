@@ -610,7 +610,9 @@ async function downloadFile(req: Request, res: Response) {
 async function downloadFileFromStorage(req: Request, res: Response) {
     return new Promise(async (resolve) => {
         try {
-            const query = "select originalfilename from record where filekey = $1;";
+            const query = "select originalfilename from record where filekey = $1 " +
+                        "union " +
+                        "select originalfilename from attachment where filekey = $1;";
             console.log(query);
             const response = await db.oneOrNone(query, [req.params.key]);
             if (!response) {
