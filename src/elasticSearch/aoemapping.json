@@ -57,12 +57,12 @@
               }
             }
           },
-          "agerangemax" : {
-            "type" : "long"
-          },
-          "agerangemin" : {
-            "type" : "long"
-          },
+          "agerangemax": {
+            "type": "long"
+        },
+        "agerangemin": {
+            "type": "long"
+        },
           "alignmentobject" : {
             "properties" : {
               "alignmenttype" : {
@@ -381,7 +381,7 @@
               }
             }
           },
-          "materialDescription" : {
+          "materialdescription" : {
             "properties" : {
               "description" : {
                 "type" : "text",
@@ -409,7 +409,7 @@
               }
             }
           },
-          "materialName" : {
+          "materialname" : {
             "properties" : {
               "educationalmaterialid" : {
                 "type" : "long"
@@ -629,6 +629,27 @@
                 }
               }
             }
+          },
+          "suitsallbasicstudysubjects" : {
+            "type" : "boolean"
+          },
+          "suitsallbranches" : {
+            "type" : "boolean"
+          },
+          "suitsallearlychildhoodsubjects" : {
+            "type" : "boolean"
+          },
+          "suitsallpreprimarysubjects" : {
+            "type" : "boolean"
+          },
+          "suitsallselfmotivatedsubjects" : {
+            "type" : "boolean"
+          },
+          "suitsalluppersecondarysubjects" : {
+            "type" : "boolean"
+          },
+          "suitsallvocationaldegrees" : {
+            "type" : "boolean"
           },
           "timerequired" : {
             "type" : "text",
