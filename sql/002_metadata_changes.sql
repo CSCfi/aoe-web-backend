@@ -1,0 +1,1 @@
+ALTER TABLE Material ALTER COLUMN MaterialLanguageKey TYPE TEXT;
