@@ -128,7 +128,13 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         queries.push(response);
 
         query = "select * from isbasedon where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.map(query, [req.params.id], (q: any) => {
+            t.any("select * from isbasedonauthor where isbasedonid = $1;", q.id)
+            .then((data: any) => {
+                q.author = data;
+            });
+        return q;
+        });
         queries.push(response);
 
         query = "select * from inlanguage where educationalmaterialid = $1;";
@@ -625,18 +631,22 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         params = [];
         arr = req.body.isBasedOn.externals;
         if (arr == undefined) {
+            query = "DELETE FROM isbasedonauthor where isbasedonid IN (SELECT id from isbasedon where educationalmaterialid = $1);";
+            response  = await t.any(query, [req.params.id]);
             query = "DELETE FROM isbasedon where educationalmaterialid = $1;";
             response  = await t.any(query, [req.params.id]);
             queries.push(response);
         }
         else {
+            query = "DELETE FROM isbasedonauthor where isbasedonid IN (SELECT id from isbasedon where educationalmaterialid = $1);";
+            response  = await t.any(query, [req.params.id]);
             query = "SELECT * from isbasedon where educationalmaterialid = $1;";
             response  = await t.any(query, [req.params.id]);
             queries.push(response);
             for (const element of response) {
                 let toBeDeleted = true;
                 for (let i = 0; arr.length > i; i += 1 ) {
-                    if ( element.author === arr[i].author && element.name === arr[i].materialname) {
+                    if (element.name === arr[i].materialname) {
                         toBeDeleted = false;
                     }
                 }
@@ -647,10 +657,15 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 }
             }
             for (const element of arr) {
-                query = "INSERT INTO isbasedon (author, materialname, url, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (author, materialname, educationalmaterialid) DO UPDATE SET url = $3;";
-                console.log(query);
-                const resp = await t.any(query, [element.author, element.name, element.url, req.params.id]);
+                query = "INSERT INTO isbasedon (materialname, url, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (materialname, educationalmaterialid) DO UPDATE SET url = $2 returning id;";
+                console.log(query, [element.name, element.url, req.params.id]);
+                const resp = await t.one(query, [element.name, element.url, req.params.id]);
                 queries.push(resp);
+                for (const author of element.author) {
+                    query = "INSERT INTO isbasedonauthor (authorname, isbasedonid) VALUES ($1,$2);";
+                    console.log(query, [author.name, resp.id]);
+                    queries.push(t.none(query, [author.name, resp.id]));
+                }
             }
         }
 // alignmentObjects
