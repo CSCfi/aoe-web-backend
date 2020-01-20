@@ -8,11 +8,6 @@ keepAlive: true});
 export namespace Es {
     export let ESupdated = {value : new Date()};
 }
-export namespace AppState {
-    export const config = {
-        myValue: 4
-    };
-}
 import { Request, Response, NextFunction } from "express";
 const connection = require("./../db");
 const pgp = connection.pgp;
@@ -27,14 +22,9 @@ const mode = new TransactionMode({
     deferrable: true
 });
 
-// process.on("uncaughtException", function (err) {
-//     console.log(err);
-// });
-
-
 /** Check the ES connection status */
 async function createEsIndex () {
-    console.log("test");
+    console.log("Create Elasticsearch index");
     await client.ping({
         // ping usually has a 3000ms timeout
         // requestTimeout: 1000
@@ -45,9 +35,9 @@ async function createEsIndex () {
         } else {
             console.log("All is well");
             const result: boolean = await indexExists(index);
-            console.log("result: " + result);
+            console.log("ES index exists: " + result);
             if (result) {
-                console.log("ES deletind index: " + index);
+                console.log("ES deleting index: " + index);
                 await deleteIndex(index);
             }
             const createIndexResult: boolean = await createIndex(index);
@@ -77,7 +67,6 @@ async function deleteIndex (index: string) {
     const b = client.indices.delete({
         index: index
     }).then((data: any) => {
-        console.log(data);
         return data.body;
     })
     .catch((err: any) => {
@@ -92,7 +81,6 @@ async function createIndex (index: string) {
     const b = client.indices.create({
         index: index
     }).then((data: any) => {
-        console.log(data);
         return data.body;
     })
     .catch((err: any) => {
@@ -107,25 +95,17 @@ function indexExists (index: string): boolean {
     const b = client.indices.exists({
         index: index
       }).then((data: any) => {
-            console.log(data);
             return data.body;
       })
       .catch((err: any) => {
           console.log(err);
           return false;
       });
-      console.log(b);
       return b;
 }
 async function addMapping(index: string) {
     return new Promise(async (resolve, reject) => {
-        // const rawdata = fs.readFileSync("/Users/juniemin/aoe-backend/src/elasticSearch/aoemapping.json");
-        console.log(path.resolve(__dirname, "aoemapping.json"));
-        // const rawdata = fs.readFileSync(path.resolve(__dirname, "aoemapping.json"))
-        const rawdata = fs.readFileSync("/opt/sources/src/elasticSearch/aoemapping.json");
-        // .catch((err: any) => {
-        //     console.log(err);
-        // });
+        const rawdata = fs.readFileSync(process.env.ES_MAPPING_FILE);
         const data = JSON.parse(rawdata);
         client.indices.putMapping({
             index: index,
@@ -137,29 +117,11 @@ async function addMapping(index: string) {
             reject(new Error(err));
             }
             else {
-            console.log("response: ", resp);
-            console.log("mapping created: ", resp.body);
+            console.log("ES mapping created: ", resp.body);
             resolve();
             }
         });
     });
-}
-
-async function elasticSearchQuery(req: Request, res: Response) {
-    console.log(
-        {"index" : "aoe",
-    "body" : req.body});
-    client.search({"index" : "aoe",
-                    "body" : req.body}
-    , (err: Error, result: any) => {
-        if (err) {
-            console.log(err);
-            res.status(500).json(err);
-        }
-        else {
-            res.status(200).json(result);
-        }
-      });
 }
 
 async function metadataToEs(offset: number, limit: number) {
@@ -253,7 +215,6 @@ async function metadataToEs(offset: number, limit: number) {
         .then( async (data: any) => {
             console.log("inserting data to elastic material number: " + (offset * limit + 1));
             if (data.length > 0) {
-            // console.log(JSON.stringify(data[0]));
             const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
             // console.log("THIS IS BODY:");
             // console.log(JSON.stringify(body));
@@ -296,8 +257,6 @@ async function metadataToEs(offset: number, limit: number) {
 async function updateEsDocument() {
     return new Promise(async (resolve, reject) => {
     db.tx({mode}, async (t: any)  => {
-        console.log("Toimiiko täällä: ");
-        console.log(Es.ESupdated.value);
         const params: any = [];
         params.push(Es.ESupdated.value);
         let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
@@ -384,13 +343,6 @@ async function updateEsDocument() {
         })
         .then( async (data: any) => {
             if (data.length > 0) {
-                data.forEach(element => {
-                    console.log(element.id);
-                });
-            // const { body: apiResponse } = await client.index({
-            //     "id" : data[0].id,
-            //     "index" : index,
-            //     "refresh": "true", "body" : data[0] });
             const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
             const { body: bulkResponse } = await client.bulk({ refresh: true, body });
             if (bulkResponse.errors) {
