@@ -236,6 +236,7 @@ app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection);
 
 require("./aoeScheduler");
+const es = require("./elasticSearch/es");
 /**
  * API examples routes.
  */

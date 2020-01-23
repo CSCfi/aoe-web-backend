@@ -5,6 +5,7 @@ import { Request, Response, NextFunction } from "express";
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
+const elasticSearch = require("./../elasticSearch/es");
 // const dbHelpers = require("./../databaseHelpers");
 
 
@@ -74,9 +75,19 @@ async function getMaterial(req: Request , res: Response , next: NextFunction) {
     }
 }
 
+const TransactionMode = pgp.txMode.TransactionMode;
+const isolationLevel = pgp.txMode.isolationLevel;
+
+// Create a reusable transaction mode (serializable + read-only + deferrable):
+const mode = new TransactionMode({
+    tiLevel: isolationLevel.serializable,
+    readOnly: true,
+    deferrable: true
+});
+
 async function getMaterialData(req: Request , res: Response , next: NextFunction) {
 
-    db.task(async (t: any) => {
+    db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
         query = "SELECT * FROM educationalmaterial WHERE id = $1 and obsoleted != '1';";
@@ -889,8 +900,13 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             }
         return t.batch(queries);
     })
-    .then ((data: any) => {
+    .then (async (data: any) => {
         res.status(200).json("data updated");
+        elasticSearch.updateEsDocument()
+        .catch ((err: Error) => {
+            console.log("Es update error do something");
+            console.log(err);
+        });
     })
     .catch ((err: Error) => {
         console.log(err);
