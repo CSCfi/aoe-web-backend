@@ -187,7 +187,14 @@ async function metadataToEs(offset: number, limit: number) {
             q.author = response;
 
             query = "select * from isbasedon where educationalmaterialid = $1;";
-            response = await t.any(query, [q.id]);
+            response = await t.map(query, [q.id], (q2: any) => {
+                t.any("select * from isbasedonauthor where isbasedonid = $1;", q2.id)
+                .then((data: any) => {
+                    q2.author = data;
+                });
+            return q2;
+            });
+            // response = await t.any(query, [q.id]);
             q.isbasedon = response;
 
             query = "select * from inlanguage where educationalmaterialid = $1;";
@@ -316,7 +323,15 @@ async function updateEsDocument() {
             q.author = response;
 
             query = "select * from isbasedon where educationalmaterialid = $1;";
-            response = await t.any(query, [q.id]);
+            response = await t.map(query, [q.id], (q2: any) => {
+                t.any("select * from isbasedonauthor where isbasedonid = $1;", q2.id)
+                .then((data: any) => {
+                    q2.author = data;
+                });
+            return q2;
+            });
+
+            // response = await t.any(query, [q.id]);
             q.isbasedon = response;
 
             query = "select * from inlanguage where educationalmaterialid = $1;";
