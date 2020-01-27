@@ -1,3 +1,4 @@
+ALTER TABLE isbasedon ALTER COLUMN author DROP not null;
 ALTER TABLE Material ALTER COLUMN MaterialLanguageKey TYPE TEXT;
 
 ALTER TABLE IF EXISTS isbasedon DROP CONSTRAINT constraint_isbasedon;
@@ -9,3 +10,5 @@ CREATE TABLE IsBasedOnAuthor (
   IsBasedOnId int8 NOT NULL, 
   PRIMARY KEY (Id));
 ALTER TABLE IsBasedOnAuthor ADD CONSTRAINT FKIsBasedOnAuthor FOREIGN KEY (IsBasedOnId) REFERENCES IsBasedOn (Id);
+
+ALTER TABLE isbasedon DROP COLUMN author;
