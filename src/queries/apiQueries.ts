@@ -674,8 +674,8 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 queries.push(resp);
                 for (const author of element.author) {
                     query = "INSERT INTO isbasedonauthor (authorname, isbasedonid) VALUES ($1,$2);";
-                    console.log(query, [author.name, resp.id]);
-                    queries.push(t.none(query, [author.name, resp.id]));
+                    console.log(query, [author, resp.id]);
+                    queries.push(t.none(query, [author, resp.id]));
                 }
             }
         }
