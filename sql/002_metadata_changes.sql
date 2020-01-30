@@ -12,3 +12,5 @@ CREATE TABLE IsBasedOnAuthor (
 ALTER TABLE IsBasedOnAuthor ADD CONSTRAINT FKIsBasedOnAuthor FOREIGN KEY (IsBasedOnId) REFERENCES IsBasedOn (Id);
 
 ALTER TABLE isbasedon DROP COLUMN author;
+
+ALTER TABLE attachment ADD COLUMN Obsoleted int4 DEFAULT 0 NOT NULL;
