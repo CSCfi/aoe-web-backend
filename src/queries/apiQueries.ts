@@ -902,11 +902,11 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
     })
     .then (async (data: any) => {
         res.status(200).json("data updated");
-        elasticSearch.updateEsDocument()
-        .catch ((err: Error) => {
-            console.log("Es update error do something");
-            console.log(err);
-        });
+        // elasticSearch.updateEsDocument()
+        // .catch ((err: Error) => {
+        //     console.log("Es update error do something");
+        //     console.log(err);
+        // });
     })
     .catch ((err: Error) => {
         console.log(err);

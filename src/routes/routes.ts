@@ -72,5 +72,5 @@ router.get("/logout", ah.logout);
 router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
-router.post("/elasticSearch/search", es.elasticSearchQuery);
+// router.post("/elasticSearch/search", es.elasticSearchQuery);
 export = router;
