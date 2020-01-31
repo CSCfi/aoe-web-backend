@@ -52,10 +52,10 @@ router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicatication
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 // delete link or record from educationalmaterial
-router.delete("/material/file/:materialid/:fileid", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteRecord);
+router.delete("/material/file/:materialid/:fileid", ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 // router.post("/material", db.postMaterial);
 // delete attachment
-router.delete("/material/attachment/:materialid/:attachmentid", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteRecord);
+router.delete("/material/attachment/:materialid/:attachmentid", ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 // router.post("/createUser", db.createUser);
 router.put("/user", ah.checkAuthenticated, db.updateUser);
 router.get("/user", ah.checkAuthenticated, db.getUser);

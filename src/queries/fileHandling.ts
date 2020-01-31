@@ -610,9 +610,9 @@ async function downloadFile(req: Request, res: Response) {
 async function downloadFileFromStorage(req: Request, res: Response) {
     return new Promise(async (resolve) => {
         try {
-            const query = "select originalfilename from record where filekey = $1 " +
+            const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
                         "union " +
-                        "select originalfilename from attachment where filekey = $1;";
+                        "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
             console.log(query);
             const response = await db.oneOrNone(query, [req.params.key]);
             if (!response) {
@@ -655,7 +655,9 @@ async function downloadFileFromStorage(req: Request, res: Response) {
 
 async function downloadMaterialFile(req: Request, res: Response) {
     try {
-        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1;";
+        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1 and obsoleted = 0" +
+        " union " +
+        "select attachment.filekey, attachment.originalfilename from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and attachment.obsoleted = 0;";
         console.log(query);
         const response = await db.any(query, [req.params.materialId]);
         if (response.length < 1) {
