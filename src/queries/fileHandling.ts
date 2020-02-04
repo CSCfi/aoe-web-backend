@@ -3,6 +3,7 @@ const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
 globalLog.initialize();
+const ADMzip = require("adm-zip");
 
 const fs = require("fs");
 const path = require("path");
@@ -704,6 +705,15 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
             res.status(500).send("error");
         }
     });
+
+async function unZipAndExtract(req: Request, file: any) {
+    const pathToZip = file.path;
+    const zip = new ADMzip(pathToZip);
+    const newPath = "Path to new unzipped folder";
+    zip.extractAllTo(newPath, true);
+
+    return newPath;
+ }
 }
 
 module.exports = {

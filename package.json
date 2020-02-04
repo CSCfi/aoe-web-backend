@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@types/pg": "^7.4.10",
+    "adm-zip": "^0.4.13",
     "async": "^2.6.1",
     "aws-sdk": "^2.437.0",
     "bcrypt-nodejs": "^0.0.3",
