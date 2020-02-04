@@ -212,6 +212,11 @@ async function metadataToEs(offset: number, limit: number) {
             query = "select * from educationalaudience where educationalmaterialid = $1;";
             response = await t.any(query, [q.id]);
             q.educationalaudience = response;
+
+            query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
+            response = await t.oneOrNone(query, [q.id]);
+            q.thumbnail = response;
+
             return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -349,6 +354,10 @@ async function updateEsDocument() {
             query = "select * from educationalaudience where educationalmaterialid = $1;";
             response = await t.any(query, [q.id]);
             q.educationalaudience = response;
+
+            query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
+            response = await t.oneOrNone(query, [q.id]);
+            q.thumbnail = response;
             return q;
             }).then(t.batch)
             .catch((error: any) => {
