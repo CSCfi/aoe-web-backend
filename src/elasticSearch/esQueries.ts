@@ -91,26 +91,26 @@ interface Source {
     suitsallvocationaldegrees: boolean;
     suitsallselfmotivatedsubjects: boolean;
     suitsallbranches: boolean;
-    materials: Array<{
-            id: number;
-            language: string;
-            link: string;
-            priority: number;
-            filepath: string;
-            originalfilename: string;
-            filesize: number;
-            mimetype: string;
-            format: string;
-            filekey: string;
-            filebucket: string;
-            obsoleted: number;
-            materialdisplayname: Array<{
-                    id: string;
-                    displayname: string;
-                    language: string;
-                    materialid: number;
-              }>;
-        }>;
+    // materials: Array<{
+    //         id: number;
+    //         language: string;
+    //         link: string;
+    //         priority: number;
+    //         filepath: string;
+    //         originalfilename: string;
+    //         filesize: number;
+    //         mimetype: string;
+    //         format: string;
+    //         filekey: string;
+    //         filebucket: string;
+    //         obsoleted: number;
+    //         materialdisplayname: Array<{
+    //                 id: string;
+    //                 displayname: string;
+    //                 language: string;
+    //                 materialid: number;
+    //           }>;
+    //     }>;
     materialname: Array<{
         id: number;
         materialname: string;
@@ -196,62 +196,62 @@ interface Source {
     thumbnail: string;
 }
 
-interface AoeBody {
+// interface AoeBody {
+//   hits: number;
+//   results?: Array<
+//     {
+// _source: T;
+
+interface AoeBody<T> {
     hits: number;
-    results?: Array<
-      {
-        id: number;
-        createdAt: Date;
-        publishedAt: Date;
-        updatedAt: Date;
-        materialName: Array<{
-          id: number;
+    results?: Array<T>;
+}
+interface AoeResult {
+        id?: number;
+        createdAt?: Date;
+        publishedAt?: Date;
+        updatedAt?: Date;
+        materialName?: Array<{
           materialname: string;
           language: string;
-          slug: string;
-          educationalmaterialid: number;
-        }>
-        description: Array<{
-          id: number;
+        }>;
+        description?: Array<{
           description: string;
           language: string;
-          educationalmaterialid: number;
         }>;
-        authors: Array<{
-
-        }>,
-        learningResourceTypes: Array<{
-          id: number;
+        authors?: Array<{
+          authorname: string;
+          organization: string;
+          organizationkey: string;
+        }>;
+        learningResourceTypes?: Array<{
           value: string;
-         educationalmaterialid: number;
           learningresourcetypekey: string;
         }>
         ;
-        license: string;
-        alignmentObjects: Array<{
-          id: number;
-          educationalmaterialid: number;
-          alignmenttype: string;
-          targetname: string;
-          source: string;
-          educationalframework: string;
-          objectkey: string;
-          targeturl: string;
-        }>;
-        educationLevels: Array<{
-          id: number;
+        license?: string;
+        // alignmentObjects: Array<{
+        //   id: number;
+        //   educationalmaterialid: number;
+        //   alignmenttype: string;
+        //   targetname: string;
+        //   source: string;
+        //   educationalframework: string;
+        //   objectkey: string;
+        //   targeturl: string;
+        // }>;
+        educationLevels?: Array<{
           value: string;
-          educationalmaterialid: number;
           educationallevelkey: string;
         }>;
-        thumbnail: string;
-      }>;
-}
+        thumbnail?: string;
+      }
+
 
 async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
   console.log("response:");
   console.log(response);
-  const resp: AoeBody = {
+  const resp: AoeBody<AoeResult> = {
     hits : response.body.hits.total.value
   };
 
@@ -259,19 +259,25 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
   hits.map(hit => console.log(hit));
   const source = hits.map(hit => hit._source);
   // resp.hits = response.body.hits.total;
-  const result = source.map(obj => ({id : obj.id,
-    createdAt : obj.createdat,
-    publishedAt : obj.publishedat,
-    updatedAt : obj.updatedat,
-    materialName : obj.materialname,
-    description : obj.materialdescription,
-    authors : obj.author,
-    learningResourceTypes : obj.learningresourcetype,
-    license : obj.licensecode,
-    alignmentObjects : obj.alignmentobject,
-    educationLevels : obj.educationallevel,
-    thumbnail : obj.thumbnail,
-    materials : obj.materials}));
+  const result = source.map(obj => {
+    const rObj: AoeResult = {};
+    rObj.id = obj.id,
+    rObj.createdAt = obj.createdat,
+    rObj.publishedAt = obj.publishedat,
+    rObj.updatedAt = obj.updatedat;
+    const mname = obj.materialname;
+    rObj.materialName = mname.map(name => ({materialname : name.materialname, language : name.language}));
+    rObj.description = obj.materialdescription.map(description => (
+      {description : description.description, language : description.language}));
+    rObj.authors = obj.author.map(author => (
+      {authorname : author.authorname, organization : author.organization, organizationkey : author.organizationkey}));
+    rObj.learningResourceTypes = obj.learningresourcetype.map(lrt => ({value : lrt.value, learningresourcetypekey : lrt.learningresourcetypekey}));
+    rObj.license =  obj.licensecode,
+    rObj.educationLevels =  obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})),
+    rObj.thumbnail =  obj.thumbnail;
+    return rObj;
+    }
+  );
   // console.log(source);
   resp.results = result;
   console.log(resp);
@@ -320,7 +326,7 @@ async function elasticSearchQuery(req: Request, res: Response) {
             res.status(500).json(err);
         }
         else {
-          const body: AoeBody = await aoeResponseMapper(result);
+          const body: AoeBody<AoeResult> = await aoeResponseMapper(result);
           // aoeResponseMapper(result);
           console.log(body);
             res.status(200).json(body);
