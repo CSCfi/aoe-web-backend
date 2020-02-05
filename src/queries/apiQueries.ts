@@ -176,7 +176,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.oneOrNone(query, [req.params.id]);
         queries.push(response);
 
-        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and obsoleted = 0;";
+        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         console.log(query, [req.params.id]);
         queries.push(response);
@@ -349,9 +349,31 @@ async function deleteMaterial(req: Request , res: Response , next: NextFunction)
     try {
         let query;
         let data;
-        query = "update educationalmaterial SET obsoleted = '1' WHERE id = $1;";
-        data = await db.any(query, [req.params.id]);
-        res.status(200).json(data);
+        await db.tx({mode}, async (t: any) => {
+            const queries: any = [];
+            query = "update educationalmaterial SET obsoleted = '1' WHERE id = $1;";
+            queries.push(await db.none(query, [req.params.id]));
+            query = "update material SET obsoleted = '1' WHERE educationalmaterialid = $1 returning id;";
+            data = await db.any(query, [req.params.id]);
+            queries.push(data);
+            const arr: string[] = [];
+            for (let i = 1; i <= data.length; i++) {
+                arr.push("('" + data[i - 1].id + "')");
+            }
+            if (arr.length > 0) {
+                query = "update attachment SET obsoleted = '1' WHERE materialid in (" + arr.join(",") + " );";
+                queries.push(await db.none(query));
+            }
+            query = "update educationalmaterial set updatedat = now() where id = $1";
+            queries.push(await db.none(query, [req.params.id]));
+            return t.batch(queries);
+        });
+        res.status(200).json({"status" : "deleted"});
+        elasticSearch.updateEsDocument()
+        .catch ((err: Error) => {
+            console.log("Es update error");
+            console.log(err);
+        });
     }
     catch (err ) {
         console.log(err);
@@ -363,9 +385,51 @@ async function deleteRecord(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         let data;
-        query = "update material SET obsoleted = '1' WHERE id = $1;";
-        data = await db.any(query, [req.params.fileid]);
-        res.status(200).json(data);
+        await db.tx({mode}, async (t: any) => {
+            const queries: any = [];
+            query = "update material SET obsoleted = '1' WHERE id = $1 returning educationalmaterialid;";
+            data = await db.one(query, [req.params.fileid]);
+            queries.push(data);
+            query = "update attachment SET obsoleted = '1' WHERE materialid = $1;";
+            queries.push(await db.none(query, [req.params.fileid]));
+            query = "update educationalmaterial set updatedat = now() where id = $1";
+            queries.push(await db.none(query, [data.educationalmaterialid]));
+            return t.batch(queries);
+        });
+        res.status(200).json({"status" : "deleted"});
+        elasticSearch.updateEsDocument()
+        .catch ((err: Error) => {
+            console.log("Es update error");
+            console.log(err);
+        });
+    }
+    catch (err ) {
+        console.log(err);
+        res.sendStatus(500);
+    }
+}
+
+async function deleteAttachment(req: Request , res: Response , next: NextFunction) {
+    try {
+        let query;
+        let data;
+        await db.tx({mode}, async (t: any) => {
+            const queries: any = [];
+            query = "update attachment SET obsoleted = '1' WHERE id = $1;";
+            data = await db.any(query, [req.params.attachmentid]);
+            queries.push(data);
+            query = "update educationalmaterial set updatedat = now() where id = "
+            + "(select educationalmaterialid from material where id = (select materialid from attachment where id = $1));";
+            console.log(query);
+            queries.push(await db.none(query, [req.params.attachmentid]));
+            return t.batch(queries);
+        });
+        res.status(200).json({"status" : "deleted"});
+        elasticSearch.updateEsDocument()
+        .catch ((err: Error) => {
+            console.log("Es update error");
+            console.log(err);
+        });
     }
     catch (err ) {
         console.log(err);
@@ -1237,6 +1301,7 @@ module.exports = {
     getUser : getUser,
     deleteMaterial : deleteMaterial,
     deleteRecord : deleteRecord,
+    deleteAttachment : deleteAttachment,
     insertEducationalMaterial : insertEducationalMaterial,
     updateTermsOfUsage : updateTermsOfUsage,
     addLinkToMaterial : addLinkToMaterial
