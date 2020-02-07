@@ -47,10 +47,16 @@ async function hasAccesstoPublication(id: number, req: Request) {
     }
 }
 
-async function InsertUserToDatabase(userinfo: object) {
+async function InsertUserToDatabase(userinfo: object, acr: string) {
     try {
         console.log("The userinfo in function at authservice: " + userinfo);
-        const uid = userinfo["uid"];
+        let uid: string;
+        if (acr == process.env.SUOMIACR) {
+            uid = userinfo["sub"];
+        }
+        else {
+            uid = userinfo["uid"];
+        }
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
         const data = await db.oneOrNone(query, [uid]);
         if (!data.exists) {
