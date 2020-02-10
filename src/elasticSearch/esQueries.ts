@@ -26,6 +26,8 @@ interface MultiMatchSeachBody {
             query: string,
             fields: Array<string>;
         }
+        from?: number,
+        size?: number,
     };
 }
 
@@ -288,7 +290,7 @@ async function elasticSearchQuery(req: Request, res: Response) {
   try {
     const fields = [ "accessibilityfeature.value",
     "accessibilityhazard.value",
-    "alignmentobject.alignmenttype",
+    "alignmentobject.targetname",
     "alignmentobject.educationalframework",
     "author.authorname",
     "author.organization",
@@ -314,11 +316,13 @@ async function elasticSearchQuery(req: Request, res: Response) {
         "query": {
           "multi_match": {
             "query": req.body.keywords,
-            "fields": fields
+            "fields": fields,
           }
         }
       };
     client.search({"index" : index,
+                    "from" : 0,
+                    "size" : 1000,
                     "body" : body}
     , async (err: Error, result: ApiResponse<SearchResponse<Source>>) => {
         if (err) {
