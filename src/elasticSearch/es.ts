@@ -132,7 +132,7 @@ async function metadataToEs(offset: number, limit: number) {
         params.push(offset * limit);
         params.push(limit);
         let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-        " from educationalmaterial as em where obsoleted = 0 order by em.id asc OFFSET $1 LIMIT $2;";
+        " from educationalmaterial as em where em.obsoleted = 0 and em.publishedat IS NOT NULL order by em.id asc OFFSET $1 LIMIT $2;";
         return t.map(query, params, async (q: any) => {
             const m: any = [];
             t.map("select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
@@ -272,7 +272,7 @@ async function updateEsDocument() {
         const params: any = [];
         params.push(Es.ESupdated.value);
         let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-        " from educationalmaterial as em where updatedat > $1;";
+        " from educationalmaterial as em where updatedat > $1 and em.publishedat IS NOT NULL;";
         // console.log(query);
         return t.map(query, params, async (q: any) => {
             const m: any = [];
