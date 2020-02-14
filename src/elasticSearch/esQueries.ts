@@ -21,15 +21,18 @@ query: {
 }
 
 interface MultiMatchSeachBody {
-    query: {
-        multi_match: {
-            query: string,
-            fields: Array<string>;
-        }
-        from?: number,
-        size?: number,
-    };
+  query: {
+    bool: {
+      must: Array<object>
+    }
+  };
 }
+interface FilterTerm {
+  term: {
+    [key: string]: string
+  };
+}
+
 
 interface ShardsResponse {
   total: number;
@@ -203,7 +206,11 @@ interface Source {
 //   results?: Array<
 //     {
 // _source: T;
-
+interface AoeRequestFilter {
+  educationalLevels: Array<string>;
+  learningResourceTypes: Array<string>;
+  educationalSubjects:Array<string>;
+}
 interface AoeBody<T> {
     hits: number;
     results?: Array<T>;
@@ -249,18 +256,13 @@ interface AoeResult {
         thumbnail?: string;
       }
 
-
 async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
-  console.log("response:");
-  console.log(response);
   const resp: AoeBody<AoeResult> = {
     hits : response.body.hits.total.value
   };
 
   const hits = response.body.hits.hits;
-  hits.map(hit => console.log(hit));
   const source = hits.map(hit => hit._source);
-  // resp.hits = response.body.hits.total;
   const result = source.map(obj => {
     const rObj: AoeResult = {};
     rObj.id = obj.id,
@@ -280,9 +282,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
     return rObj;
     }
   );
-  // console.log(source);
   resp.results = result;
-  console.log(resp);
   return resp;
 }
 
@@ -312,14 +312,25 @@ async function elasticSearchQuery(req: Request, res: Response) {
     "owner.lastname",
     "publisher.name"
     ];
+    const mustList = [];
+    mustList.push({
+      "multi_match": {
+        "query": req.body.keywords,
+        "fields": fields,
+        "fuzziness" : "AUTO"
+      }
+    });
+    if (req.body.filters) {
+      const filters = filterMapper(req.body.filters);
+      filters.map(filter => mustList.push(filter));
+    }
     const body: MultiMatchSeachBody = {
-        "query": {
-          "multi_match": {
-            "query": req.body.keywords,
-            "fields": fields,
-          }
+      "query": {
+        "bool" : {
+          "must" : mustList
         }
-      };
+      }
+    };
     client.search({"index" : index,
                     "from" : 0,
                     "size" : 1000,
@@ -330,10 +341,8 @@ async function elasticSearchQuery(req: Request, res: Response) {
             res.status(500).json(err);
         }
         else {
-          const body: AoeBody<AoeResult> = await aoeResponseMapper(result);
-          // aoeResponseMapper(result);
-          console.log(body);
-            res.status(200).json(body);
+          const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
+          res.status(200).json(responseBody);
         }
       });
     }
@@ -341,6 +350,44 @@ async function elasticSearchQuery(req: Request, res: Response) {
       console.log(err);
       res.sendStatus(500);
     }
+}
+
+function filterMapper(filters: AoeRequestFilter) {
+    try {
+      const filter = [];
+      if (filters.educationalLevels) {
+        createShouldObject(filter, "educationallevel.educationallevelkey.keyword", filters.educationalLevels);
+      }
+      if (filters.learningResourceTypes) {
+        createShouldObject(filter, "learningresourcetype.learningresourcetypekey.keyword", filters.learningResourceTypes);
+      }
+      if (filters.educationalSubjects) {
+        createShouldObject(filter, "alignmentobject.targetname.keyword", filters.educationalSubjects);
+      }
+      return filter;
+    }
+    catch (err) {
+      console.log(err);
+      throw new Error(err);
+    }
+}
+
+function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>) {
+  try {
+    const shouldFilter: FilterTerm[] = [];
+    valueList.map(term => {
+          const obj = {};
+          obj[key] = term;
+          shouldFilter.push({"term": obj});
+        });
+    if (shouldFilter.length > 0) {
+      filter.push({"bool": {"should": [shouldFilter]}});
+    }
+  }
+  catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
 }
 
 module.exports = {
