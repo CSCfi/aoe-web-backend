@@ -331,7 +331,7 @@ async function elasticSearchQuery(req: Request, res: Response) {
         }
       }
     };
-    console.log("Elasticsearch query body: " + body);
+    console.log("Elasticsearch query body: " + JSON.stringify(body));
     client.search({"index" : index,
                     "from" : 0,
                     "size" : 1000,
