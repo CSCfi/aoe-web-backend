@@ -209,7 +209,7 @@ interface Source {
 interface AoeRequestFilter {
   educationalLevels: Array<string>;
   learningResourceTypes: Array<string>;
-  educationalSubjects:Array<string>;
+  educationalSubjects: Array<string>;
 }
 interface AoeBody<T> {
     hits: number;
