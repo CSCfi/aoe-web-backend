@@ -313,13 +313,12 @@ async function elasticSearchQuery(req: Request, res: Response) {
     "publisher.name"
     ];
     const mustList = [];
-    mustList.push({
-      "multi_match": {
-        "query": req.body.keywords,
-        "fields": fields,
-        "fuzziness" : "AUTO"
-      }
-    });
+    if (req.body.keywords) {
+      mustList.push(createMultiMatchObject(req.body.keywords, fields));
+    } else {
+      // match all if keywords null
+      mustList.push(createMatchAllObject());
+    }
     if (req.body.filters) {
       const filters = filterMapper(req.body.filters);
       filters.map(filter => mustList.push(filter));
@@ -331,11 +330,12 @@ async function elasticSearchQuery(req: Request, res: Response) {
         }
       }
     };
-    console.log("Elasticsearch query body: " + JSON.stringify(body));
-    client.search({"index" : index,
-                    "from" : 0,
-                    "size" : 1000,
-                    "body" : body}
+    const query = {"index" : index,
+                  "from" : 0,
+                  "size" : 1000,
+                  "body" : body};
+    console.log("Elasticsearch query: " + JSON.stringify(query));
+    client.search(query
     , async (err: Error, result: ApiResponse<SearchResponse<Source>>) => {
         if (err) {
             console.log(JSON.stringify(err));
@@ -371,6 +371,20 @@ function filterMapper(filters: AoeRequestFilter) {
       console.log(err);
       throw new Error(err);
     }
+}
+
+function createMatchAllObject() {
+  return {"match_all": {}};
+}
+
+function createMultiMatchObject(keywords: string, fields: string[]) {
+  return {
+    "multi_match": {
+      "query": keywords,
+      "fields": fields,
+      "fuzziness" : "AUTO"
+    }
+  };
 }
 
 function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>) {
