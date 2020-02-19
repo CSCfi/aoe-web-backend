@@ -1,25 +1,13 @@
 /// <reference path="es.ts" />
 import {
     Client,
-    RequestParams,
-    ApiResponse,
+    ApiResponse
   } from "@elastic/elasticsearch";
 const index = process.env.ES_INDEX;
 
 const client = new Client({node: process.env.ES_NODE});
 
-const connection = require("./../db");
-const pgp = connection.pgp;
-const db = connection.db;
-const TransactionMode = pgp.txMode.TransactionMode;
-const isolationLevel = pgp.txMode.isolationLevel;
 import { Request, Response, NextFunction } from "express";
-interface SearchBody {
-query: {
-    match: { foo: string }
-};
-}
-
 interface MultiMatchSeachBody {
   query: {
     bool: {
@@ -210,6 +198,12 @@ interface AoeRequestFilter {
   educationalLevels: Array<string>;
   learningResourceTypes: Array<string>;
   educationalSubjects: Array<string>;
+  educationalRoles: Array<string>;
+  authors: Array<string>;
+  alignmentTypes: Array<string>;
+  keywords: Array<string>;
+  languages: Array<string>;
+  organizations: Array<string>;
 }
 interface AoeBody<T> {
     hits: number;
@@ -288,6 +282,14 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
 
 async function elasticSearchQuery(req: Request, res: Response) {
   try {
+    let from = 0;
+    let size = 100;
+    if (req.body.from) {
+      from = req.body.from;
+    }
+    if (req.body.size) {
+      size = req.body.size;
+    }
     const fields = [ "accessibilityfeature.value",
     "accessibilityhazard.value",
     "alignmentobject.targetname",
@@ -331,8 +333,8 @@ async function elasticSearchQuery(req: Request, res: Response) {
       }
     };
     const query = {"index" : index,
-                  "from" : 0,
-                  "size" : 1000,
+                  "from" : from,
+                  "size" : size,
                   "body" : body};
     console.log("Elasticsearch query: " + JSON.stringify(query));
     client.search(query
@@ -365,6 +367,25 @@ function filterMapper(filters: AoeRequestFilter) {
       if (filters.educationalSubjects) {
         createShouldObject(filter, "alignmentobject.targetname.keyword", filters.educationalSubjects);
       }
+      if (filters.educationalRoles) {
+        createShouldObject(filter, "educationalaudience.educationalrolekey.keyword", filters.educationalRoles);
+      }
+      if (filters.authors) {
+        createShouldObject(filter, "author.authorname.keyword", filters.authors);
+      }
+      if (filters.alignmentTypes) {
+        createShouldObject(filter, "alignmentobject.alignmenttype.keyword", filters.alignmentTypes);
+      }
+      if (filters.keywords) {
+        createShouldObject(filter, "keyword.keywordkey.keyword", filters.keywords);
+      }
+      if (filters.languages) {
+        createShouldObject(filter, "materials.language.keyword", filters.languages);
+      }
+      if (filters.organizations) {
+        createShouldObject(filter, "author.organizationkey.keyword", filters.organizations);
+      }
+
       return filter;
     }
     catch (err) {
@@ -396,7 +417,7 @@ function createShouldObject(filter: Array<object>, key: string, valueList: Array
           shouldFilter.push({"term": obj});
         });
     if (shouldFilter.length > 0) {
-      filter.push({"bool": {"should": [shouldFilter]}});
+      filter.push({"bool": {"should": shouldFilter}});
     }
   }
   catch (err) {
@@ -406,5 +427,10 @@ function createShouldObject(filter: Array<object>, key: string, valueList: Array
 }
 
 module.exports = {
-    elasticSearchQuery : elasticSearchQuery
+    elasticSearchQuery : elasticSearchQuery,
+    createShouldObject,
+    createMultiMatchObject,
+    createMatchAllObject,
+    filterMapper,
+    aoeResponseMapper
 };
