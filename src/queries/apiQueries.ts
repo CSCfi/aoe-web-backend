@@ -1,4 +1,7 @@
 import { Request, Response, NextFunction } from "express";
+// import { insertDataToDisplayName } from "./fileHandling";
+const fh = require("./fileHandling");
+
 
 
 
@@ -451,6 +454,67 @@ async function deleteAttachment(req: Request , res: Response , next: NextFunctio
 //     }
 // }
 
+async function insertDataToDescription(t: any, educationalmaterialid: string, description: any) {
+    const queries = [];
+    // const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
+    const query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
+                    "UPDATE SET description = $1;";
+    console.log(query);
+    if (description && educationalmaterialid) {
+        if (!description.fi || description.fi === "") {
+            if (!description.sv || description.sv === "") {
+                if (!description.en || description.en === "") {
+                    queries.push(await t.any(query, ["", "fi", educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.any(query, [description.en, "fi", educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.any(query, [description.sv, "fi", educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.any(query, [description.fi, "fi", educationalmaterialid]));
+        }
+
+        if (!description.sv || description.sv === "") {
+            if (!description.fi || description.fi === "") {
+                if (!description.en || description.en === "") {
+                    queries.push(await t.any(query, ["", "sv", educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.any(query, [description.en, "sv", educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.any(query, [description.fi, "sv", educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.any(query, [description.sv, "sv", educationalmaterialid]));
+        }
+
+        if (!description.en || description.en === "") {
+            if (!description.fi || description.fi === "") {
+                if (!description.sv || description.sv === "") {
+                    queries.push(await t.any(query, ["", "en", educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.any(query, [description.sv, "en", educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.any(query, [description.fi, "en", educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.any(query, [description.en, "en", educationalmaterialid]));
+        }
+    }
+    return queries;
+}
+
 async function updateMaterial(req: Request , res: Response , next: NextFunction) {
     db.tx(async (t: any) => {
         let query;
@@ -505,27 +569,28 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         // if not found do nothing
         }
         else {
-            query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
-                    "UPDATE SET description = $1;";
-            console.log(query);
-            if (description.fi === null) {
-                queries.push(await t.any(query, ["", "fi", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [description.fi, "fi", req.params.id]));
-            }
-            if (description.sv === null) {
-                queries.push(await t.any(query, ["", "sv", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [description.sv, "sv", req.params.id]));
-            }
-            if (description.en === null) {
-                queries.push(await t.any(query, ["", "en", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [description.en, "en", req.params.id]));
-            }
+            queries.push(await insertDataToDescription(t, req.params.id, description));
+            // query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
+            //         "UPDATE SET description = $1;";
+            // console.log(query);
+            // if (description.fi === null) {
+            //     queries.push(await t.any(query, ["", "fi", req.params.id]));
+            // }
+            // else {
+            //     queries.push(await t.any(query, [description.fi, "fi", req.params.id]));
+            // }
+            // if (description.sv === null) {
+            //     queries.push(await t.any(query, ["", "sv", req.params.id]));
+            // }
+            // else {
+            //     queries.push(await t.any(query, [description.sv, "sv", req.params.id]));
+            // }
+            // if (description.en === null) {
+            //     queries.push(await t.any(query, ["", "en", req.params.id]));
+            // }
+            // else {
+            //     queries.push(await t.any(query, [description.en, "en", req.params.id]));
+            // }
         }
 // educationalRoles
         console.log("inserting educationalRoles");
@@ -823,29 +888,31 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         }
         else {
             for (const element of arr) {
-                query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
-                // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                // const slug = createSlug(element.displayName.fi);
-                console.log(element.displayName.fi);
-                console.log(query, [element.displayName.fi, "fi", element.id, req.params.id]);
-                if (element.displayName.fi === null) {
-                    queries.push(await t.any(query, ["", "fi", element.id, req.params.id]));
-                }
-                else {
-                    queries.push(await t.any(query, [element.displayName.fi, "fi", element.id, req.params.id]));
-                }
-                if (element.displayName.sv === null) {
-                    queries.push(await t.any(query, ["", "sv", element.id, req.params.id]));
-                }
-                else {
-                    queries.push(await t.any(query, [element.displayName.sv, "sv", element.id, req.params.id]));
-                }
-                if (element.displayName.en === null) {
-                    queries.push(await t.any(query, ["", "en", element.id, req.params.id]));
-                }
-                else {
-                    queries.push(await t.any(query, [element.displayName.en, "en", element.id, req.params.id]));
-                }
+                const dnresult = await fh.insertDataToDisplayName(t, req.params.id, element.id, element);
+                queries.push(dnresult);
+                // query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
+                // // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
+                // // const slug = createSlug(element.displayName.fi);
+                // console.log(element.displayName.fi);
+                // console.log(query, [element.displayName.fi, "fi", element.id, req.params.id]);
+                // if (element.displayName.fi === null) {
+                //     queries.push(await t.any(query, ["", "fi", element.id, req.params.id]));
+                // }
+                // else {
+                //     queries.push(await t.any(query, [element.displayName.fi, "fi", element.id, req.params.id]));
+                // }
+                // if (element.displayName.sv === null) {
+                //     queries.push(await t.any(query, ["", "sv", element.id, req.params.id]));
+                // }
+                // else {
+                //     queries.push(await t.any(query, [element.displayName.sv, "sv", element.id, req.params.id]));
+                // }
+                // if (element.displayName.en === null) {
+                //     queries.push(await t.any(query, ["", "en", element.id, req.params.id]));
+                // }
+                // else {
+                //     queries.push(await t.any(query, [element.displayName.en, "en", element.id, req.params.id]));
+                // }
                 query = "UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3";
                 console.log("update material name: " + query, [element.language.key, element.id, req.params.id]);
                 queries.push(await t.any(query, [element.language.key, element.id, req.params.id]));

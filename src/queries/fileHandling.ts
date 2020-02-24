@@ -399,23 +399,57 @@ async function insertDataToEducationalMaterialTable(req: Request, t: any) {
 async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
-    if (fileDetails.fi === null) {
-        queries.push(await t.none(query, ["", "fi", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.fi, "fi", materialid, educationalmaterialid]));
-    }
-    if (fileDetails.sv === null) {
-        queries.push(await t.none(query, ["", "sv", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.sv, "sv", materialid, educationalmaterialid]));
-    }
-    if (fileDetails.en === null) {
-        queries.push(await t.none(query, ["", "en", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.en, "en", materialid, educationalmaterialid]));
+    if (fileDetails.displayName && materialid) {
+        if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+            if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+                if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+                    queries.push(await t.none(query, ["", "fi", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.en, "fi", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.sv, "fi", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.fi, "fi", materialid, educationalmaterialid]));
+        }
+
+        if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+            if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+                if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+                    queries.push(await t.none(query, ["", "sv", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.en, "sv", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.fi, "sv", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.sv, "sv", materialid, educationalmaterialid]));
+        }
+
+        if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+            if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+                if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+                    queries.push(await t.none(query, ["", "en", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.sv, "en", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.fi, "en", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.en, "en", materialid, educationalmaterialid]));
+        }
     }
     return queries;
 }
@@ -720,5 +754,6 @@ module.exports = {
     checkTemporaryRecordQueue : checkTemporaryRecordQueue,
     uploadBase64FileToStorage : uploadBase64FileToStorage,
     uploadAttachmentToMaterial : uploadAttachmentToMaterial,
-    checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue
+    checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue,
+    insertDataToDisplayName : insertDataToDisplayName
 };
