@@ -53,7 +53,7 @@ test("map aoe request filters to elastic search query", () => {
     ,{"term":{"educationallevel.educationallevelkey.keyword":"key2"}}]}}
     ,{"bool":{"should":[{"term":{"learningresourcetype.learningresourcetypekey.keyword":"a42b00b6-c2a7-407d-ba6b-8e7a4fb3e195"}}
     ,{"term":{"learningresourcetype.learningresourcetypekey.keyword":"key3"}}]}}
-    ,{"bool":{"should":[{"term":{"alignmentobject.targetname.keyword":"etsi"}}]}}
+    ,{"bool":{"should":[{"term":{"alignmentobject.objectkey.keyword":"etsi"}}]}}
     ,{"bool":{"should":[{"term":{"educationalaudience.educationalrolekey.keyword":"student"}}]}}
     ,{"bool":{"should":[{"term":{"author.authorname.keyword":"Jari"}}]}}
     ,{"bool":{"should":[{"term":{"alignmentobject.alignmenttype.keyword":"type"}}]}}

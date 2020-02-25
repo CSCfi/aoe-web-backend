@@ -365,7 +365,7 @@ function filterMapper(filters: AoeRequestFilter) {
         createShouldObject(filter, "learningresourcetype.learningresourcetypekey.keyword", filters.learningResourceTypes);
       }
       if (filters.educationalSubjects) {
-        createShouldObject(filter, "alignmentobject.targetname.keyword", filters.educationalSubjects);
+        createShouldObject(filter, "alignmentobject.objectkey.keyword", filters.educationalSubjects);
       }
       if (filters.educationalRoles) {
         createShouldObject(filter, "educationalaudience.educationalrolekey.keyword", filters.educationalRoles);
