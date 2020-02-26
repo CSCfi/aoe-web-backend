@@ -681,11 +681,39 @@ test("map elastic search response to aoe", async () => {
                     }
                 ],
                 "license": "CCBY4.0",
-                "educationLevels": [
+                "educationalLevels": [
                     {
                         "value": "ala-aste2",
                         "educationallevelkey": "key2"
                     }
+                ],
+                "educationalRoles": [
+                    {
+                        "value": "teachers",
+                        "educationalrolekey": "key1"
+                    },
+                    {
+                        "value": "student",
+                        "educationalrolekey": "key2"
+                    },
+                    {
+                        "value": "student2",
+                        "educationalrolekey": "key3"
+                    }
+                ],
+                "keywords": [
+                    {
+                        "value": "ympäristötietoisuus",
+                        "keywordkey": "p10"
+                    },
+                    {
+                        "value": "toinen sana",
+                        "keywordkey": "p2"
+                    }
+                ],
+                "languages": [
+                    "en",
+                    "fi"
                 ],
                 "thumbnail": null
             }
