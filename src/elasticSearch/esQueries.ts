@@ -84,26 +84,26 @@ interface Source {
     suitsallvocationaldegrees: boolean;
     suitsallselfmotivatedsubjects: boolean;
     suitsallbranches: boolean;
-    // materials: Array<{
-    //         id: number;
-    //         language: string;
-    //         link: string;
-    //         priority: number;
-    //         filepath: string;
-    //         originalfilename: string;
-    //         filesize: number;
-    //         mimetype: string;
-    //         format: string;
-    //         filekey: string;
-    //         filebucket: string;
-    //         obsoleted: number;
-    //         materialdisplayname: Array<{
-    //                 id: string;
-    //                 displayname: string;
-    //                 language: string;
-    //                 materialid: number;
-    //           }>;
-    //     }>;
+    materials: Array<{
+            id: number;
+            language: string;
+            link: string;
+            priority: number;
+            filepath: string;
+            originalfilename: string;
+            filesize: number;
+            mimetype: string;
+            format: string;
+            filekey: string;
+            filebucket: string;
+            obsoleted: number;
+            materialdisplayname: Array<{
+                    id: string;
+                    displayname: string;
+                    language: string;
+                    materialid: number;
+              }>;
+        }>;
     materialname: Array<{
         id: number;
         materialname: string;
@@ -243,10 +243,20 @@ interface AoeResult {
         //   objectkey: string;
         //   targeturl: string;
         // }>;
-        educationLevels?: Array<{
+        educationalLevels?: Array<{
           value: string;
           educationallevelkey: string;
         }>;
+        keywords?: Array<{
+          value: string;
+          keywordkey: string;
+        }>;
+        educationalRoles?: Array<{
+          value: string;
+          educationalrolekey: string;
+        }>;
+
+        languages?: Array<string>;
         thumbnail?: string;
       }
 
@@ -271,7 +281,10 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
       {authorname : author.authorname, organization : author.organization, organizationkey : author.organizationkey}));
     rObj.learningResourceTypes = obj.learningresourcetype.map(lrt => ({value : lrt.value, learningresourcetypekey : lrt.learningresourcetypekey}));
     rObj.license =  obj.licensecode,
-    rObj.educationLevels =  obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})),
+    rObj.educationalLevels =  obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})),
+    rObj.educationalRoles =  obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})),
+    rObj.keywords =  obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})),
+    rObj.languages =  [...new Set(obj.materials.map(material => (material.language)))],
     rObj.thumbnail =  obj.thumbnail;
     return rObj;
     }
