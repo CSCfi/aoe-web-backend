@@ -163,9 +163,9 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
-        query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
-        response = await t.any(query, [req.params.id]);
-        queries.push(response);
+        // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
+        // response = await t.any(query, [req.params.id]);
+        // queries.push(response);
 
         query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted != '1';";
         response = await t.any(query, [req.params.id]);
@@ -186,17 +186,23 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
 
         return t.batch(queries);
     })
-    .then((data: any) => {
+    .then(async (data: any) => {
         const jsonObj: any = {};
         if (data[0][0] === undefined) {
             return res.status(200).json(jsonObj);
         }
+        let owner = false;
+        console.log(owner);
+        if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
+            owner = await isOwner(req.params.id, req.session.passport.user.uid);
+        }
+        console.log(owner);
         // add displayname object to material object
         for (const element of data[15]) {
             const nameobj = {"fi" : "",
                             "sv" : "",
                             "en" : ""};
-            for (const element2 of data[17]) {
+            for (const element2 of data[16]) {
                 if (element2.materialid === element.id) {
                     if (element2.language === "fi") {
                         nameobj.fi = element2.displayname;
@@ -213,7 +219,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         }
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[15];
-        jsonObj.owner = data[16];
+        jsonObj.owner = owner;
         jsonObj.name = data[1];
         jsonObj.createdAt = data[0][0].createdat;
         jsonObj.updatedAt = data[0][0].updatedat;
@@ -245,10 +251,9 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.accessibilityHazards = data[6];
         jsonObj.license = data[0][0].licensecode;
         jsonObj.isBasedOn = data[12];
-        // jsonObj.materialDisplayName = data[17];
-        jsonObj.educationalRoles = data[18];
-        jsonObj.thumbnail = data[19];
-        jsonObj.attachments = data[20];
+        jsonObj.educationalRoles = data[17];
+        jsonObj.thumbnail = data[18];
+        jsonObj.attachments = data[19];
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -1355,7 +1360,24 @@ function createSlug(str: String) {
     return str;
 }
 
-
+async function isOwner(educationalmaterialid: string, username: string) {
+    if (educationalmaterialid && username) {
+        const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
+        console.log(query);
+        const result = await db.oneOrNone(query, educationalmaterialid);
+        console.log(result);
+        if (!result) {
+            console.log("isOwner: No result found for id " + educationalmaterialid);
+            return false;
+        }
+        else if (username === result.usersusername) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+}
 
 module.exports = {
     getMaterial : getMaterial,
