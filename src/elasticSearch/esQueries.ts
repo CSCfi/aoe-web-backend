@@ -261,36 +261,45 @@ interface AoeResult {
       }
 
 async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
-  const resp: AoeBody<AoeResult> = {
-    hits : response.body.hits.total.value
-  };
-
-  const hits = response.body.hits.hits;
-  const source = hits.map(hit => hit._source);
-  const result = source.map(obj => {
-    const rObj: AoeResult = {};
-    rObj.id = obj.id,
-    rObj.createdAt = obj.createdat,
-    rObj.publishedAt = obj.publishedat,
-    rObj.updatedAt = obj.updatedat;
-    const mname = obj.materialname;
-    rObj.materialName = mname.map(name => ({materialname : name.materialname, language : name.language}));
-    rObj.description = obj.materialdescription.map(description => (
-      {description : description.description, language : description.language}));
-    rObj.authors = obj.author.map(author => (
-      {authorname : author.authorname, organization : author.organization, organizationkey : author.organizationkey}));
-    rObj.learningResourceTypes = obj.learningresourcetype.map(lrt => ({value : lrt.value, learningresourcetypekey : lrt.learningresourcetypekey}));
-    rObj.license =  obj.licensecode,
-    rObj.educationalLevels =  obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})),
-    rObj.educationalRoles =  obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})),
-    rObj.keywords =  obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})),
-    rObj.languages =  [...new Set(obj.materials.map(material => (material.language)))],
-    rObj.thumbnail =  obj.thumbnail;
-    return rObj;
-    }
-  );
-  resp.results = result;
-  return resp;
+  try {
+    const resp: AoeBody<AoeResult> = {
+      hits : response.body.hits.total.value
+    };
+    const hits = response.body.hits.hits;
+    if (hits) {
+      const source = hits.map(hit => hit._source);
+      if (source) {
+        const result = source.map(obj => {
+          const rObj: AoeResult = {};
+          rObj.id = obj.id,
+          rObj.createdAt = obj.createdat,
+          rObj.publishedAt = obj.publishedat,
+          rObj.updatedAt = obj.updatedat;
+          const mname = obj.materialname;
+          rObj.materialName = (mname) ? mname.map(name => ({materialname : name.materialname, language : name.language})) : undefined;
+          rObj.description = (obj.materialdescription) ? obj.materialdescription.map(description => (
+            {description : description.description, language : description.language})) : undefined;
+          rObj.authors = (obj.author) ? obj.author.map(author => (
+            {authorname : author.authorname, organization : author.organization, organizationkey : author.organizationkey})) : undefined;
+          rObj.learningResourceTypes = (obj.learningresourcetype) ? obj.learningresourcetype.map(lrt => ({value : lrt.value, learningresourcetypekey : lrt.learningresourcetypekey})) : undefined;
+          rObj.license =  obj.licensecode,
+          rObj.educationalLevels =  (obj.educationallevel) ? obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})) : undefined,
+          rObj.educationalRoles =  (obj.educationalaudience) ? obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})) : undefined,
+          rObj.keywords =  (obj.keyword) ? obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})) : undefined,
+          rObj.languages = (obj.materials) ? [...new Set(obj.materials.map(material => (material.language)))] : undefined,
+          rObj.thumbnail =  obj.thumbnail;
+          return rObj;
+          }
+        );
+        resp.results = result;
+      }
+      }
+    return resp;
+  }
+  catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
 }
 
 async function elasticSearchQuery(req: Request, res: Response) {
@@ -357,8 +366,14 @@ async function elasticSearchQuery(req: Request, res: Response) {
             res.status(500).json(err);
         }
         else {
-          const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
-          res.status(200).json(responseBody);
+          try {
+            const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
+            res.status(200).json(responseBody);
+          }
+          catch (err) {
+            console.log(err);
+            res.status(500).json(err);
+          }
         }
       });
     }
