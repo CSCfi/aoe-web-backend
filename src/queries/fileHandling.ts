@@ -637,7 +637,20 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     res.attachment(key);
                     res.header("Content-Disposition", contentDisposition(response.originalfilename));
                     const fileStream = s3.getObject(params).createReadStream();
+                    const ext = response.originafilelname.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
+
+                    // Here we check if the extensionname of the response from pouta is .zip, if it is
+                    // we send it to the unzip function so we can show the zipped content in iframe.
+                    if (ext === "zip") {
+                        // Not sure how we send it back here, the function simply returns
+                        // the specified url for the index.html file in the folder for the frontend to use as the sourceurl
+                        fileStream.pipe(unZipAndExtract(response));
+                        // Not sure how to return the data, either the way above or below
+                        return unZipAndExtract(response);
+                    }
+                    else {
                     fileStream.pipe(res);
+                    }
                 }
                 catch (err) {
                     console.log(err);
@@ -706,21 +719,30 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
         }
     });
 
-async function unZipAndExtract(req: Request, file: any) {
-    const pathToZip = file.path;
-    const zip = new ADMzip(pathToZip);
-    const newPath = "Path to new unzipped folder";
-    zip.extractAllTo(newPath, true);
 
-    return newPath;
- }
 }
+async function unZipAndExtract(file: any) {
+
+    // We unzip the file that is received to the function
+    // We unzip the file to the folder specified in the env variables, + filename
+    const fileToUnzip = file;
+    const zip = new ADMzip(fileToUnzip);
+    // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
+    const filename = file.originalname.substring(0, file.originalname.lastIndexOf("."));
+    const folderPath = process.env.HTMLFOLDER + "/" + filename;
+    // Here we finally extract the zipped file to the folder we just specified.
+    zip.extractAllTo(folderPath, true);
+    const pathToReturn = folderPath + "/index.html";
+    // This is the path we return to the frontend, the folderpath + unzipped filename + index.html
+    return pathToReturn;
+ }
 
 module.exports = {
     uploadMaterial: uploadMaterial,
     uploadFileToMaterial : uploadFileToMaterial,
     uploadFileToStorage : uploadFileToStorage,
     downloadFile : downloadFile,
+    unZipAndExtract: unZipAndExtract,
     downloadFileFromStorage : downloadFileFromStorage,
     downloadMaterialFile : downloadMaterialFile,
     checkTemporaryRecordQueue : checkTemporaryRecordQueue,
