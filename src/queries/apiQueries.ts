@@ -458,6 +458,55 @@ async function deleteAttachment(req: Request , res: Response , next: NextFunctio
 //         res.sendStatus(500);
 //     }
 // }
+async function setLanguage(obj: any) {
+    try {
+        if (obj) {
+            if (!obj.fi || obj.fi === "") {
+                if (!obj.sv || obj.sv === "") {
+                    if (!obj.en || obj.en === "") {
+                        obj.fi = "";
+                    }
+                    else {
+                        obj.fi = obj.en;
+                    }
+                }
+                else {
+                    obj.fi = obj.sv;
+                }
+            }
+            if (!obj.sv || obj.sv === "") {
+                if (!obj.fi || obj.fi === "") {
+                    if (!obj.en || obj.en === "") {
+                        obj.sv = "";
+                    }
+                    else {
+                        obj.sv = obj.en;
+                    }
+                }
+                else {
+                    obj.sv = obj.fi;
+                }
+            }
+            if (!obj.en || obj.en === "") {
+                if (!obj.fi || obj.fi === "") {
+                    if (!obj.sv || obj.sv === "") {
+                        obj.en = "";
+                    }
+                    else {
+                        obj.en = obj.sv;
+                    }
+                }
+                else {
+                    obj.en = obj.fi;
+                }
+            }
+        }
+    }
+    catch (err) {
+        console.log(err);
+        throw new Error(err);
+    }
+}
 
 async function insertDataToDescription(t: any, educationalmaterialid: string, description: any) {
     const queries = [];
@@ -532,12 +581,13 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         console.log(JSON.stringify(req.body));
         let arr = req.body.name;
         console.log("inserting material name");
-        if (arr == undefined) {
+        if (materialname == undefined) {
             // query = "DELETE FROM materialname where educationalmaterialid = $1;";
             // response  = await t.any(query, [req.params.id]);
             // queries.push(response);
         }
         else {
+            await setLanguage(materialname);
             query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
                     "UPDATE SET materialname = $1 , slug = $3;";
             console.log(query);
