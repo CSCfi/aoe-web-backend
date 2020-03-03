@@ -722,7 +722,7 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
 
 }
 async function unZipAndExtract(file: any) {
-
+try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
     const fileToUnzip = file;
@@ -735,6 +735,11 @@ async function unZipAndExtract(file: any) {
     const pathToReturn = folderPath + "/index.html";
     // This is the path we return to the frontend, the folderpath + unzipped filename + index.html
     return pathToReturn;
+
+}
+catch (err) {
+    console.log("The error in unzipAndExtract function for HTML zip: " + err);
+}
  }
 
 module.exports = {
