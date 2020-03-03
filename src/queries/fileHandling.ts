@@ -680,7 +680,9 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     if (ext === "zip") {
                         // Not sure how we send it back here, the function simply returns
                         // the specified url for the index.html file in the folder for the frontend to use as the sourceurl
-                        fileStream.pipe(unZipAndExtract(response));
+
+                        // fileStream.pipe(unZipAndExtract(response));
+
                         // Not sure how to return the data, either the way above or below
                         return unZipAndExtract(response);
                     }
