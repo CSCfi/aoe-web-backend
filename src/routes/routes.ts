@@ -16,6 +16,7 @@ const passport = require("passport");
  const handler = require("./../metadataEngine/xlsxHandler");
  const thumbnail = require("./../queries/thumbnailHandler");
  const oajpmh = require("./../queries/oajpmh");
+ const es = require("./../elasticSearch/esQueries");
 //  const pouta = require("./../queries/pouta");
 // post metadata
 // post file
@@ -51,9 +52,10 @@ router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicatication
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 // delete link or record from educationalmaterial
-router.delete("/material/file/:materialid/:fileid", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteRecord);
+router.delete("/material/file/:materialid/:fileid", ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 // router.post("/material", db.postMaterial);
-
+// delete attachment
+router.delete("/material/attachment/:attachmentid", ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 // router.post("/createUser", db.createUser);
 router.put("/user", ah.checkAuthenticated, db.updateUser);
 router.get("/user", ah.checkAuthenticated, db.getUser);
@@ -71,4 +73,5 @@ router.get("/logout", ah.logout);
 router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
+router.post("/elasticSearch/search", es.elasticSearchQuery);
 export = router;

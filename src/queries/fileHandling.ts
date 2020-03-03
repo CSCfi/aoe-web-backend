@@ -400,23 +400,57 @@ async function insertDataToEducationalMaterialTable(req: Request, t: any) {
 async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
-    if (fileDetails.fi === null) {
-        queries.push(await t.none(query, ["", "fi", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.fi, "fi", materialid, educationalmaterialid]));
-    }
-    if (fileDetails.sv === null) {
-        queries.push(await t.none(query, ["", "sv", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.sv, "sv", materialid, educationalmaterialid]));
-    }
-    if (fileDetails.en === null) {
-        queries.push(await t.none(query, ["", "en", materialid, educationalmaterialid]));
-    }
-    else {
-        queries.push(await t.none(query, [fileDetails.displayName.en, "en", materialid, educationalmaterialid]));
+    if (fileDetails.displayName && materialid) {
+        if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+            if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+                if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+                    queries.push(await t.none(query, ["", "fi", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.en, "fi", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.sv, "fi", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.fi, "fi", materialid, educationalmaterialid]));
+        }
+
+        if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+            if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+                if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+                    queries.push(await t.none(query, ["", "sv", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.en, "sv", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.fi, "sv", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.sv, "sv", materialid, educationalmaterialid]));
+        }
+
+        if (!fileDetails.displayName.en || fileDetails.displayName.en === "") {
+            if (!fileDetails.displayName.fi || fileDetails.displayName.fi === "") {
+                if (!fileDetails.displayName.sv || fileDetails.displayName.sv === "") {
+                    queries.push(await t.none(query, ["", "en", materialid, educationalmaterialid]));
+                }
+                else {
+                    queries.push(await t.none(query, [fileDetails.displayName.sv, "en", materialid, educationalmaterialid]));
+                }
+            }
+            else {
+                queries.push(await t.none(query, [fileDetails.displayName.fi, "en", materialid, educationalmaterialid]));
+            }
+        }
+        else {
+            queries.push(await t.none(query, [fileDetails.displayName.en, "en", materialid, educationalmaterialid]));
+        }
     }
     return queries;
 }
@@ -611,7 +645,9 @@ async function downloadFile(req: Request, res: Response) {
 async function downloadFileFromStorage(req: Request, res: Response) {
     return new Promise(async (resolve) => {
         try {
-            const query = "select originalfilename from record where filekey = $1;";
+            const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
+                        "union " +
+                        "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
             console.log(query);
             const response = await db.oneOrNone(query, [req.params.key]);
             if (!response) {
@@ -667,7 +703,9 @@ async function downloadFileFromStorage(req: Request, res: Response) {
 
 async function downloadMaterialFile(req: Request, res: Response) {
     try {
-        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1;";
+        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1 and obsoleted = 0" +
+        " union " +
+        "select attachment.filekey, attachment.originalfilename from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and attachment.obsoleted = 0;";
         console.log(query);
         const response = await db.any(query, [req.params.materialId]);
         if (response.length < 1) {
@@ -753,5 +791,6 @@ module.exports = {
     checkTemporaryRecordQueue : checkTemporaryRecordQueue,
     uploadBase64FileToStorage : uploadBase64FileToStorage,
     uploadAttachmentToMaterial : uploadAttachmentToMaterial,
-    checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue
+    checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue,
+    insertDataToDisplayName : insertDataToDisplayName
 };

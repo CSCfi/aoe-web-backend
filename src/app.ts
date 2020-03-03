@@ -147,8 +147,26 @@ Issuer.discover(process.env.PROXY_URI)
             console.log("Typeof userinfo: " + typeof (userinfo));
             console.log("expires_in", tokenset.expires_in);
 
-            // Tässä se laukaisee sen insertin
-            ah.InsertUserToDatabase(userinfo)
+            // Here we launch the insert to the database
+            // First we check if the login occured via suomi.fi, if so then use another key, as not to save SoSign to database.
+            // Else we just save the UID to the database.
+
+            if (tokenset.claims().acr == process.env.SUOMIACR) {
+
+                ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
+                .then(() => {
+                    const nameparsed = userinfo.given_name + " " + userinfo.family_name;
+                    return done(undefined, {uid: userinfo.sub, name: nameparsed, email: userinfo.email});
+                })
+                .catch((err: Error) => {
+                        console.log(err);
+                        return done("Login error when inserting suomi.fi information to database ", undefined);
+                    }
+                );
+            }
+            else {
+
+            ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                 .then(() => {
                     const nameparsed = userinfo.given_name + " " + userinfo.family_name;
                     return done(undefined, {uid: userinfo.uid, name: nameparsed, email: userinfo.email});
@@ -158,6 +176,7 @@ Issuer.discover(process.env.PROXY_URI)
                         return done("Login error", undefined);
                     }
                 );
+            }
         }));
     });
 app.use(flash());
@@ -236,6 +255,7 @@ app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection);
 
 require("./aoeScheduler");
+const es = require("./elasticSearch/es");
 /**
  * API examples routes.
  */

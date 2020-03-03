@@ -47,10 +47,16 @@ async function hasAccesstoPublication(id: number, req: Request) {
     }
 }
 
-async function InsertUserToDatabase(userinfo: object) {
+async function InsertUserToDatabase(userinfo: object, acr: string) {
     try {
         console.log("The userinfo in function at authservice: " + userinfo);
-        const uid = userinfo["uid"];
+        let uid: string;
+        if (acr == process.env.SUOMIACR) {
+            uid = userinfo["sub"];
+        }
+        else {
+            uid = userinfo["uid"];
+        }
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
         const data = await db.oneOrNone(query, [uid]);
         if (!data.exists) {
@@ -92,7 +98,13 @@ async function hasAccessToPublicaticationMW(req: Request, res: Response, next: N
 }
 
 async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {
-    const id = req.params.materialId;
+    let id = req.params.materialId;
+    if (req.params.materialId) {
+        id = req.params.materialId;
+    }
+    else if (req.params.fileid) {
+        id = req.params.fileid;
+    }
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = $1";
     const result = await db.oneOrNone(query, [id]);
     console.log(req.session.passport.user.uid);
@@ -108,6 +120,26 @@ async function hasAccessToMaterial(req: Request, res: Response, next: NextFuncti
         res.sendStatus(401);
     }
 }
+
+async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction) {
+    const id = req.params.attachmentid;
+    const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = " +
+                    "(select materialid from attachment where attachment.id =$1);";
+    const result = await db.oneOrNone(query, [id]);
+    console.log(req.session.passport.user.uid);
+    console.log(result);
+    if (!result) {
+        console.log("No result found for id " + id);
+        return res.sendStatus(401);
+    }
+    if (req.session.passport.user.uid === result.usersusername) {
+        return next();
+    }
+    else {
+        res.sendStatus(401);
+    }
+}
+
 function logout(req: Request, res: Response) {
     req.logout();
     res.redirect("/");
@@ -120,6 +152,7 @@ module.exports = {
     InsertUserToDatabase: InsertUserToDatabase,
     hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
     logout: logout,
-    hasAccessToMaterial: hasAccessToMaterial
+    hasAccessToMaterial : hasAccessToMaterial,
+    hasAccessToAttachmentFile : hasAccessToAttachmentFile
     // hasAccess: hasAccess,
 };
