@@ -5,7 +5,8 @@ const {elasticSearchQuery,
     createMultiMatchObject,
     createMatchAllObject,
     filterMapper,
-    aoeResponseMapper} = require ("../src/elasticSearch/esQueries");
+    aoeResponseMapper,
+    hasDownloadableFiles} = require ("../src/elasticSearch/esQueries");
 
 test("create should object", () => {
     const obj = [];
@@ -560,6 +561,15 @@ test("map elastic search response to aoe", async () => {
                             "educationalframework": "A1",
                             "objectkey": "key2",
                             "targeturl": "testurl"
+                        }, {
+                            "id": "462",
+                            "educationalmaterialid": "2",
+                            "alignmenttype": "educationalSubject",
+                            "targetname": "ma",
+                            "source": "koodisto1",
+                            "educationalframework": "",
+                            "objectkey": "key3",
+                            "targeturl": "testurl"
                         }],
                         "owner": [{
                             "firstname": "Jari",
@@ -715,11 +725,41 @@ test("map elastic search response to aoe", async () => {
                     "en",
                     "fi"
                 ],
+                "educationalSubjects": [
+                    {
+                        "key": "key3",
+                        "source": "koodisto1",
+                        "value": "ma"
+                    }
+                ],
+                "teaches": [
+                    {
+                        "key": "key1",
+                        "value": "ma"
+                    },
+                    {
+                        "key": "key2",
+                        "value": "etsi"
+                    }
+                ],
+                "hasDownloadableFiles": true,
                 "thumbnail": null
             }
         ]
     }
     expect(obj).toEqual(result);
+});
+
+test("hasDownloadableFiles returns true", async () => {
+    const data = [{"data": "data","filekey" : "key"}, {"data": "data"}];
+    const response = hasDownloadableFiles(data);
+    expect(response).toBe(true);
+});
+
+test("hasDownloadableFiles returns false", async () => {
+    const data = [{"data": "data"}];
+    const response = hasDownloadableFiles(data);
+    expect(response).toBe(false);
 });
 
 elasticSearchQuery
