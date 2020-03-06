@@ -257,7 +257,17 @@ interface AoeResult {
         }>;
 
         languages?: Array<string>;
+        educationalSubjects?: Array<{
+          value: string;
+          key: string;
+          source: string;
+        }>;
+        teaches?: Array<{
+          value: string;
+          key: string;
+        }>;
         thumbnail?: string;
+        hasDownloadableFiles?: boolean;
       }
 
 async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
@@ -287,6 +297,13 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.educationalRoles =  (obj.educationalaudience) ? obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})) : undefined,
           rObj.keywords =  (obj.keyword) ? obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})) : undefined,
           rObj.languages = (obj.materials) ? [...new Set(obj.materials.map(material => (material.language)))] : undefined,
+          rObj.educationalSubjects = (obj.alignmentobject) ? obj.alignmentobject
+          .filter(object => {return object.alignmenttype === "educationalSubject"; })
+          .map(object => ({key : object.objectkey, source : object.source, value : object.targetname})) : undefined,
+          rObj.teaches = (obj.alignmentobject) ? obj.alignmentobject
+          .filter(object => {return object.alignmenttype === "teaches"; })
+          .map(object => ({key : object.objectkey, value : object.targetname})) : undefined,
+          rObj.hasDownloadableFiles = (obj.materials) ? hasDownloadableFiles(obj.materials) : false,
           rObj.thumbnail =  obj.thumbnail;
           return rObj;
           }
@@ -298,6 +315,21 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
   }
   catch (err) {
     console.log(err);
+    throw new Error(err);
+  }
+}
+
+function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
+  try {
+    for (const element of materials) {
+      if (element.filekey) {
+        return true;
+      }
+    }
+    return false;
+  }
+  catch (err) {
+    console.error(err);
     throw new Error(err);
   }
 }
@@ -460,5 +492,6 @@ module.exports = {
     createMultiMatchObject,
     createMatchAllObject,
     filterMapper,
-    aoeResponseMapper
+    aoeResponseMapper,
+    hasDownloadableFiles
 };
