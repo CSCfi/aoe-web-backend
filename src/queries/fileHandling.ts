@@ -679,7 +679,7 @@ async function downloadFileFromStorage(req: Request, res: Response) {
 
                     // Here we check if the extensionname of the response from pouta is .zip, if it is
                     // we send it to the unzip function so we can show the zipped content in iframe.
-                    if (ext === "zip") {
+                    if (ext === ".zip") {
                         // Not sure how we send it back here, the function simply returns
                         // the specified url for the index.html file in the folder for the frontend to use as the sourceurl
 
