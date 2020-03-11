@@ -672,8 +672,9 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     };
                     res.attachment(key);
                     res.header("Content-Disposition", contentDisposition(response.originalfilename));
+                    console.log("The response.originalfilename is: " + response.originalfilename);
                     const fileStream = s3.getObject(params).createReadStream();
-                    const ext = response.originafilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
+                    const ext = response.originalfilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
                     console.log("The file extension of the response from pouta: " + ext);
 
                     // Here we check if the extensionname of the response from pouta is .zip, if it is
