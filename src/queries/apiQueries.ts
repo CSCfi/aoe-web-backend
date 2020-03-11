@@ -162,8 +162,8 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
-        console.log("The response that hopefully includes mimetype: " + response);
-        console.log("Maybe this is where we see mimetype: " + response["mimetype"] + " and filekey: " + response["filekey"]);
+        console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
+        console.log("Maybe this is where we see mimetype: " + JSON.stringify(response["mimetype"]) + " and filekey: " + JSON.stringify(response["filekey"]));
 
         // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
         // response = await t.any(query, [req.params.id]);
@@ -184,9 +184,6 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         console.log(query, [req.params.id]);
-        console.log("The response that hopefully includes mimetype: " + response);
-        console.log("Maybe this is where we see mimetype: " + response["mimetype"] + " and filekey: " + response["filekey"]);
-        console.log("What happens if i log the queries? : " + queries);
 
         queries.push(response);
 
