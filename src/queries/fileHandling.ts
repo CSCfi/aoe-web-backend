@@ -673,7 +673,8 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     res.attachment(key);
                     res.header("Content-Disposition", contentDisposition(response.originalfilename));
                     const fileStream = s3.getObject(params).createReadStream();
-                    const ext = response.originafilelname.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
+                    const ext = response.originafilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
+                    console.log("The file extension of the response from pouta: " + ext);
 
                     // Here we check if the extensionname of the response from pouta is .zip, if it is
                     // we send it to the unzip function so we can show the zipped content in iframe.
