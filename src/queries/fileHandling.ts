@@ -676,21 +676,22 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     const fileStream = s3.getObject(params).createReadStream();
                     const ext = response.originalfilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
                     console.log("The file extension of the response from pouta: " + ext);
+                    fileStream.pipe(res);
 
                     // Here we check if the extensionname of the response from pouta is .zip, if it is
                     // we send it to the unzip function so we can show the zipped content in iframe.
-                    if (ext === ".zip") {
+                    // if (ext === ".zip") {
                         // Not sure how we send it back here, the function simply returns
                         // the specified url for the index.html file in the folder for the frontend to use as the sourceurl
 
                         // fileStream.pipe(unZipAndExtract(response));
 
                         // Not sure how to return the data, either the way above or below
-                        return unZipAndExtract(response);
-                    }
-                    else {
-                    fileStream.pipe(res);
-                    }
+                    //     return unZipAndExtract(response);
+                    // }
+                    // else {
+                    // fileStream.pipe(res);
+                    // }
                 }
                 catch (err) {
                     console.log(err);
@@ -764,6 +765,8 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
 
 }
 async function unZipAndExtract(file: any) {
+
+
 try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
@@ -775,8 +778,17 @@ try {
     // Here we finally extract the zipped file to the folder we just specified.
     zip.extractAllTo(folderPath, true);
     const pathToReturn = folderPath + "/index.html";
+    if (fs.existsSync(pathToReturn)) {
+        // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
+        // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
+        return pathToReturn;
+    }
+    else {
+        // If we come here, the index.html file doesnt exist, which means the zipped file is not a html file
+        // Then we dont want to return the pathtothefolder, and we dont want to store the unzipped folder so we delete it here.
+        return false;
+    }
     // This is the path we return to the frontend, the folderpath + unzipped filename + index.html
-    return pathToReturn;
 
 }
 catch (err) {
