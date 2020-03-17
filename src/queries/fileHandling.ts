@@ -629,10 +629,16 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
     });
 }
 
-async function downloadFile(req: Request, res: Response) {
+async function downloadFile(req: Request, res: Response, isZip?: boolean) {
     try {
+
         const data = await downloadFileFromStorage(req, res);
+        if (isZip === true) {
+            unZipAndExtract(data);
+        }
+        else {
         res.status(200).send(data);
+        }
     }
     catch (err) {
         console.log(err);
@@ -770,6 +776,7 @@ async function unZipAndExtract(file: any) {
 try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
+    console.log("The file that came to the unZipandExtract function: " + file);
     const fileToUnzip = file;
     const zip = new ADMzip(fileToUnzip);
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly

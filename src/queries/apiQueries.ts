@@ -163,8 +163,16 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
         console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
-        console.log("Maybe this is where we see mimetype: " + JSON.stringify(response["mimetype"]) + " and filekey: " + JSON.stringify(response["filekey"]));
+        console.log("Maybe this is where we see mimetype: " + response[0].mimetype + " and filekey: " + response[0].filekey);
 
+        if (response[0].mimetype === "application/zip") {
+            const result = fh.downloadFile(req, res, true);
+            if (result != false) {
+                // if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
+                // Write db code to replace application/zip with text/html for this specific file
+                console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + result);
+            }
+        }
         // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
         // response = await t.any(query, [req.params.id]);
         // queries.push(response);
