@@ -159,9 +159,18 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
+
+        /**
+         * This might be the correct way, we dont push the response here, since we need to first confirm and/or change mimetype
+         * We do the same query again inside the if statement, and there we push the response, to ensure that the mimetype in the response
+         * is the correct one.
+         * We have to change the first query under this comment to only look for the mimetype.
+         * This removes unnecessary queries, and is faster, since we only need the mimetype
+         * Consult Jussi on this db statement, unsure of the exact db-schema.
+         */
         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
         response = await t.any(query, [req.params.id]);
-        queries.push(response);
+        // queries.push(response);
         console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
         console.log("Maybe this is where we see mimetype: " + response[0].mimetype + " and filekey: " + response[0].filekey);
 
@@ -173,13 +182,22 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                  * Write db code to replace application/zip with text/html for this specific file
                  */
 
+                 /**
+                  * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
+                  */
+                query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+                queries.push(response);
                 console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + result);
             }
             else  {
                 /**
                  * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
-                 * Simply return the result to the frontend
+                 * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
                  */
+                query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+                queries.push(response);
             }
 
         }
