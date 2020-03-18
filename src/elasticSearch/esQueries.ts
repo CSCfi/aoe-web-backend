@@ -266,6 +266,9 @@ interface AoeResult {
           value: string;
           key: string;
         }>;
+        filters?: Array<{
+          teaches?: Array<string>;
+        }>;
         thumbnail?: string;
         hasDownloadableFiles?: boolean;
       }
@@ -300,9 +303,8 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.educationalSubjects = (obj.alignmentobject) ? obj.alignmentobject
           .filter(object => {return object.alignmenttype === "educationalSubject"; })
           .map(object => ({key : object.objectkey, source : object.source, value : object.targetname})) : undefined,
-          rObj.teaches = (obj.alignmentobject) ? obj.alignmentobject
-          .filter(object => {return object.alignmenttype === "teaches"; })
-          .map(object => ({key : object.objectkey, value : object.targetname})) : undefined,
+          rObj.filters = [];
+          rObj.filters.push(createfilters(obj));
           rObj.hasDownloadableFiles = (obj.materials) ? hasDownloadableFiles(obj.materials) : false,
           rObj.thumbnail =  obj.thumbnail;
           return rObj;
@@ -315,6 +317,25 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
   }
   catch (err) {
     console.log(err);
+    throw new Error(err);
+  }
+}
+
+/**
+ * create filters list for aoeresponse
+ * @param obj
+ */
+function createfilters(obj: Source) {
+  try {
+    const arr: Array<string> = [];
+    const fobj = {"teaches": arr};
+    fobj.teaches = (obj.alignmentobject) ? obj.alignmentobject
+            .filter(object => {return object.alignmenttype === "teaches"; })
+            .map(object => (object.objectkey)) : undefined;
+    return fobj;
+  }
+  catch (err) {
+    console.error(err);
     throw new Error(err);
   }
 }
@@ -493,5 +514,6 @@ module.exports = {
     createMatchAllObject,
     filterMapper,
     aoeResponseMapper,
-    hasDownloadableFiles
+    hasDownloadableFiles,
+    createfilters
 };
