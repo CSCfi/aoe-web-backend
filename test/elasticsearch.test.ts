@@ -6,8 +6,7 @@ const {elasticSearchQuery,
     createMatchAllObject,
     filterMapper,
     aoeResponseMapper,
-    hasDownloadableFiles,
-    createfilters} = require ("../src/elasticSearch/esQueries");
+    hasDownloadableFiles} = require ("../src/elasticSearch/esQueries");
 
 test("create should object", () => {
     const obj = [];
@@ -733,12 +732,14 @@ test("map elastic search response to aoe", async () => {
                         "value": "ma"
                     }
                 ],
-                "filters": [
+                "teaches": [
                     {
-                        "teaches": [
-                            "key1",
-                            "key2"
-                        ]
+                        "key": "key1",
+                        "value": "ma"
+                    },
+                    {
+                        "key": "key2",
+                        "value": "etsi"
                     }
                 ],
                 "hasDownloadableFiles": true,
@@ -759,265 +760,6 @@ test("hasDownloadableFiles returns false", async () => {
     const data = [{"data": "data"}];
     const response = hasDownloadableFiles(data);
     expect(response).toBe(false);
-});
-
-test("aoeResponseFilter test", async () => {
-    const data = {
-        "id": "68",
-        "createdat": "2019-12-10T14:56:49.306Z",
-        "publishedat": "1920-01-01T00:00:00.000Z",
-        "updatedat": "2020-03-17T14:20:29.950Z",
-        "archivedat": "9999-01-01T00:00:00.000Z",
-        "timerequired": "3",
-        "agerangemin": -1,
-        "agerangemax": -1,
-        "licensecode": "CCBY4.0",
-        "obsoleted": 0,
-        "originalpublishedat": "2019-12-10T14:56:49.306Z",
-        "expires": "2022-01-01T00:00:00.000Z",
-        "suitsallearlychildhoodsubjects": true,
-        "suitsallpreprimarysubjects": true,
-        "suitsallbasicstudysubjects": true,
-        "suitsalluppersecondarysubjects": true,
-        "suitsallvocationaldegrees": true,
-        "suitsallselfmotivatedsubjects": true,
-        "suitsallbranches": true,
-        "materials": [{
-            "id": "85",
-            "language": "sv",
-            "link": "",
-            "priority": 0,
-            "filepath": "https://testing.object.pouta.csc.fi/testikuva-1575989809280.png",
-            "originalfilename": "testikuvä.png",
-            "filesize": 11760,
-            "mimetype": "image/png",
-            "format": "7bit",
-            "filekey": "testikuva-1575989809280.png",
-            "filebucket": "testing",
-            "obsoleted": 0,
-            "materialdisplayname": [{
-                "id": "143",
-                "displayname": "Nimi suomeks",
-                "language": "fi",
-                "materialid": "85"
-            }, {
-                "id": "144",
-                "displayname": "Ruotsiks",
-                "language": "sv",
-                "materialid": "85"
-            }, {
-                "id": "145",
-                "displayname": "Enkuks",
-                "language": "en",
-                "materialid": "85"
-            }]
-        }],
-        "materialname": [{
-            "id": "98",
-            "materialname": "suomi",
-            "language": "fi",
-            "slug": "",
-            "educationalmaterialid": "68"
-        }, {
-            "id": "99",
-            "materialname": "suomi",
-            "language": "sv",
-            "slug": "",
-            "educationalmaterialid": "68"
-        }, {
-            "id": "100",
-            "materialname": "en",
-            "language": "en",
-            "slug": "",
-            "educationalmaterialid": "68"
-        }],
-        "materialdescription": [{
-            "id": "94",
-            "description": "Kuvaus",
-            "language": "fi",
-            "educationalmaterialid": "68"
-        }, {
-            "id": "95",
-            "description": "svkuvaus2",
-            "language": "sv",
-            "educationalmaterialid": "68"
-        }, {
-            "id": "96",
-            "description": "descriptions",
-            "language": "en",
-            "educationalmaterialid": "68"
-        }],
-        "educationalaudience": [{
-            "id": "307",
-            "educationalrole": "teachers",
-            "educationalmaterialid": "68",
-            "educationalrolekey": "key1"
-        }, {
-            "id": "308",
-            "educationalrole": "student",
-            "educationalmaterialid": "68",
-            "educationalrolekey": "key2"
-        }, {
-            "id": "309",
-            "educationalrole": "student2",
-            "educationalmaterialid": "68",
-            "educationalrolekey": "key3"
-        }],
-        "learningresourcetype": [{
-            "id": "208",
-            "value": "uusi",
-            "educationalmaterialid": "68",
-            "learningresourcetypekey": "key6"
-        }, {
-            "id": "209",
-            "value": "lr3",
-            "educationalmaterialid": "68",
-            "learningresourcetypekey": "key3"
-        }],
-        "accessibilityfeature": [{
-            "id": "167",
-            "value": "tableOfContents",
-            "educationalmaterialid": "68",
-            "accessibilityfeaturekey": "key1"
-        }, {
-            "id": "168",
-            "value": "annotations",
-            "educationalmaterialid": "68",
-            "accessibilityfeaturekey": "key4"
-        }],
-        "accessibilityhazard": [{
-            "id": "167",
-            "value": "flashing",
-            "educationalmaterialid": "68",
-            "accessibilityhazardkey": "key1"
-        }, {
-            "id": "168",
-            "value": "sound",
-            "educationalmaterialid": "68",
-            "accessibilityhazardkey": "key2"
-        }],
-        "keyword": [{
-            "id": "204",
-            "value": "ympäristötietoisuus",
-            "educationalmaterialid": "68",
-            "keywordkey": "p10"
-        }, {
-            "id": "205",
-            "value": "toinen sana",
-            "educationalmaterialid": "68",
-            "keywordkey": "p2"
-        }],
-        "educationallevel": [{
-            "id": "168",
-            "value": "ala-aste",
-            "educationalmaterialid": "68",
-            "educationallevelkey": "key2"
-        }, {
-            "id": "324",
-            "value": "ala-aste",
-            "educationalmaterialid": "68",
-            "educationallevelkey": "key1"
-        }],
-        "educationaluse": [{
-            "id": "210",
-            "value": "educationalUse123",
-            "educationalmaterialid": "68",
-            "educationalusekey": "key1"
-        }, {
-            "id": "211",
-            "value": "educationalUse2",
-            "educationalmaterialid": "68",
-            "educationalusekey": "key3"
-        }],
-        "publisher": [{
-            "id": "349",
-            "name": "adsas33",
-            "educationalmaterialid": "68",
-            "publisherkey": "adsa1"
-        }, {
-            "id": "194",
-            "name": "CSC",
-            "educationalmaterialid": "68",
-            "publisherkey": "CSC"
-        }],
-        "author": [{
-            "id": "489",
-            "authorname": "Testinen, Testi",
-            "organization": "A. Hätinen Oy",
-            "educationalmaterialid": "68",
-            "organizationkey": "1.2.246.562.10.58952610762"
-        }, {
-            "id": "490",
-            "authorname": "Testinen, Toinen",
-            "organization": "",
-            "educationalmaterialid": "68",
-            "organizationkey": ""
-        }, {
-            "id": "491",
-            "authorname": "",
-            "organization": "Aalto-yliopisto",
-            "educationalmaterialid": "68",
-            "organizationkey": "1.2.246.562.10.56753942459"
-        }],
-        "isbasedon": [{
-            "id": "181",
-            "url": "uusi.example://url.fi",
-            "materialname": "Kalevin vala2",
-            "educationalmaterialid": "68",
-            "author": [{
-                "id": "1196",
-                "authorname": "T",
-                "isbasedonid": "181"
-            }]
-        }],
-        "inlanguage": [],
-        "alignmentobject": [{
-            "id": "233",
-            "educationalmaterialid": "68",
-            "alignmenttype": "teaches2",
-            "targetname": "ma",
-            "source": "koodisto1",
-            "educationalframework": "",
-            "objectkey": "key3",
-            "targeturl": "testurl"
-        }, {
-            "id": "482",
-            "educationalmaterialid": "68",
-            "alignmenttype": "educationalSubject",
-            "targetname": "ma",
-            "source": "koodisto1",
-            "educationalframework": "",
-            "objectkey": "key3",
-            "targeturl": "testurl"
-        }, {
-            "id": "483",
-            "educationalmaterialid": "68",
-            "alignmenttype": "teaches",
-            "targetname": "ma",
-            "source": "koodisto2",
-            "educationalframework": "A1",
-            "objectkey": "key1",
-            "targeturl": "testurl"
-        }, {
-            "id": "484",
-            "educationalmaterialid": "68",
-            "alignmenttype": "teaches",
-            "targetname": "m43",
-            "source": "koodisto1",
-            "educationalframework": "A1",
-            "objectkey": "key2",
-            "targeturl": "testurl"
-        }],
-        "owner": [{
-            "firstname": "Jari",
-            "lastname": "Aarni"
-        }],
-        "thumbnail": null
-    };
-    const response = createfilters(data);
-    expect(response).toEqual({
-        "teaches": ["key1", "key2"]
-    });
 });
 
 elasticSearchQuery
