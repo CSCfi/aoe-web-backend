@@ -89,6 +89,7 @@ interface Source {
     suitsallpreprimarysubjects: boolean;
     suitsallbasicstudysubjects: boolean;
     suitsalluppersecondarysubjects: boolean;
+    suitsalluppersecondarysubjectsnew: boolean;
     suitsallvocationaldegrees: boolean;
     suitsallselfmotivatedsubjects: boolean;
     suitsallbranches: boolean;

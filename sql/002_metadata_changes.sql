@@ -14,3 +14,6 @@ ALTER TABLE IsBasedOnAuthor ADD CONSTRAINT FKIsBasedOnAuthor FOREIGN KEY (IsBase
 ALTER TABLE isbasedon DROP COLUMN author;
 
 ALTER TABLE attachment ADD COLUMN Obsoleted int4 DEFAULT 0 NOT NULL;
+
+--24.3.2020 feat-582
+ALTER TABLE educationalmaterial ADD COLUMN SuitsAllUpperSecondarySubjectsNew bool DEFAULT 'false' NOT NULL;

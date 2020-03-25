@@ -251,34 +251,6 @@
           "id" : {
             "type" : "long"
           },
-          "inlanguage" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "inlanguage" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "url" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
           "isbasedon" : {
             "properties" : {
               "author" : {
@@ -668,6 +640,9 @@
             "type" : "boolean"
           },
           "suitsalluppersecondarysubjects" : {
+            "type" : "boolean"
+          },
+          "suitsalluppersecondarysubjectsnew" : {
             "type" : "boolean"
           },
           "suitsallvocationaldegrees" : {
