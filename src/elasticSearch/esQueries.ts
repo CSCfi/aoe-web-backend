@@ -20,8 +20,16 @@ interface FilterTerm {
     [key: string]: string
   };
 }
-
-
+interface MatchObject {
+  bool: {
+    must: Array<
+      {
+        match: {
+          [key: string]: string
+      };
+    }>;
+  };
+}
 interface ShardsResponse {
   total: number;
   successful: number;
@@ -81,6 +89,7 @@ interface Source {
     suitsallpreprimarysubjects: boolean;
     suitsallbasicstudysubjects: boolean;
     suitsalluppersecondarysubjects: boolean;
+    suitsalluppersecondarysubjectsnew: boolean;
     suitsallvocationaldegrees: boolean;
     suitsallselfmotivatedsubjects: boolean;
     suitsallbranches: boolean;
@@ -204,6 +213,7 @@ interface AoeRequestFilter {
   keywords: Array<string>;
   languages: Array<string>;
   organizations: Array<string>;
+  teaches: Array<string>;
 }
 interface AoeBody<T> {
     hits: number;
@@ -319,6 +329,11 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
   }
 }
 
+/**
+ *
+ * @param materials
+ * return true if any material has pouta filekey
+ */
 function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
   try {
     for (const element of materials) {
@@ -425,7 +440,7 @@ function filterMapper(filters: AoeRequestFilter) {
         createShouldObject(filter, "learningresourcetype.learningresourcetypekey.keyword", filters.learningResourceTypes);
       }
       if (filters.educationalSubjects) {
-        createShouldObject(filter, "alignmentobject.objectkey.keyword", filters.educationalSubjects);
+        createShouldObject(filter, "alignmentobject.objectkey.keyword", filters.educationalSubjects, "educationalSubject");
       }
       if (filters.educationalRoles) {
         createShouldObject(filter, "educationalaudience.educationalrolekey.keyword", filters.educationalRoles);
@@ -444,6 +459,9 @@ function filterMapper(filters: AoeRequestFilter) {
       }
       if (filters.organizations) {
         createShouldObject(filter, "author.organizationkey.keyword", filters.organizations);
+      }
+      if (filters.teaches) {
+        createShouldObject(filter, "alignmentobject.objectkey.keyword", filters.teaches, "teaches");
       }
 
       return filter;
@@ -467,17 +485,38 @@ function createMultiMatchObject(keywords: string, fields: string[]) {
     }
   };
 }
-
-function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>) {
+/**
+ *
+ * @param filter
+ * @param key
+ * @param valueList
+ * @param alignmentObjectType
+ *
+ * Creates bool should object for elastic search query
+ * uses elastic search term object as default or
+ * must match list if alignmentObjectType is defined
+ */
+function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>, alignmentObjectType?: string) {
   try {
-    const shouldFilter: FilterTerm[] = [];
-    valueList.map(term => {
-          const obj = {};
-          obj[key] = term;
-          shouldFilter.push({"term": obj});
-        });
-    if (shouldFilter.length > 0) {
-      filter.push({"bool": {"should": shouldFilter}});
+    if (alignmentObjectType) {
+      const mustMatchObjectList: MatchObject[] = [];
+      valueList.map(key => {
+        mustMatchObjectList.push(createMustMatchObject(key, alignmentObjectType));
+      });
+      if (mustMatchObjectList.length > 0) {
+        filter.push({"bool": {"should": mustMatchObjectList}});
+      }
+    }
+    else {
+      const shouldFilter: FilterTerm[] = [];
+      valueList.map(term => {
+            const obj = {};
+            obj[key] = term;
+            shouldFilter.push({"term": obj});
+          });
+      if (shouldFilter.length > 0) {
+        filter.push({"bool": {"should": shouldFilter}});
+      }
     }
   }
   catch (err) {
@@ -486,6 +525,27 @@ function createShouldObject(filter: Array<object>, key: string, valueList: Array
   }
 }
 
+function createMustMatchObject(key: string, type: string) {
+  try {
+    const mustObj = {"bool": {
+                      "must": [ {
+                        "match": {
+                          "alignmentobject.alignmenttype.keyword": type}
+                        },
+                                {
+                        "match": {
+                          "alignmentobject.objectkey.keyword": key}
+                        }
+                      ]
+                    }
+                  };
+                  return mustObj;
+  }
+  catch (err) {
+    console.log(err);
+    throw new Error(err);
+  }
+}
 module.exports = {
     elasticSearchQuery : elasticSearchQuery,
     createShouldObject,
@@ -493,5 +553,6 @@ module.exports = {
     createMatchAllObject,
     filterMapper,
     aoeResponseMapper,
-    hasDownloadableFiles
+    hasDownloadableFiles,
+    createMustMatchObject
 };
