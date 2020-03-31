@@ -170,37 +170,39 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
          */
         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
         response = await t.any(query, [req.params.id]);
-        queries.push(response);
+        // queries.push(response);
         console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
         console.log("Maybe this is where we see mimetype: " + response[0].mimetype + " and filekey: " + response[0].filekey);
 
-        // if (response[0].mimetype === "application/zip" || response[0].mimetype === "text/html") {
-        //     const result = fh.downloadFile(req, res, true);
-        //     if (result != false && response[0].mimetype === "application/zip") {
-        //         /**
-        //          * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
-        //          * Write db code to replace application/zip with text/html for this specific file
-        //          */
+        if (response[0].mimetype === "application/zip" || response[0].mimetype === "text/html") {
+            const result = fh.downloadFile(req, res, true);
+            if (result != false && response[0].mimetype === "application/zip") {
+                /**
+                 * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
+                 * Write db code to replace application/zip with text/html for this specific file
+                 */
 
-        //          /**
-        //           * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
-        //           */
-        //         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        //         response = await t.any(query, [req.params.id]);
-        //         queries.push(response);
-        //         console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + result);
-        //     }
-        //     else  {
-        //         /**
-        //          * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
-        //          * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
-        //          */
-        //         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        //         response = await t.any(query, [req.params.id]);
-        //         queries.push(response);
-        //     }
+                 /**
+                  * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
+                  */
+                query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+                queries.push(response);
+                console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + result);
+            }
+            else  {
+                /**
+                 * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
+                 * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
+                 */
+                query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+                queries.push(response);
+                next();
+            }
+            next();
 
-        // }
+        }
         // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
         // response = await t.any(query, [req.params.id]);
         // queries.push(response);

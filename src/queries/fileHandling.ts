@@ -629,11 +629,12 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
     });
 }
 
-async function downloadFile(req: Request, res: Response, isZip?: boolean) {
+async function downloadFile(req: Request, res: Response, isZip?: any) {
     try {
         console.log("We came here, the isZip boolean value: " + isZip);
         const data = await downloadFileFromStorage(req, res);
-        if (isZip === true) {
+        console.log("The data in DownloadFile function: " + data);
+        if (isZip) {
             unZipAndExtract(data);
         }
         else {
