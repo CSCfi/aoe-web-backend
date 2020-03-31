@@ -631,7 +631,7 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
 
 async function downloadFile(req: Request, res: Response, isZip?: boolean) {
     try {
-
+        console.log("We came here, the isZip boolean value: " + isZip);
         const data = await downloadFileFromStorage(req, res);
         if (isZip === true) {
             unZipAndExtract(data);
