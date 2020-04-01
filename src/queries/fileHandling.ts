@@ -658,6 +658,7 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
             console.log("The query from downloadFileFromStorage: " + query);
             const response = await db.oneOrNone(query, [req.params.key]);
+            console.log("The response from query in downloadFileFromStorage function: " + response);
             if (!response) {
                 res.status(404).send("Not found");
             }
@@ -704,7 +705,7 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
             }
         }
         catch (err) {
-            console.log("The error in downloadFileFromStorage function (uppe try catch) : " + err);
+            console.log("The error in downloadFileFromStorage function (upper try catch) : " + err);
             res.status(500).send("error");
         }
     });
@@ -768,7 +769,7 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
 
 
 }
-async function unZipAndExtract(zipFolder: any) {
+ async function unZipAndExtract(zipFolder: any) {
 
 
 try {
