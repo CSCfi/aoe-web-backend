@@ -631,14 +631,15 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
 
 async function downloadFile(req: Request, res: Response, isZip?: any) {
     try {
-        console.log("We came here, the isZip boolean value: " + isZip);
-        const data = await downloadFileFromStorage(req, res);
-        console.log("The data in DownloadFile function: " + data);
+
         if (isZip) {
-            unZipAndExtract(data);
+            downloadFileFromStorage(req, res, true);
         }
         else {
-        res.status(200).send(data);
+            console.log("We came here, the isZip boolean value: " + isZip);
+            const data = await downloadFileFromStorage(req, res);
+            console.log("The data in DownloadFile function: " + data);
+            res.status(200).send(data);
         }
     }
     catch (err) {
@@ -649,7 +650,7 @@ async function downloadFile(req: Request, res: Response, isZip?: any) {
     }
 }
 
-async function downloadFileFromStorage(req: Request, res: Response) {
+async function downloadFileFromStorage(req: Request, res: Response, isZip?: any) {
     return new Promise(async (resolve) => {
         try {
             const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
@@ -683,22 +684,19 @@ async function downloadFileFromStorage(req: Request, res: Response) {
                     const fileStream = s3.getObject(params).createReadStream();
                     const ext = response.originalfilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
                     console.log("The file extension of the response from pouta: " + ext);
-                    fileStream.pipe(res);
+                    if (isZip) {
+                        /**
+                         * Here implement the code to
+                         * download straight to server
+                         */
+                        const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
+                        fileStream.pipe(fs.createWriteStream(folderpath));
+                        unZipAndExtract(folderpath);
+                    }
+                    else {
+                        fileStream.pipe(res);
+                    }
 
-                    // Here we check if the extensionname of the response from pouta is .zip, if it is
-                    // we send it to the unzip function so we can show the zipped content in iframe.
-                    // if (ext === ".zip") {
-                        // Not sure how we send it back here, the function simply returns
-                        // the specified url for the index.html file in the folder for the frontend to use as the sourceurl
-
-                        // fileStream.pipe(unZipAndExtract(response));
-
-                        // Not sure how to return the data, either the way above or below
-                    //     return unZipAndExtract(response);
-                    // }
-                    // else {
-                    // fileStream.pipe(res);
-                    // }
                 }
                 catch (err) {
                     console.log(err);
@@ -771,18 +769,19 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
 
 
 }
-async function unZipAndExtract(file: any) {
+async function unZipAndExtract(zipFolder: any) {
 
 
 try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
-    console.log("The file that came to the unZipandExtract function: " + file);
-    const fileToUnzip = file;
+    console.log("The file that came to the unZipandExtract function: " + zipFolder);
+    const fileToUnzip = zipFolder;
     const zip = new ADMzip(fileToUnzip);
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
-    const filename = file.originalname.substring(0, file.originalname.lastIndexOf("."));
-    const folderPath = process.env.HTMLFOLDER + "/" + filename;
+    const filename = zipFolder.originalname.substring(1, zipFolder.lastIndexOf("/"));
+    const folderPath = zipFolder;
+    // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
     zip.extractAllTo(folderPath, true);
     const pathToReturn = folderPath + "/index.html";

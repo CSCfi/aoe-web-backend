@@ -180,7 +180,9 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                 /**
                  * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
                  * Write db code to replace application/zip with text/html for this specific file
+                 * mimetype = text/html + result
                  */
+
 
                  /**
                   * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
@@ -198,9 +200,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                 query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
                 response = await t.any(query, [req.params.id]);
                 queries.push(response);
-                next();
             }
-            next();
 
         }
         // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
