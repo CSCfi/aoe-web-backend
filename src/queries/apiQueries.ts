@@ -176,6 +176,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
 
         if (response[0].mimetype === "application/zip" || response[0].mimetype === "text/html") {
             const result = fh.downloadFile(req, res, true);
+            console.log("The result from fh.downloadFile with isZip True value: " + result);
             if (result != false && response[0].mimetype === "application/zip") {
                 /**
                  * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html

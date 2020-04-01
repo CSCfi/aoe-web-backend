@@ -650,12 +650,13 @@ async function downloadFile(req: Request, res: Response, isZip?: any) {
 }
 
 async function downloadFileFromStorage(req: Request, res: Response, isZip?: any) {
+    console.log("The isZip value in downloadFileFromStorage: " + isZip);
     return new Promise(async (resolve) => {
         try {
             const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
                         "union " +
                         "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
-            console.log(query);
+            console.log("The query from downloadFileFromStorage: " + query);
             const response = await db.oneOrNone(query, [req.params.key]);
             if (!response) {
                 res.status(404).send("Not found");
@@ -681,8 +682,6 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                     res.header("Content-Disposition", contentDisposition(response.originalfilename));
                     console.log("The response.originalfilename is: " + response.originalfilename);
                     const fileStream = s3.getObject(params).createReadStream();
-                    const ext = response.originalfilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
-                    console.log("The file extension of the response from pouta: " + ext);
                     if (isZip) {
                         console.log("We came to the if-statement in downloadFileFromStorage!");
                         /**
@@ -691,7 +690,7 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                          */
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
                         fileStream.pipe(fs.createWriteStream(folderpath));
-                        return unZipAndExtract(folderpath);
+                        unZipAndExtract(folderpath);
                     }
                     else {
                         fileStream.pipe(res);
@@ -699,13 +698,13 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
 
                 }
                 catch (err) {
-                    console.log(err);
+                    console.log("The error in downloadFileFromStorage function: " + err);
                     res.status(500).send(err);
                 }
             }
         }
         catch (err) {
-            console.log(err);
+            console.log("The error in downloadFileFromStorage function: " + err);
             res.status(500).send("error");
         }
     });
@@ -775,7 +774,7 @@ async function unZipAndExtract(zipFolder: any) {
 try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
-    console.log("The file that came to the unZipandExtract function: " + zipFolder);
+    console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
     const fileToUnzip = zipFolder;
     const zip = new ADMzip(fileToUnzip);
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
