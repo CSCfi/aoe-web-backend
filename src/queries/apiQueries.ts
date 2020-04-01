@@ -183,14 +183,13 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                  * mimetype = text/html + result
                  */
 
-
                  /**
                   * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
                   */
                 query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
                 response = await t.any(query, [req.params.id]);
                 queries.push(response);
-                console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + result);
+                console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + JSON.stringify(result));
             }
             else  {
                 /**

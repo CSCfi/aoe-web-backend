@@ -633,10 +633,9 @@ async function downloadFile(req: Request, res: Response, isZip?: any) {
     try {
 
         if (isZip) {
-            downloadFileFromStorage(req, res, true);
+            return downloadFileFromStorage(req, res, true);
         }
         else {
-            console.log("We came here, the isZip boolean value: " + isZip);
             const data = await downloadFileFromStorage(req, res);
             console.log("The data in DownloadFile function: " + data);
             res.status(200).send(data);
@@ -685,13 +684,14 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                     const ext = response.originalfilename.substring(response.originalfilename.lastIndexOf("."), response.originalfilename.length);
                     console.log("The file extension of the response from pouta: " + ext);
                     if (isZip) {
+                        console.log("We came to the if-statement in downloadFileFromStorage!");
                         /**
                          * Here implement the code to
                          * download straight to server
                          */
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
                         fileStream.pipe(fs.createWriteStream(folderpath));
-                        unZipAndExtract(folderpath);
+                        return unZipAndExtract(folderpath);
                     }
                     else {
                         fileStream.pipe(res);
