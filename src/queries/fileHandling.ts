@@ -678,9 +678,6 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         Bucket: bucketName,
                         Key: key
                     };
-                    res.attachment(key);
-                    res.header("Content-Disposition", contentDisposition(response.originalfilename));
-                    console.log("The response.originalfilename is: " + response.originalfilename);
                     const fileStream = s3.getObject(params).createReadStream();
                     if (isZip) {
                         console.log("We came to the if-statement in downloadFileFromStorage!");
@@ -693,18 +690,21 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         unZipAndExtract(folderpath);
                     }
                     else {
+                        res.attachment(key);
+                        res.header("Content-Disposition", contentDisposition(response.originalfilename));
+                        console.log("The response.originalfilename is: " + response.originalfilename);
                         fileStream.pipe(res);
                     }
 
                 }
                 catch (err) {
-                    console.log("The error in downloadFileFromStorage function: " + err);
+                    console.log("The error in downloadFileFromStorage function (nested try) : " + err);
                     res.status(500).send(err);
                 }
             }
         }
         catch (err) {
-            console.log("The error in downloadFileFromStorage function: " + err);
+            console.log("The error in downloadFileFromStorage function (uppe try catch) : " + err);
             res.status(500).send("error");
         }
     });
