@@ -779,7 +779,7 @@ try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
     console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
-    const filenameParsed = zipFolder.originalname.substring(1, zipFolder.lastIndexOf("/"));
+    const filenameParsed = zipFolder.substring(1, zipFolder.lastIndexOf("/"));
     console.log("The filenameParsed: " + filenameParsed);
     console.log("Does the file exist? : " + fs.existsSync(zipFolder));
     const zip = new ADMzip(filenameParsed);
