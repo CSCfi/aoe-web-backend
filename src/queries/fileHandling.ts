@@ -779,15 +779,15 @@ try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
     console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
-    const fileToUnzip = zipFolder;
-    const zip = new ADMzip(fileToUnzip);
+    const filenameParsed = zipFolder.originalname.substring(1, zipFolder.lastIndexOf("/"));
+    console.log("The filenameParsed: " + filenameParsed);
+    const zip = new ADMzip(filenameParsed);
+    console.log("Does the file exist? : " + fs.existsSync(zipFolder));
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
-    const filename = zipFolder.originalname.substring(1, zipFolder.lastIndexOf("/"));
-    const folderPath = zipFolder;
     // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
-    zip.extractAllTo(folderPath, true);
-    const pathToReturn = folderPath + "/index.html";
+    zip.extractAllTo(zipFolder, true);
+    const pathToReturn = zipFolder + "/index.html";
     if (fs.existsSync(pathToReturn)) {
         // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
         // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
