@@ -781,8 +781,8 @@ try {
     console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
     const filenameParsed = zipFolder.originalname.substring(1, zipFolder.lastIndexOf("/"));
     console.log("The filenameParsed: " + filenameParsed);
-    const zip = new ADMzip(filenameParsed);
     console.log("Does the file exist? : " + fs.existsSync(zipFolder));
+    const zip = new ADMzip(filenameParsed);
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
     // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
