@@ -10,6 +10,8 @@ const passport = require("passport");
 // Importing ah const from authservice.ts
  const db = require("../queries/apiQueries");
  const ah = require("../services/authService");
+ const rating = require("../rating/rating");
+ const validator = require("../validators/validator");
 
 // File handling
  const fh = require("./../queries/fileHandling");
@@ -74,4 +76,6 @@ router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
+router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules() , validator.ratingValidate, rating.addRating);
+router.get("/rating", rating.getRating);
 export = router;

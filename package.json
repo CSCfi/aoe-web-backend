@@ -45,7 +45,7 @@
     "express": "^4.16.4",
     "express-flash": "0.0.2",
     "express-session": "^1.15.6",
-    "express-validator": "^4.3.0",
+    "express-validator": "^6.4.0",
     "fast-csv": "^2.4.1",
     "global-request-logger": "^0.1.1",
     "hoek": "^5.0.3",
@@ -87,7 +87,7 @@
     "@types/lodash": "^4.14.110",
     "@types/lusca": "^1.5.0",
     "@types/morgan": "^1.7.35",
-    "@types/node": "^9.6.22",
+    "@types/node": "^9.6.55",
     "@types/nodemailer": "^4.6.1",
     "@types/passport": "^0.4.5",
     "@types/passport-local": "^1.0.33",
@@ -111,7 +111,7 @@
     "ts-jest": "^22.4.6",
     "ts-node": "^5.0.1",
     "tslint": "^5.10.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.8.3"
   },
   "jest": {
     "coverageReporters": [
