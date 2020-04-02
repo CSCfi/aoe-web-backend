@@ -652,8 +652,7 @@ async function downloadFile(req: Request, res: Response, isZip?: any) {
 async function downloadFileFromStorage(req: Request, res: Response, isZip?: any) {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
     console.log("The req.headers in downloadFileFromStorage: " + JSON.stringify(req.headers));
-    console.log("The whole req in DownloadFileFromStorage: " + JSON.stringify(req));
-    console.log("The whole response in downloadFileFromStorage: " + JSON.stringify(res));
+    console.log("The req.params in downloadFileFromStorage: " + JSON.stringify(req.params));
     return new Promise(async (resolve) => {
         try {
             const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
