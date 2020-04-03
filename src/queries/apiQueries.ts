@@ -929,8 +929,13 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 const dnresult = await fh.insertDataToDisplayName(t, req.params.id, element.id, element);
                 queries.push(dnresult);
                 query = "UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3";
-                console.log("update material name: " + query, [element.language.key, element.id, req.params.id]);
-                queries.push(await t.any(query, [element.language.key, element.id, req.params.id]));
+                console.log("update material name: " + query, [element.language, element.id, req.params.id]);
+                queries.push(await t.any(query, [element.language, element.id, req.params.id]));
+                if (element.link) {
+                    query = "UPDATE material SET link = $1 WHERE id = $2 AND educationalmaterialid = $3";
+                    console.log("update link: " + query, [element.link, element.id, req.params.id]);
+                    queries.push(await t.any(query, [element.link, element.id, req.params.id]));
+                }
             }
         }
 // accessibilityFeatures

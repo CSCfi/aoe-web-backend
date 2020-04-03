@@ -250,7 +250,6 @@ app.set("views", path.join(__dirname, "../views"));
 app.set("view engine", "pug");
 app.get("/", homeController.index);
 app.use("/", apiRouter);
-app.use(expressValidator);
 app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection);
 
