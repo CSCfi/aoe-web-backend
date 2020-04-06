@@ -233,6 +233,8 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.suitsAllSelfMotivatedSubjects = data[0][0].suitsallselfmotivatedsubjects;
         jsonObj.suitsAllBranches = data[0][0].suitsallbranches;
         jsonObj.suitsAllUpperSecondarySubjectsNew = data[0][0].suitsalluppersecondarysubjectsnew;
+        jsonObj.ratingContentAverage = data[0][0].ratingcontentaverage;
+        jsonObj.ratingVisualAverage = data[0][0].ratingvisualaverage;
         jsonObj.author = data[11];
         jsonObj.publisher = data[10];
         jsonObj.description = data[2];
