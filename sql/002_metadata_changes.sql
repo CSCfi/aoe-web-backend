@@ -28,7 +28,7 @@ CREATE TABLE Rating (
   FeedbackPurpose       varchar(1000), 
   EducationalMaterialId int8 NOT NULL, 
   UsersUserName         text NOT NULL,
-  UpdatedAt        timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL 
+  UpdatedAt        timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL,
   PRIMARY KEY (Id));
 ALTER TABLE Rating ADD CONSTRAINT FKRatingUsers FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
 ALTER TABLE Rating ADD CONSTRAINT FKRatingEducationalMaterial FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
