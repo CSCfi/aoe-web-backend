@@ -618,8 +618,8 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
         query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,publishedat, suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) where id=$6;";
-        console.log(query, [req.body.expires, dnow, req.body.timeRequired, req.body.typicalAgeRange.typicalAgeRangeMin, req.body.typicalAgeRange.typicalAgeRangeMax, req.params.id, req.body.license]);
-        queries.push(await t.any(query, [((req.body.expires == undefined) ? "9999-01-01T00:00:00+00:00" : req.body.expires), dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((req.body.typicalAgeRange.typicalAgeRangeMin == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMin), ((req.body.typicalAgeRange.typicalAgeRangeMax == undefined) ? -1 : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, ((req.body.publishedAt == undefined) ? "now()" : req.body.publishedAt), req.body.suitsAllUpperSecondarySubjectsNew]));
+        console.log(query, [req.body.expires, dnow, req.body.timeRequired, ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license]);
+        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, ((req.body.publishedAt == undefined) ? "now()" : req.body.publishedAt), req.body.suitsAllUpperSecondarySubjectsNew]));
 // description
         console.log("inserting description");
         const description = req.body.description;
@@ -869,7 +869,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 for (const element of response) {
                     let toBeDeleted = true;
                     for (let i = 0; arr.length > i; i += 1 ) {
-                        if ( element.alignmenttype === arr[i].alignmentType && element.targetname === arr[i].targetName && element.source === arr[i].source) {
+                        if ( element.alignmenttype === arr[i].alignmentType && element.objectkey === arr[i].key && element.source === arr[i].source) {
                             toBeDeleted = false;
                         }
                     }
@@ -883,6 +883,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 // data input values:
                 // console.log(arr);
                 const values: any = [];
+                // const updateValues: Array<object> = [];
                 for ( let i = 0; i < arr.length; i += 1) {
                     arr[i].educationalmaterialid = req.params.id;
                 }
@@ -890,10 +891,11 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     console.log(element.educationalFramework);
                     const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework), targeturl : element.targetUrl };
                     values.push(obj);
+                    // updateValues.push({educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework)});
                 });
-                // console.log(arr);
+                // console.log(arr); (alignmentType, targetName, source, educationalmaterialid)
                 console.log(values);
-                query = pgp.helpers.insert(values, cs) + " ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
+                query = pgp.helpers.insert(values, cs) + " ON CONFLICT ON CONSTRAINT constraint_alignmentobject DO UPDATE Set educationalframework = excluded.educationalframework";
                 console.log(query);
                 queries.push(await t.any(query));
                 // for (const element of arr) {
@@ -1049,6 +1051,17 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
                     console.log(query, [element.priority, element.id, req.params.id]);
                     queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
+                }
+            }
+
+            console.log("update attachmentDetails");
+            arr = req.body.attachmentDetails;
+            if (arr) {
+                for (const element of arr) {
+                    query = "update attachment set kind = $1, defaultfile = $2, label = $3, srclang = $4 where (id = $5 " +
+                    "and (select educationalmaterialid from material where id = (select materialid from attachment where id = $5)) = $6);";
+                    console.log(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]);
+                    queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]));
                 }
             }
         return t.batch(queries);

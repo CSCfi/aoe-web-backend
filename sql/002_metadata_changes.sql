@@ -35,3 +35,12 @@ ALTER TABLE Rating ADD CONSTRAINT FKRatingEducationalMaterial FOREIGN KEY (Educa
 ALTER TABLE Rating ADD CONSTRAINT constraint_Rating UNIQUE (UsersUserName,educationalmaterialid);
 ALTER TABLE educationalmaterial ADD COLUMN RatingContentAverage NUMERIC (2, 1);
 ALTER TABLE educationalmaterial ADD COLUMN RatingVisualAverage NUMERIC (2, 1);
+
+--feat 628
+ALTER TABLE educationalmaterial ALTER COLUMN agerangemin DROP DEFAULT;
+ALTER TABLE educationalmaterial ALTER COLUMN agerangemin DROP NOT NULL;
+ALTER TABLE educationalmaterial ALTER COLUMN agerangemax DROP DEFAULT;
+ALTER TABLE educationalmaterial ALTER COLUMN agerangemax DROP NOT NULL;
+ALTER TABLE educationalmaterial ALTER COLUMN expires DROP NOT NULL;
+ALTER TABLE alignmentobject DROP CONSTRAINT constraint_alignmentobject;
+ALTER TABLE alignmentobject ADD CONSTRAINT constraint_alignmentobject UNIQUE (alignmentType, objectkey, source, educationalmaterialid);
