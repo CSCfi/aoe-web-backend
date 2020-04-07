@@ -690,8 +690,8 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                          * download straight to server
                          */
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
-                        fileStream.pipe(fs.createWriteStream(folderpath));
-                        unZipAndExtract(folderpath);
+                        const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
+                        zipStream.end(unZipAndExtract(folderpath));
                     }
                     else {
                         res.attachment(key);
