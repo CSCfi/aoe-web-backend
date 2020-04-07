@@ -779,17 +779,19 @@ try {
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
     console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
-    const filenameParsed = zipFolder.substring(0, zipFolder.lastIndexOf("/"));
+    // const filenameParsed = zipFolder.substring(0, zipFolder.lastIndexOf("/"));
     const filenameParsedNicely = zipFolder.slice(0, -4);
     console.log("Hopefully the filename is parsed corectly: " + filenameParsedNicely);
-    console.log("The filenameParsed: " + filenameParsed);
+    // console.log("The filenameParsed: " + filenameParsed);
     console.log("Does the file exist? : " + fs.existsSync(zipFolder));
     const zip = new ADMzip(zipFolder);
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
     // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
     const zipEntries = zip.getEntries();
-    console.log("The zip entries: " + zipEntries);
+    zipEntries.forEach(function (zipEntry) {
+        console.log(zipEntry.getData().toString("utf8"));
+    });
     zip.extractAllTo(filenameParsedNicely, true);
     const pathToReturn = zipFolder + "/index.html";
     if (fs.existsSync(pathToReturn)) {
