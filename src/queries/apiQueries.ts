@@ -270,7 +270,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1' limit 1000;";
+            query = "SELECT id, licensecode as license, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1' limit 1000;";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
