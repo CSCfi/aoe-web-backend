@@ -351,8 +351,8 @@ function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
 
 async function elasticSearchQuery(req: Request, res: Response) {
   try {
-    let from = 0;
-    let size = 100;
+    let from = Number(process.env.ES_FROM_DEFAULT) || 0;
+    let size = Number(process.env.ES_SIZE_DEFAULT) || 100;
     if (req.body.from) {
       from = req.body.from;
     }
