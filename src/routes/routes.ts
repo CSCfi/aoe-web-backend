@@ -77,5 +77,5 @@ router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
 router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules() , validator.ratingValidate, rating.addRating);
-router.get("/rating", rating.getRating);
+router.get("/rating/:materialId", rating.getRating);
 export = router;

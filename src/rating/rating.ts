@@ -28,7 +28,7 @@ export async function addRating(req: Request , res: Response) {
 
 export async function getRating(req: Request, res: Response) {
   try {
-    const response = await getRatings(req.body.materialId);
+    const response = await getRatings(req.params.materialId);
     res.status(200).json({"ratings": response});
   }
   catch (error) {
