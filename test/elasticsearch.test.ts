@@ -5,7 +5,9 @@ const {elasticSearchQuery,
     createMultiMatchObject,
     createMatchAllObject,
     filterMapper,
-    aoeResponseMapper} = require ("../src/elasticSearch/esQueries");
+    aoeResponseMapper,
+    hasDownloadableFiles,
+    createMustMatchObject} = require ("../src/elasticSearch/esQueries");
 
 test("create should object", () => {
     const obj = [];
@@ -45,7 +47,8 @@ test("map aoe request filters to elastic search query", () => {
         "alignmentTypes": ["type"],
         "keywords": ["avainsana"],
         "languages": ["fi"],
-        "organizations": ["csc"]
+        "organizations": ["csc"],
+        "teaches": ["matematiikkakey"]
       };
     
     const obj = filterMapper(filters);
@@ -53,13 +56,16 @@ test("map aoe request filters to elastic search query", () => {
     ,{"term":{"educationallevel.educationallevelkey.keyword":"key2"}}]}}
     ,{"bool":{"should":[{"term":{"learningresourcetype.learningresourcetypekey.keyword":"a42b00b6-c2a7-407d-ba6b-8e7a4fb3e195"}}
     ,{"term":{"learningresourcetype.learningresourcetypekey.keyword":"key3"}}]}}
-    ,{"bool":{"should":[{"term":{"alignmentobject.objectkey.keyword":"etsi"}}]}}
+    // ,{"bool":{"should":[{"term":{"alignmentobject.objectkey.keyword":"etsi"}}]}}
+    ,{"bool":{"should":[{"bool": {"must": [{"match": {"alignmentobject.alignmenttype.keyword": "educationalSubject"}}, {"match": {"alignmentobject.objectkey.keyword": "etsi"}}]}}]}}
     ,{"bool":{"should":[{"term":{"educationalaudience.educationalrolekey.keyword":"student"}}]}}
     ,{"bool":{"should":[{"term":{"author.authorname.keyword":"Jari"}}]}}
     ,{"bool":{"should":[{"term":{"alignmentobject.alignmenttype.keyword":"type"}}]}}
     ,{"bool":{"should":[{"term":{"keyword.keywordkey.keyword":"avainsana"}}]}}
     ,{"bool":{"should":[{"term":{"materials.language.keyword":"fi"}}]}}
-    ,{"bool":{"should":[{"term":{"author.organizationkey.keyword":"csc"}}]}}]
+    ,{"bool":{"should":[{"term":{"author.organizationkey.keyword":"csc"}}]}}
+    ,{"bool":{"should":[{"bool": {"must": [{"match": {"alignmentobject.alignmenttype.keyword": "teaches"}}, {"match": {"alignmentobject.objectkey.keyword": "matematiikkakey"}}]}}]}}
+]
     expect(obj).toEqual(result);
 });
 
@@ -560,6 +566,15 @@ test("map elastic search response to aoe", async () => {
                             "educationalframework": "A1",
                             "objectkey": "key2",
                             "targeturl": "testurl"
+                        }, {
+                            "id": "462",
+                            "educationalmaterialid": "2",
+                            "alignmenttype": "educationalSubject",
+                            "targetname": "ma",
+                            "source": "koodisto1",
+                            "educationalframework": "",
+                            "objectkey": "key3",
+                            "targeturl": "testurl"
                         }],
                         "owner": [{
                             "firstname": "Jari",
@@ -715,11 +730,60 @@ test("map elastic search response to aoe", async () => {
                     "en",
                     "fi"
                 ],
+                "educationalSubjects": [
+                    {
+                        "key": "key3",
+                        "source": "koodisto1",
+                        "value": "ma"
+                    }
+                ],
+                "teaches": [
+                    {
+                        "key": "key1",
+                        "value": "ma"
+                    },
+                    {
+                        "key": "key2",
+                        "value": "etsi"
+                    }
+                ],
+                "hasDownloadableFiles": true,
                 "thumbnail": null
             }
         ]
     }
     expect(obj).toEqual(result);
+});
+
+test("hasDownloadableFiles returns true", async () => {
+    const data = [{"data": "data","filekey" : "key"}, {"data": "data"}];
+    const response = hasDownloadableFiles(data);
+    expect(response).toBe(true);
+});
+
+test("hasDownloadableFiles returns false", async () => {
+    const data = [{"data": "data"}];
+    const response = hasDownloadableFiles(data);
+    expect(response).toBe(false);
+});
+
+test("createMustMatchObject test", async () => {
+    const result = 
+    {
+        "bool": {
+            "must": [{
+                "match": {
+                    "alignmentobject.alignmenttype.keyword": "educationalSubject"
+                }
+            }, {
+                "match": {
+                    "alignmentobject.objectkey.keyword": "etsi"
+                }
+            }]
+        }
+    };
+    const response = createMustMatchObject("etsi", "educationalSubject");
+    expect(response).toEqual(result);
 });
 
 elasticSearchQuery
