@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { someLimit } from "async";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -651,7 +652,6 @@ async function downloadFile(req: Request, res: Response, isZip?: any) {
 
 async function downloadFileFromStorage(req: Request, res: Response, isZip?: any) {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
-    console.log("The req.headers in downloadFileFromStorage: " + JSON.stringify(req.headers));
     console.log("The req.params in downloadFileFromStorage: " + req.params);
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
     return new Promise(async (resolve) => {
@@ -692,7 +692,7 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
                         const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
                         zipStream.on("finish", function() {
-                            unZipAndExtract(folderpath);
+                            return unZipAndExtract(folderpath);
                         });
                         // unZipAndExtract(folderpath);
                     }
@@ -797,6 +797,8 @@ try {
     // });
     zip.extractAllTo(filenameParsedNicely, true);
     const pathToReturn = zipFolder + "/index.html";
+
+    console.log("The pathtoreturn: " + pathToReturn);
     if (fs.existsSync(pathToReturn)) {
         // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
         // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
