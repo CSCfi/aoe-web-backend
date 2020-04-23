@@ -286,6 +286,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                 jsonObj.materials[0]["filepath"] = result;
 
             }
+        }
         jsonObj.owner = owner;
         jsonObj.name = data[1];
         jsonObj.createdAt = data[0][0].createdat;
