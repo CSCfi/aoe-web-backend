@@ -691,9 +691,9 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                          */
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
                         const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
-                        zipStream.on("finish", function() {
+                        zipStream.on("finish", async function() {
                             console.log("We finished the zipstream!");
-                            resolve(unZipAndExtract(folderpath));
+                             resolve(await unZipAndExtract(folderpath));
                             // return unZipAndExtract(folderpath);
                         });
                         // unZipAndExtract(folderpath);
@@ -826,7 +826,7 @@ try {
 
     const pathToReturn = zipFolder + "/index.html";
     console.log("The pathtoreturn: " + pathToReturn);
-    const results = await searchRecursive(zipFolder, "index.html");
+    const results = await searchRecursive(filenameParsedNicely, "index.html");
     if (results != []) {
         console.log("The results: " + results);
         return results[0];
