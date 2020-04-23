@@ -692,7 +692,9 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
                         const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
                         zipStream.on("finish", function() {
-                            return unZipAndExtract(folderpath);
+                            console.log("We finished the zipstream!");
+                            resolve(unZipAndExtract(folderpath));
+                            // return unZipAndExtract(folderpath);
                         });
                         // unZipAndExtract(folderpath);
                     }
@@ -776,9 +778,34 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
 
 }
  async function unZipAndExtract(zipFolder: any) {
+    const searchRecursive = function(dir, pattern) {
+        // This is where we store pattern matches of all files inside the directory
+        let results = [];
 
+        // Read contents of directory
+        fs.readdirSync(dir).forEach(function (dirInner) {
+          // Obtain absolute path
+          dirInner = path.resolve(dir, dirInner);
+
+          // Get stats to determine if path is a directory or a file
+          const stat = fs.statSync(dirInner);
+
+          // If path is a directory, scan it and combine results
+          if (stat.isDirectory()) {
+            results = results.concat(searchRecursive(dirInner, pattern));
+          }
+
+          // If path is a file and ends with pattern then push it onto results
+          if (stat.isFile() && dirInner.endsWith(pattern)) {
+            results.push(dirInner);
+          }
+        });
+
+        return results;
+      };
 
 try {
+
     // We unzip the file that is received to the function
     // We unzip the file to the folder specified in the env variables, + filename
     console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
@@ -791,24 +818,35 @@ try {
     // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
     // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
-    const zipEntries = zip.getEntries();
+    // const zipEntries = zip.getEntries();
     // zipEntries.forEach(function (zipEntry) {
     //     console.log(zipEntry.getData().toString("utf8"));
     // });
     zip.extractAllTo(filenameParsedNicely, true);
-    const pathToReturn = zipFolder + "/index.html";
 
+    const pathToReturn = zipFolder + "/index.html";
     console.log("The pathtoreturn: " + pathToReturn);
-    if (fs.existsSync(pathToReturn)) {
-        // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
-        // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
-        return pathToReturn;
+    const results = await searchRecursive(zipFolder, "index.html");
+    if (results != []) {
+        console.log("The results: " + results);
+        return results[0];
     }
     else {
-        // If we come here, the index.html file doesnt exist, which means the zipped file is not a html file
-        // Then we dont want to return the pathtothefolder, and we dont want to store the unzipped folder so we delete it here.
+        console.log("the unzipandextract returns false");
         return false;
     }
+
+    // console.log("The pathtoreturn: " + pathToReturn);
+    // if (fs.existsSync(pathToReturn)) {
+    //     // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
+    //     // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
+    //     return pathToReturn;
+    // }
+    // else {
+    //     // If we come here, the index.html file doesnt exist, which means the zipped file is not a html file
+    //     // Then we dont want to return the pathtothefolder, and we dont want to store the unzipped folder so we delete it here.
+    //     return false;
+    // }
     // This is the path we return to the frontend, the folderpath + unzipped filename + index.html
 
 }
@@ -816,6 +854,7 @@ catch (err) {
     console.log("The error in unzipAndExtract function for HTML zip: " + err);
 }
  }
+
 
 module.exports = {
     uploadMaterial: uploadMaterial,
