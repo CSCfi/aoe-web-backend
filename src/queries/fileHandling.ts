@@ -706,13 +706,13 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                 }
                 catch (err) {
                     console.log("The error in downloadFileFromStorage function (nested try) : " + err);
-                    res.status(500).send(err);
+                    res.status(500).send("err");
                 }
             }
         }
         catch (err) {
             console.log("The error in downloadFileFromStorage function (upper try catch) : " + err);
-            res.status(500).send("error");
+            res.status(500).send("err");
         }
     });
 }
@@ -792,9 +792,9 @@ try {
     // const folderPath = process.env.HTMLFOLDER + "/" + filename;
     // Here we finally extract the zipped file to the folder we just specified.
     const zipEntries = zip.getEntries();
-    zipEntries.forEach(function (zipEntry) {
-        console.log(zipEntry.getData().toString("utf8"));
-    });
+    // zipEntries.forEach(function (zipEntry) {
+    //     console.log(zipEntry.getData().toString("utf8"));
+    // });
     zip.extractAllTo(filenameParsedNicely, true);
     const pathToReturn = zipFolder + "/index.html";
     if (fs.existsSync(pathToReturn)) {
