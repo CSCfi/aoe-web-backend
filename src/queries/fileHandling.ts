@@ -689,11 +689,21 @@ async function downloadFileFromStorage(req: Request, res: Response) {
 
 async function downloadMaterialFile(req: Request, res: Response) {
     try {
-        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1 and obsoleted = 0" +
-        " union " +
-        "select attachment.filekey, attachment.originalfilename from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and attachment.obsoleted = 0;";
-        console.log(query);
-        const response = await db.any(query, [req.params.materialId]);
+        console.log("downloadMaterialFile");
+        const response = await db.task(async (t: any) => {
+            let publishedat = req.params.publishedat;
+            if (!publishedat) {
+                const q = "select max(publishedat) from versioncomposition where educationalmaterialid = $1;";
+                console.log(q, req.params.materialId);
+                const res = await t.oneOrNone(q, req.params.materialId);
+                publishedat = res.max;
+            }
+            const query = "select record.filekey, record.originalfilename from versioncomposition right join material on material.id = versioncomposition.materialid right join record on record.materialid = material.id where material.educationalmaterialid = $1 and obsoleted = 0 and publishedat = $2" +
+            " union " +
+            "select attachment.filekey, attachment.originalfilename from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where v.versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and v.versionpublishedat = $2;";
+            console.log(query, [req.params.materialId, publishedat]);
+            return await db.any(query, [req.params.materialId, publishedat]);
+        });
         if (response.length < 1) {
             res.status(404).send("Not found");
         }

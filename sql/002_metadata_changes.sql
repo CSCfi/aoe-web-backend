@@ -44,3 +44,46 @@ ALTER TABLE educationalmaterial ALTER COLUMN agerangemax DROP NOT NULL;
 ALTER TABLE educationalmaterial ALTER COLUMN expires DROP NOT NULL;
 ALTER TABLE alignmentobject DROP CONSTRAINT constraint_alignmentobject;
 ALTER TABLE alignmentobject ADD CONSTRAINT constraint_alignmentobject UNIQUE (alignmentType, objectkey, source, educationalmaterialid);
+
+-- 2.0.0
+
+CREATE TABLE VersionComposition (
+  EducationalMaterialId int8 NOT NULL, 
+  MaterialId            int8 NOT NULL, 
+  PublishedAt           timestamp NOT NULL, 
+  Priority              int4, 
+  PRIMARY KEY (EducationalMaterialId, 
+  MaterialId, 
+  PublishedAt));
+ALTER TABLE VersionComposition ADD CONSTRAINT FKMaterialVersion FOREIGN KEY (MaterialId) REFERENCES Material (Id);
+ALTER TABLE VersionComposition ADD CONSTRAINT FKEducationalMaterialVersion FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+
+INSERT INTO VersionComposition (EducationalMaterialId, PublishedAt, MaterialId, priority)
+SELECT em.Id as EducationalMaterialId, em.PublishedAt::timestamp(3), m.Id as MaterialId, m.Priority
+FROM EducationalMaterial AS em
+JOIN Material AS m
+ON em.Id = m.EducationalMaterialId
+WHERE em.PublishedAt IS NOT NULL;
+--ON CONFLICT (EducationalMaterialId, PublishedAt, MaterialId) DO NOTHING;
+
+CREATE TABLE AttachmentVersionComposition (
+  VersionEducationalMaterialId int8 NOT NULL, 
+  VersionMaterialId            int8 NOT NULL, 
+  VersionPublishedAt           timestamp NOT NULL, 
+  AttachmentId                            int8 NOT NULL, 
+  PRIMARY KEY (VersionEducationalMaterialId, 
+  VersionMaterialId, 
+  VersionPublishedAt, 
+  AttachmentId));
+ALTER TABLE AttachmentVersionComposition ADD CONSTRAINT FKVersionCompositionAttachment FOREIGN KEY (VersionEducationalMaterialId, VersionMaterialId, VersionPublishedAt) REFERENCES VersionComposition (EducationalMaterialId, MaterialId, PublishedAt);
+ALTER TABLE AttachmentVersionComposition ADD CONSTRAINT FKAttachmentVersion FOREIGN KEY (AttachmentId) REFERENCES Attachment (Id);
+
+
+INSERT INTO AttachmentVersionComposition (VersionEducationalMaterialId, VersionPublishedAt, VersionMaterialId, AttachmentId)
+SELECT em.Id as EducationalMaterialId, em.PublishedAt::timestamp(3), m.Id as MaterialId, attachment.id
+FROM EducationalMaterial AS em
+JOIN Material AS m
+ON em.Id = m.EducationalMaterialId
+JOIN attachment
+ON m.id = attachment.MaterialId
+WHERE em.PublishedAt IS NOT NULL;

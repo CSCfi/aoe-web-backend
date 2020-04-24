@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 // import { insertDataToDisplayName } from "./fileHandling";
 const fh = require("./fileHandling");
+const parseDate = require("postgres-date");
 
 
 
@@ -159,15 +160,27 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
-        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        response = await t.any(query, [req.params.id]);
+        // query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+        if (req.params.publishedat) {
+            console.log(query, [req.params.id, req.params.publishedat]);
+            query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+            "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
+            "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+            response = await t.any(query, [req.params.id, req.params.publishedat]);
+        }
+        else {
+            query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+            "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+            "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+            response = await t.any(query, [req.params.id]);
+        }
         queries.push(response);
 
         // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
         // response = await t.any(query, [req.params.id]);
         // queries.push(response);
 
-        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted != '1';";
+        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -178,11 +191,27 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
         response = await t.oneOrNone(query, [req.params.id]);
         queries.push(response);
-
-        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
-        response = await t.any(query, [req.params.id]);
-        console.log(query, [req.params.id]);
+        if (req.params.publishedat) {
+            // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
+            response = await t.any(query, [req.params.id, req.params.publishedat]);
+            console.log(query, [req.params.id]);
+        }
+        else {
+            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+            response = await t.any(query, [req.params.id, req.params.publishedat]);
+            console.log(query, [req.params.id]);
+        }
         queries.push(response);
+        const TYPE_TIMESTAMP = 1114;
+        // const TYPE_TIMESTAMPTZ = 1184;
+        // use raw date in version
+        // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
+        query = "select distinct publishedat from versioncomposition where educationalmaterialid = $1 order by publishedat desc;";
+        console.log(query, [req.params.id]);
+        response = await t.any(query, [req.params.id]);
+        queries.push(response);
+        pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
 
         return t.batch(queries);
     })
@@ -257,6 +286,8 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
         jsonObj.attachments = data[18];
+        jsonObj.versions = data[19];
+        console.log(data[19]);
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -617,9 +648,9 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         // material
         console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
-        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,publishedat, suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) where id=$6;";
+        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
         console.log(query, [req.body.expires, dnow, req.body.timeRequired, ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license]);
-        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, ((req.body.publishedAt == undefined) ? "now()" : req.body.publishedAt), req.body.suitsAllUpperSecondarySubjectsNew]));
+        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, req.body.suitsAllUpperSecondarySubjectsNew]));
 // description
         console.log("inserting description");
         const description = req.body.description;
@@ -1042,17 +1073,17 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 }
             }
             // update fileOrder
-            console.log("inserting fileOrder");
-            params = [];
-            arr = req.body.fileOrder;
-            console.log(arr);
-            if (arr) {
-                for (const element of arr) {
-                    query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
-                    console.log(query, [element.priority, element.id, req.params.id]);
-                    queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
-                }
-            }
+            // console.log("inserting fileOrder");
+            // params = [];
+            // arr = req.body.fileOrder;
+            // console.log(arr);
+            // if (arr) {
+            //     for (const element of arr) {
+            //         query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
+            //         console.log(query, [element.priority, element.id, req.params.id]);
+            //         queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
+            //     }
+            // }
 
             console.log("update attachmentDetails");
             arr = req.body.attachmentDetails;
@@ -1062,6 +1093,37 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     "and (select educationalmaterialid from material where id = (select materialid from attachment where id = $5)) = $6);";
                     console.log(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]);
                     queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]));
+                }
+            }
+            if (req.body.isVersioned) {
+                console.log("versioned true");
+                arr = req.body.materials;
+                if (req.body.materials) {
+                    query = "UPDATE educationalmaterial SET publishedat = now() WHERE id = $1 AND publishedat IS NULL;";
+                    queries.push(await t.none(query, [req.params.id]));
+                    for (const element of arr) {
+                        // query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) VALUES ($1,$2,now(),$3);";
+                        query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) select $1,$2,now()::timestamp(3),$3 where exists (select * from material where id = $2 and educationalmaterialid = $1);";
+                        console.log(query, [req.params.id, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                        // add attachments
+                        if (element.attachments) {
+                            for (const att of element.attachments) {
+                                query = "INSERT INTO attachmentversioncomposition (versioneducationalmaterialid, versionmaterialid, versionpublishedat, attachmentid) select $1,$2,now()::timestamp(3),$3 where exists (select * from attachment where id = $3 and materialid = $2);";
+                                console.log(query, [req.params.id, element.materialId, att]);
+                                queries.push(await t.none(query, [req.params.id, element.materialId, att]));
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if (arr = req.body.materials) {
+                    for (const element of arr) {
+                        query = "UPDATE versioncomposition SET priority = $3 WHERE educationalmaterialid = $1 and materialid = $2 and publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+                        console.log(query, [req.params.id, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                    }
                 }
             }
         return t.batch(queries);
