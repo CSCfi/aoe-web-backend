@@ -94,7 +94,8 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
-        query = "SELECT * FROM educationalmaterial WHERE id = $1 and obsoleted != '1';";
+        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage " +
+        "FROM educationalmaterial as m left join licensecode as l ON l.code = m.licensecode WHERE id = $1 and obsoleted != '1';";
         let response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -281,7 +282,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         // jsonObj.inLanguage = data[13];
         jsonObj.accessibilityFeatures = data[5];
         jsonObj.accessibilityHazards = data[6];
-        jsonObj.license = data[0][0].licensecode;
+        jsonObj.license = data[0][0].license;
         jsonObj.isBasedOn = data[12];
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
@@ -301,7 +302,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1' limit 1000;";
+            query = "SELECT id, l.license, publishedat FROM educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE usersusername = $1 and obsoleted != '1';";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
@@ -347,7 +348,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license FROM educationalmaterial WHERE obsoleted != '1' AND publishedat IS NOT NULL ORDER BY educationalmaterial.updatedAt DESC LIMIT 6;";
+            query = "SELECT id, l.license FROM educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE obsoleted != '1' AND publishedat IS NOT NULL ORDER BY m.updatedAt DESC LIMIT 6;";
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);
