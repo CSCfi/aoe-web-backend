@@ -275,6 +275,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                  */
                 jsonObj.materials[0]["mimetype"] = "text/html";
                 jsonObj.materials[0]["filepath"] = result;
+                console.log("The jsonObj: " + JSON.stringify(jsonObj));
 
 
             }
@@ -284,7 +285,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                  * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
                  */
                 jsonObj.materials[0]["filepath"] = result;
-
+                console.log("The jsonObj: " + JSON.stringify(jsonObj));
             }
         }
         jsonObj.owner = owner;
