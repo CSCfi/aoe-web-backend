@@ -633,7 +633,7 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
 async function downloadFile(req: Request, res: Response, isZip?: any) {
     try {
 
-        if (isZip) {
+        if (isZip === true) {
             return downloadFileFromStorage(req, res, true);
         }
         else {
@@ -683,7 +683,7 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
                         Key: key
                     };
                     const fileStream = s3.getObject(params).createReadStream();
-                    if (isZip) {
+                    if (isZip === true) {
                         console.log("We came to the if-statement in downloadFileFromStorage!");
                         /**
                          * Here implement the code to
@@ -829,7 +829,7 @@ try {
     const results = await searchRecursive(filenameParsedNicely, "index.html");
     if (results != []) {
         console.log("The results: " + results);
-        return results[0];
+        return "https://127.0.0.1:3000" + results[0];
     }
     else {
         console.log("the unzipandextract returns false");
