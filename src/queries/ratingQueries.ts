@@ -62,16 +62,23 @@ export async function insertRatingAverage(id: string) {
 
 export async function getRatings(materialId: string) {
     try {
-        const ratingList: Array<RatingResponse> = [];
+        const ratings: Array<RatingResponse> = [];
         const data = await db.task(async (t: any) => {
             let query;
+            query = "SELECT count(*) FROM rating where educationalmaterialid = $1;";
+            const ratingsCount = await t.one(query, [materialId]);
+            query = "SELECT ratingcontentaverage, ratingvisualaverage from educationalmaterial where id = $1;";
+            const averages = await t.one(query, [materialId]);
+            query = "select materialname, language from materialname where educationalmaterialid = $1;";
+            const name = await t.any(query, [materialId]);
             query = "SELECT educationalmaterialid, ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, updatedat, firstname, lastname FROM rating inner join users on rating.usersusername = users.username where educationalmaterialid = $1";
             console.log("RatingQueries getRatings: " + query, [materialId]);
-            const response = await t.any(query, [materialId]);
-            return t.batch(response);
+            const ratings = await t.any(query, [materialId]);
+            return {ratingsCount, averages, name, ratings}; // (response);
         });
-        for (const element of data) {
-            ratingList.push({"materialId" : element.educationalmaterialid,
+        console.log(data);
+        for (const element of data.ratings) {
+            ratings.push({"materialId" : element.educationalmaterialid,
             "ratingContent": element.ratingcontent,
             "ratingVisual": element.ratingvisual,
             "feedbackPositive": element.feedbackpositive,
@@ -81,10 +88,43 @@ export async function getRatings(materialId: string) {
             "firstName": element.firstname,
             "lastName": element.lastname});
         }
-        return ratingList;
+        console.log(data.name);
+        const name = data.name.reduce(function(map, obj) {
+            map[obj.language] = obj.materialname;
+            return map;
+        }, {});
+        console.log(name);
+        return {"ratingsCount" : data.ratingsCount.count,
+        "averages": {"content": data.averages.ratingcontentaverage, "visual": data.averages.ratingvisualaverage},
+        "name": name,
+        ratings};
     }
     catch (err) {
         console.log(err);
+        throw new Error(err);
+    }
+}
+
+export async function getUserRatings(username: string, materialId: string) {
+    try {
+        const data = await db.task(async (t: any) => {
+            const query = "SELECT educationalmaterialid, ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, updatedat from rating where usersusername = $1 and educationalmaterialid = $2;";
+            console.log(query, [username, materialId]);
+            const ratings = await t.one(query, [username, materialId]);
+            return {ratings};
+        });
+    return {
+        "materialId": data.ratings.educationalmaterialid,
+        "ratingContent": data.ratings.ratingcontent,
+        "ratingVisual": data.ratings.ratingvisual,
+        "feedbackPositive": data.ratings.feedbackpositive,
+        "feedbackSuggest": data.ratings.feedbacksuggest,
+        "feedbackPurpose": data.ratings.feedbackpurpose,
+        "updatedAt": data.ratings.updatedat
+      };
+    }
+    catch (err) {
+        console.error(err);
         throw new Error(err);
     }
 }
