@@ -29,7 +29,13 @@ export async function addRating(req: Request , res: Response) {
 export async function getRating(req: Request, res: Response) {
   try {
     const response = await getRatings(req.params.materialId);
-    res.status(200).json(response);
+    console.log(response);
+    if (!response.averages) {
+      res.sendStatus(404);
+    }
+    else {
+      res.status(200).json(response);
+    }
   }
   catch (error) {
     console.error(error);
@@ -40,7 +46,11 @@ export async function getRating(req: Request, res: Response) {
 export async function getUserRating(req: Request, res: Response) {
   try {
     const response = await getUserRatings(req.session.passport.user.uid, req.params.materialId);
-    res.status(200).json(response);
+    if (!response.materialId) {
+      res.sendStatus(404);
+    } else {
+      res.status(200).json(response);
+    }
   }
   catch (error) {
     console.error(error);

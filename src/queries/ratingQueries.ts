@@ -65,18 +65,23 @@ export async function getRatings(materialId: string) {
         const ratings: Array<RatingResponse> = [];
         const data = await db.task(async (t: any) => {
             let query;
+            console.log("RatingQueries getRatings: " + query, [materialId]);
+            query = "SELECT ratingcontentaverage, ratingvisualaverage from educationalmaterial where id = $1 and obsoleted = 0;";
+            const averages = await t.oneOrNone(query, [materialId]);
+            if (!averages) {
+                return {};
+            }
             query = "SELECT count(*) FROM rating where educationalmaterialid = $1;";
-            const ratingsCount = await t.one(query, [materialId]);
-            query = "SELECT ratingcontentaverage, ratingvisualaverage from educationalmaterial where id = $1;";
-            const averages = await t.one(query, [materialId]);
+            const ratingsCount = await t.oneOrNone(query, [materialId]);
             query = "select materialname, language from materialname where educationalmaterialid = $1;";
             const name = await t.any(query, [materialId]);
             query = "SELECT educationalmaterialid, ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, updatedat, firstname, lastname FROM rating inner join users on rating.usersusername = users.username where educationalmaterialid = $1";
-            console.log("RatingQueries getRatings: " + query, [materialId]);
             const ratings = await t.any(query, [materialId]);
             return {ratingsCount, averages, name, ratings}; // (response);
         });
-        console.log(data);
+        if (!data.averages) {
+            return {};
+        }
         for (const element of data.ratings) {
             ratings.push({"materialId" : element.educationalmaterialid,
             "ratingContent": element.ratingcontent,
@@ -88,14 +93,12 @@ export async function getRatings(materialId: string) {
             "firstName": element.firstname,
             "lastName": element.lastname});
         }
-        console.log(data.name);
         const name = data.name.reduce(function(map, obj) {
             map[obj.language] = obj.materialname;
             return map;
         }, {});
-        console.log(name);
         return {"ratingsCount" : data.ratingsCount.count,
-        "averages": {"content": data.averages.ratingcontentaverage, "visual": data.averages.ratingvisualaverage},
+        "averages": (!data.averages) ? undefined : {"content": data.averages.ratingcontentaverage, "visual": data.averages.ratingvisualaverage},
         "name": name,
         ratings};
     }
@@ -110,18 +113,23 @@ export async function getUserRatings(username: string, materialId: string) {
         const data = await db.task(async (t: any) => {
             const query = "SELECT educationalmaterialid, ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, updatedat from rating where usersusername = $1 and educationalmaterialid = $2;";
             console.log(query, [username, materialId]);
-            const ratings = await t.one(query, [username, materialId]);
+            const ratings = await t.oneOrNone(query, [username, materialId]);
             return {ratings};
         });
-    return {
-        "materialId": data.ratings.educationalmaterialid,
-        "ratingContent": data.ratings.ratingcontent,
-        "ratingVisual": data.ratings.ratingvisual,
-        "feedbackPositive": data.ratings.feedbackpositive,
-        "feedbackSuggest": data.ratings.feedbacksuggest,
-        "feedbackPurpose": data.ratings.feedbackpurpose,
-        "updatedAt": data.ratings.updatedat
-      };
+        if (!data.ratings) {
+            return {};
+        }
+        else {
+            return {
+                "materialId": materialId,
+                "ratingContent": data.ratings.ratingcontent,
+                "ratingVisual": data.ratings.ratingvisual,
+                "feedbackPositive": data.ratings.feedbackpositive,
+                "feedbackSuggest": data.ratings.feedbacksuggest,
+                "feedbackPurpose": data.ratings.feedbackpurpose,
+                "updatedAt": data.ratings.updatedat
+            };
+        }
     }
     catch (err) {
         console.error(err);
