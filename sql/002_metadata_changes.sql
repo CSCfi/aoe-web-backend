@@ -97,7 +97,7 @@ CREATE TABLE LicenseCode (
 
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBY4.0', 'CC BY 4.0');
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYNC4.0', 'CC BY-NC 4.0');
-INSERT INTO LicenseCode (Code, License) VALUES ('CCBY4.0', 'CC BY-NC-ND 4.0');
+INSERT INTO LicenseCode (Code, License) VALUES ('CCBYNCND4.0', 'CC BY-NC-ND 4.0');
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYNCSA4.0', 'CC BY-NC-SA 4.0');
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYND4.0', 'CC BY-ND 4.0');
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYSA4.0', 'CC BY-SA 4.0');
