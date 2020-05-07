@@ -10,6 +10,7 @@ const contentDisposition = require("content-disposition");
 
 // File upload dependencies
 const multer  = require("multer");
+import { insertEducationalMaterialName } from "./apiQueries";
 
 const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
     destination: function(req: Request, file: any, cb: any) {
@@ -119,7 +120,11 @@ async function uploadMaterial(req: Request, res: Response) {
 // send educationalmaterialid if no file send for link material creation.
                     if (!file) {
                         await db.tx(async (t: any) => {
-                            return await insertDataToEducationalMaterialTable(req, t);
+                            const id = await insertDataToEducationalMaterialTable(req, t);
+                            if (req.body.name) {
+                                await insertEducationalMaterialName(JSON.parse(req.body.name), id.id, t);
+                            }
+                            return id;
                         })
                         .then((data: any) => {
                             resp.id = data.id;
@@ -395,6 +400,8 @@ async function insertDataToEducationalMaterialTable(req: Request, t: any) {
     console.log(data.id);
     return data;
 }
+
+
 
 async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
     const queries = [];

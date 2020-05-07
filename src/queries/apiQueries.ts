@@ -94,9 +94,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
-        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage " +
+        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage " +
         "FROM educationalmaterial as m left join licensecode as l ON l.code = m.licensecode WHERE id = $1 and obsoleted != '1';";
         let response = await t.any(query, [req.params.id]);
+        const isPublished = (response[0] && response[0].publishedat) ? true : false;
         queries.push(response);
 
         query = "select * from materialname where educationalmaterialid = $1;";
@@ -160,20 +161,26 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select * from alignmentobject where educationalmaterialid = $1;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
-
-        // query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        if (req.params.publishedat) {
-            console.log(query, [req.params.id, req.params.publishedat]);
-            query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
-            "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
-            "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-            response = await t.any(query, [req.params.id, req.params.publishedat]);
+        // get all materials from material table if not published else get from version table
+        if (!isPublished) {
+            query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+            response = await t.any(query, [req.params.id]);
+            console.log(query, [req.params.id]);
         }
         else {
-            query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
-            "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-            "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-            response = await t.any(query, [req.params.id]);
+            if (req.params.publishedat) {
+                console.log(query, [req.params.id, req.params.publishedat]);
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
+                "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+            }
+            else {
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+                "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+            }
         }
         queries.push(response);
 
@@ -192,16 +199,24 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
         response = await t.oneOrNone(query, [req.params.id]);
         queries.push(response);
-        if (req.params.publishedat) {
-            // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
-            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
-            response = await t.any(query, [req.params.id, req.params.publishedat]);
+        // get all attachments from attachment table if not published else get from version table
+        if (!isPublished) {
+            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+            response = await t.any(query, [req.params.id]);
             console.log(query, [req.params.id]);
         }
         else {
-            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
-            response = await t.any(query, [req.params.id, req.params.publishedat]);
-            console.log(query, [req.params.id]);
+            if (req.params.publishedat) {
+                // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+                console.log(query, [req.params.id]);
+            }
+            else {
+                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+                console.log(query, [req.params.id]);
+            }
         }
         queries.push(response);
         const TYPE_TIMESTAMP = 1114;
@@ -282,7 +297,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         // jsonObj.inLanguage = data[13];
         jsonObj.accessibilityFeatures = data[5];
         jsonObj.accessibilityHazards = data[6];
-        jsonObj.license = data[0][0].license;
+        const license: any = {};
+        license.value = data[0][0].license;
+        license.key = data[0][0].licensecode;
+        jsonObj.license = license;
         jsonObj.isBasedOn = data[12];
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
@@ -302,7 +320,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, l.license, publishedat FROM educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE usersusername = $1 and obsoleted != '1';";
+            query = "SELECT id, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
@@ -326,6 +344,9 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.educationalLevels = response;
+                query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+                const responseObj = await t.oneOrNone(query, [q.id]);
+                q.license = responseObj;
                 return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -334,6 +355,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
             }) ;
         })
         .then((data: any) => {
+            console.log(JSON.stringify(data));
         res.status(200).json(data);
         });
     }
@@ -348,7 +370,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, l.license FROM educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE obsoleted != '1' AND publishedat IS NOT NULL ORDER BY m.updatedAt DESC LIMIT 6;";
+            query = "SELECT id FROM educationalmaterial WHERE obsoleted = '0' AND publishedat IS NOT NULL ORDER BY updatedAt DESC LIMIT 6;";
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);
@@ -371,6 +393,9 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.educationalLevels = response;
+                query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+                const responseObj = await t.oneOrNone(query, [q.id]);
+                q.license = responseObj;
                 return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -604,6 +629,40 @@ async function insertDataToDescription(t: any, educationalmaterialid: string, de
     return queries;
 }
 
+interface NameObject {
+    "en": string;
+    "sv": string;
+    "fi": string;
+}
+export async function insertEducationalMaterialName(materialname: NameObject, id: string, t: any) {
+    let query;
+    const queries = [];
+    console.log("inserting material name");
+    await setLanguage(materialname);
+    query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
+            "UPDATE SET materialname = $1 , slug = $3;";
+    console.log(query);
+    if (materialname.fi === null) {
+        queries.push(await t.any(query, ["", "fi", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.fi, "fi", "", id]));
+    }
+    if (materialname.sv === null) {
+        queries.push(await t.any(query, ["", "sv", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.sv, "sv", "", id]));
+    }
+    if (materialname.en === null) {
+        queries.push(await t.any(query, ["", "en", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.en, "en", "", id]));
+    }
+    return queries;
+}
+
 async function updateMaterial(req: Request , res: Response , next: NextFunction) {
     db.tx(async (t: any) => {
         let query;
@@ -622,28 +681,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             // queries.push(response);
         }
         else {
-            await setLanguage(materialname);
-            query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
-                    "UPDATE SET materialname = $1 , slug = $3;";
-            console.log(query);
-            if (materialname.fi === null) {
-                queries.push(await t.any(query, ["", "fi", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.fi, "fi", "", req.params.id]));
-            }
-            if (materialname.sv === null) {
-                queries.push(await t.any(query, ["", "sv", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.sv, "sv", "", req.params.id]));
-            }
-            if (materialname.en === null) {
-                queries.push(await t.any(query, ["", "en", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.en, "en", "", req.params.id]));
-            }
+            queries.push(await insertEducationalMaterialName(materialname, req.params.id, t));
         }
 
         // material
@@ -1471,6 +1509,8 @@ async function isOwner(educationalmaterialid: string, username: string) {
         }
     }
 }
+
+
 
 module.exports = {
     getMaterial : getMaterial,
