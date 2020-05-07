@@ -131,7 +131,7 @@ async function metadataToEs(offset: number, limit: number) {
         const params: any = [];
         params.push(offset * limit);
         params.push(limit);
-        let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
+        let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
         " from educationalmaterial as em where em.obsoleted = 0 and em.publishedat IS NOT NULL order by em.id asc OFFSET $1 LIMIT $2;";
         return t.map(query, params, async (q: any) => {
             const m: any = [];
@@ -219,6 +219,9 @@ async function metadataToEs(offset: number, limit: number) {
             response = await t.oneOrNone(query, [q.id]);
             q.thumbnail = response;
 
+            query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+            const responseObj = await t.oneOrNone(query, [q.id]);
+            q.license = responseObj;
             return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -273,7 +276,7 @@ async function updateEsDocument() {
     db.tx({mode}, async (t: any)  => {
         const params: any = [];
         params.push(Es.ESupdated.value);
-        let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
+        let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
         " from educationalmaterial as em where updatedat > $1 and em.publishedat IS NOT NULL;";
         // console.log(query);
         return t.map(query, params, async (q: any) => {
@@ -362,6 +365,10 @@ async function updateEsDocument() {
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
             q.thumbnail = response;
+
+            query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+            const responseObj = await t.oneOrNone(query, [q.id]);
+            q.license = responseObj;
             return q;
             }).then(t.batch)
             .catch((error: any) => {
