@@ -829,7 +829,7 @@ try {
     const results = await searchRecursive(filenameParsedNicely, "index.html");
     if (results != []) {
         console.log("The results: " + results);
-        return "https://127.0.0.1:3000" + results[0];
+        return results[0];
     }
     else {
         console.log("the unzipandextract returns false");
