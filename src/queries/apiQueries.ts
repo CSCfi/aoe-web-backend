@@ -365,6 +365,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.thumbnail = data[17];
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
+        console.log(data[19]);
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
