@@ -12,6 +12,7 @@ const contentDisposition = require("content-disposition");
 
 // File upload dependencies
 const multer  = require("multer");
+import { insertEducationalMaterialName } from "./apiQueries";
 
 const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
     destination: function(req: Request, file: any, cb: any) {
@@ -58,18 +59,22 @@ async function uploadAttachmentToMaterial(req: Request, res: Response) {
                 console.log(metadata);
                 const material = [];
                 const materialid = [];
+                let attachmentId;
                 let result = [];
                 if (typeof file !== "undefined") {
-                        result = await insertDataToTempAttachmentTable(file, req.params.materialId, metadata);
+                    attachmentId = await insertDataToAttachmentTable(file, req.params.materialId, undefined, undefined, undefined, metadata);
+                    console.log(JSON.stringify(attachmentId));
+                    result = await insertDataToTempAttachmentTable(file, metadata, attachmentId);
                         console.log("result: " + JSON.stringify(result[0]));
                     }
                 // return 200 if success and continue sending files to pouta
                 const resp: any = {};
-                res.status(200).json({"status" : "ok"});
+                res.status(200).json({"id": attachmentId});
                 try {
                     if (typeof file !== "undefined") {
                         const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
-                        await insertDataToAttachmentTable(file, req.params.materialId, obj.Key, obj.Bucket, obj.Location, metadata);
+                        // await insertDataToAttachmentTable(file, req.params.materialId, obj.Key, obj.Bucket, obj.Location, metadata);
+                        await updateAttachment(obj.Key, obj.Bucket, obj.Location, attachmentId);
                         await deleteDataToTempAttachmentTable(file.filename, result[0].id);
                         fs.unlink("./" + file.path, (err: any) => {
                             if (err) {
@@ -80,7 +85,7 @@ async function uploadAttachmentToMaterial(req: Request, res: Response) {
                 }
                 catch (ex) {
                     console.log(ex);
-                    console.log("error while sending files to pouta: " + JSON.stringify((<any>req).files));
+                    console.log("error while sending files to pouta: " + JSON.stringify((<any>req).file));
                 }
             } catch (e) {
                 console.log(e);
@@ -121,7 +126,11 @@ async function uploadMaterial(req: Request, res: Response) {
 // send educationalmaterialid if no file send for link material creation.
                     if (!file) {
                         await db.tx(async (t: any) => {
-                            return await insertDataToEducationalMaterialTable(req, t);
+                            const id = await insertDataToEducationalMaterialTable(req, t);
+                            if (req.body.name) {
+                                await insertEducationalMaterialName(JSON.parse(req.body.name), id.id, t);
+                            }
+                            return id;
                         })
                         .then((data: any) => {
                             resp.id = data.id;
@@ -315,9 +324,10 @@ async function fileToStorage(file: any, materialid: String) {
     });
 }
 
-async function attachmentFileToStorage(file: any, metadata: any, materialid: string) {
+async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
-    await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
+    // await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
+    await updateAttachment(obj.Key, obj.Bucket, obj.Location, attachmentId);
     await deleteDataToTempAttachmentTable(file.filename, materialid);
     fs.unlink("./" + file.path, (err: any) => {
         if (err) {
@@ -378,7 +388,7 @@ async function checkTemporaryAttachmentQueue() {
                 "filename" : element.filename
             };
             try {
-                await attachmentFileToStorage(file, metadata, element.id);
+                await attachmentFileToStorage(file, metadata, element.id, element.attachmentid);
             }
             catch (error) {
                 console.log(error);
@@ -397,6 +407,8 @@ async function insertDataToEducationalMaterialTable(req: Request, t: any) {
     console.log(data.id);
     return data;
 }
+
+
 
 async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
     const queries = [];
@@ -469,7 +481,7 @@ async function insertDataToMaterialTable(t: any, materialID: String, location: a
 async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
     const queries = [];
     let query;
-    await db.tx(async (t: any) => {
+    const data = await db.tx(async (t: any) => {
         query = "update educationalmaterial set updatedat = now() where id = (select educationalmaterialid from material where id = $1);";
         queries.push(await db.none(query, [materialID]));
         query = "insert into attachment (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, materialid, defaultfile, kind, label, srclang) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id;";
@@ -480,13 +492,28 @@ async function insertDataToAttachmentTable(files: any, materialID: any, fileKey:
     ).catch((err: Error) => {
         throw err;
     });
+    return data[1].id;
 }
 
-async function insertDataToTempAttachmentTable(files: any, materialId: any, metadata: any) {
+async function updateAttachment(fileKey: any, fileBucket: any, location: string, attachmentId: string) {
+    const queries = [];
     let query;
-    query = "insert into temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, materialid, defaultfile, kind, label, srclang) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id;";
+    await db.tx(async (t: any) => {
+        query = "update attachment set filePath = $1, fileKey = $2, fileBucket = $3 where id = $4;";
+        console.log(query);
+        queries.push(await db.none(query, [location, fileKey, fileBucket, attachmentId]));
+        return t.batch(queries);
+    }
+    ).catch((err: Error) => {
+        throw err;
+    });
+}
+
+async function insertDataToTempAttachmentTable(files: any, metadata: any, attachmentId: string) {
+    let query;
+    query = "insert into temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, defaultfile, kind, label, srclang, attachmentid) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id;";
     console.log(query);
-    const data = await db.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype, files.encoding, materialId, metadata.default, metadata.kind, metadata.label, metadata.srclang]);
+    const data = await db.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype, files.encoding, metadata.default, metadata.kind, metadata.label, metadata.srclang, attachmentId]);
     return data;
 }
 
@@ -721,11 +748,21 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
 
 async function downloadMaterialFile(req: Request, res: Response) {
     try {
-        const query = "select record.filekey, record.originalfilename from material right join record on record.materialid = material.id where educationalmaterialid = $1 and obsoleted = 0" +
-        " union " +
-        "select attachment.filekey, attachment.originalfilename from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and attachment.obsoleted = 0;";
-        console.log(query);
-        const response = await db.any(query, [req.params.materialId]);
+        console.log("downloadMaterialFile");
+        const response = await db.task(async (t: any) => {
+            let publishedat = req.params.publishedat;
+            if (!publishedat) {
+                const q = "select max(publishedat) from versioncomposition where educationalmaterialid = $1;";
+                console.log(q, req.params.materialId);
+                const res = await t.oneOrNone(q, req.params.materialId);
+                publishedat = res.max;
+            }
+            const query = "select record.filekey, record.originalfilename from versioncomposition right join material on material.id = versioncomposition.materialid right join record on record.materialid = material.id where material.educationalmaterialid = $1 and obsoleted = 0 and publishedat = $2" +
+            " union " +
+            "select attachment.filekey, attachment.originalfilename from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where v.versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and v.versionpublishedat = $2;";
+            console.log(query, [req.params.materialId, publishedat]);
+            return await db.any(query, [req.params.materialId, publishedat]);
+        });
         if (response.length < 1) {
             res.status(404).send("Not found");
         }

@@ -81,7 +81,10 @@ interface Source {
     timerequired: string;
     agerangemin: string;
     agerangemax: string;
-    licensecode: string;
+    license: {
+      key: string;
+      value: string;
+    };
     obsoleted: number;
     originalpublishedat: Date;
     expires: Date;
@@ -242,7 +245,10 @@ interface AoeResult {
           learningresourcetypekey: string;
         }>
         ;
-        license?: string;
+        license?: {
+          key: string;
+          value: string;
+        };
         // alignmentObjects: Array<{
         //   id: number;
         //   educationalmaterialid: number;
@@ -302,7 +308,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.authors = (obj.author) ? obj.author.map(author => (
             {authorname : author.authorname, organization : author.organization, organizationkey : author.organizationkey})) : undefined;
           rObj.learningResourceTypes = (obj.learningresourcetype) ? obj.learningresourcetype.map(lrt => ({value : lrt.value, learningresourcetypekey : lrt.learningresourcetypekey})) : undefined;
-          rObj.license =  obj.licensecode,
+          rObj.license =  { key: obj.license.key, value: obj.license.value};
           rObj.educationalLevels =  (obj.educationallevel) ? obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})) : undefined,
           rObj.educationalRoles =  (obj.educationalaudience) ? obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})) : undefined,
           rObj.keywords =  (obj.keyword) ? obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})) : undefined,
@@ -373,7 +379,8 @@ async function elasticSearchQuery(req: Request, res: Response) {
     "isbasedon.materialname",
     "keyword.value",
     "learningresourcetype.value",
-    "licensecode",
+    "license.value.keyword",
+    "license.key",
     "materialdescription.description",
     "materialname.materialname",
     "materials.materialdisplayname.displayname",

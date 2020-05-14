@@ -44,10 +44,12 @@ router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAcc
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
 router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
 
+router.get("/download/:key", fh.downloadFile);
+router.get("/material/file/:materialId/:publishedat?", fh.downloadMaterialFile);
 // router.get("/logintest", ah.authservice);
 router.get("/userdata", ah.checkAuthenticated, ah.getUserData);
 router.get("/material", db.getMaterial);
-router.get("/material/:id", db.getMaterialData);
+router.get("/material/:id/:publishedat?", db.getMaterialData);
 router.get("/usermaterial", ah.checkAuthenticated, db.getUserMaterial);
 router.get("/recentmaterial", db.getRecentMaterial);
 router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.updateMaterial);
@@ -64,8 +66,6 @@ router.get("/user", ah.checkAuthenticated, db.getUser);
 router.put("/termsOfUsage", ah.checkAuthenticated, db.updateTermsOfUsage);
 
 // router.post("/upload", ah.checkAuthenticated, fh.uploadFileToStorage);
-router.get("/download/:key", fh.downloadFile);
-router.get("/material/file/:materialId", fh.downloadMaterialFile);
 
 router.get("/logout", ah.logout);
 
@@ -77,5 +77,6 @@ router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
 router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules() , validator.ratingValidate, rating.addRating);
-router.get("/rating/:materialId", rating.getRating);
+router.get("/rating/:materialId", ah.checkAuthenticated, rating.getUserRating);
+router.get("/ratings/:materialId", rating.getRating);
 export = router;

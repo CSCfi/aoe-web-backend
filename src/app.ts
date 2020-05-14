@@ -33,9 +33,9 @@ const RedisStore = require("connect-redis")(session);
 // setInterval(() => ah.authIssuer(), 30000);
 const { custom } = require("openid-client");
 custom.setHttpOptionsDefaults({
-  timeout: 5000,
-  retry: 2,
-  clock_tolerance : 5,
+  timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
+  retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
+  clock_tolerance : Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
 //   hooks: {
 //     beforeRequest: [
 //       (options) => {
@@ -56,6 +56,18 @@ custom.setHttpOptionsDefaults({
 //         return response;
 //       },
 //     ],
+// onError: [
+//     error => {
+//         console.log("this is error ####################");
+//         const {response} = error;
+//          if (response && response.body) {
+//             error.name = "GitHubError";
+//             error.message = `${response.body.message} (${error.statusCode})`;
+//         }
+
+//          return error;
+//     }
+// ]
 //   },
 });
 
@@ -70,7 +82,7 @@ app.use(session({
     credentials: "include",
     cookie: {
         httpOnly: true,
-        maxAge: 60 * 60 * 1000}
+        maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000}
 }));
 
 
@@ -195,6 +207,17 @@ app.get("/login", passport.authenticate("oidc", {
     failureFlash: true,
     scope: "openid profile offline_access"
 }));
+// , function(error, req, res, next) {
+//     if (error) {
+//         console.log("nyt tuli virhe ekassa");
+//         console.error(error);
+//         res.status(500).json({"error" : "Time out"});
+//     }
+//     else {
+//         console.log("eka läpi");
+//         next(error);
+//     }
+// });
 app.get("/secure/redirect", function (req: Request, res: Response, next: NextFunction) {
         console.log("here");
         next();
@@ -205,6 +228,16 @@ app.get("/secure/redirect", function (req: Request, res: Response, next: NextFun
         failureFlash: true,
         successRedirect: process.env.SUCCESS_REDIRECT_URI
     })
+    // , function(error, req, res, next) {
+    //     if (error) {
+    //         console.log("nyt tuli virhe");
+    //         console.error(error);
+    //         res.status(500).json({"error" : "Time out"});
+    //     }
+    //     else {
+    //         next(error);
+    //     }
+    // }
 // passport.authenticate("oidc", function(err, user, info) {
 //   if (err) {
 //     console.log(err);

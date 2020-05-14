@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 const { check, validationResult } = require("express-validator");
-import { insertRating, insertRatingAverage, getRatings } from "./../queries/ratingQueries";
+import { insertRating, insertRatingAverage, getRatings, getUserRatings } from "./../queries/ratingQueries";
 interface RateRequestBody {
     "materialId": string;
     "ratingContent": number;
@@ -29,11 +29,32 @@ export async function addRating(req: Request , res: Response) {
 export async function getRating(req: Request, res: Response) {
   try {
     const response = await getRatings(req.params.materialId);
-    res.status(200).json({"ratings": response});
+    console.log(response);
+    if (!response.averages) {
+      res.sendStatus(404);
+    }
+    else {
+      res.status(200).json(response);
+    }
   }
   catch (error) {
     console.error(error);
     res.status(500).json({"error": "something went wrong"});
+  }
+}
+
+export async function getUserRating(req: Request, res: Response) {
+  try {
+    const response = await getUserRatings(req.session.passport.user.uid, req.params.materialId);
+    if (!response.materialId) {
+      res.sendStatus(404);
+    } else {
+      res.status(200).json(response);
+    }
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({"error": "error in getting users ratings"});
   }
 }
 export async function addRatingToDatabase(rating: Rating) {

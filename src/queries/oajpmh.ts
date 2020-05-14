@@ -35,10 +35,16 @@ async function getMaterialMetaData(req: Request , res: Response) {
                 query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
                 " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 order by em.id asc OFFSET $3 LIMIT $4;";
             }
-            console.log(query, params);
             return t.map(query, params, async (q: any) => {
             const m: any = [];
-            t.map("select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], (q2: any) => {
+            console.log(query, params);
+            query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
+            "from (select materialid, publishedat, from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+            "left join material as m on version.materialid = m.id left join record r on m.id = r.materialid where m.educationalmaterialid = $1";
+            console.log(query, params);
+            t.map("select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
+            "from (select materialid, publishedat from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+            "left join material as m on version.materialid = m.id left join record r on m.id = r.materialid where m.educationalmaterialid = $1;", [q.id], (q2: any) => {
                 t.any("select * from materialdisplayname where materialid = $1;", q2.id)
                     .then((data: any) => {
                         q2.materialdisplayname = data;

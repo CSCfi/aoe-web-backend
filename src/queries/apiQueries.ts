@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 // import { insertDataToDisplayName } from "./fileHandling";
 const fh = require("./fileHandling");
+const parseDate = require("postgres-date");
 
 
 
@@ -93,8 +94,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
-        query = "SELECT * FROM educationalmaterial WHERE id = $1 and obsoleted != '1';";
+        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage " +
+        "FROM educationalmaterial as m left join licensecode as l ON l.code = m.licensecode WHERE id = $1 and obsoleted != '1';";
         let response = await t.any(query, [req.params.id]);
+        const isPublished = (response[0] && response[0].publishedat) ? true : false;
         queries.push(response);
 
         query = "select * from materialname where educationalmaterialid = $1;";
@@ -158,18 +161,27 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select * from alignmentobject where educationalmaterialid = $1;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
-
-
-        /**
-         * This might be the correct way, we dont push the response here, since we need to first confirm and/or change mimetype
-         * We do the same query again inside the if statement, and there we push the response, to ensure that the mimetype in the response
-         * is the correct one.
-         * We have to change the first query under this comment to only look for the mimetype.
-         * This removes unnecessary queries, and is faster, since we only need the mimetype
-         * Consult Jussi on this db statement, unsure of the exact db-schema.
-         */
-        query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        response = await t.any(query, [req.params.id]);
+        // get all materials from material table if not published else get from version table
+        if (!isPublished) {
+            query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+            response = await t.any(query, [req.params.id]);
+            console.log(query, [req.params.id]);
+        }
+        else {
+            if (req.params.publishedat) {
+                console.log(query, [req.params.id, req.params.publishedat]);
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
+                "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+            }
+            else {
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+                "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                response = await t.any(query, [req.params.id]);
+            }
+        }
         queries.push(response);
        // console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
         // console.log("Maybe this is where we see mimetype: " + response[0].mimetype + " and filekey: " + response[0].filekey);
@@ -209,7 +221,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         // response = await t.any(query, [req.params.id]);
         // queries.push(response);
 
-        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted != '1';";
+        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
 
@@ -220,12 +232,35 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
         response = await t.oneOrNone(query, [req.params.id]);
         queries.push(response);
-
-        query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
-        response = await t.any(query, [req.params.id]);
-        console.log(query, [req.params.id]);
-
+        // get all attachments from attachment table if not published else get from version table
+        if (!isPublished) {
+            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+            response = await t.any(query, [req.params.id]);
+            console.log(query, [req.params.id]);
+        }
+        else {
+            if (req.params.publishedat) {
+                // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+                console.log(query, [req.params.id]);
+            }
+            else {
+                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+                response = await t.any(query, [req.params.id, req.params.publishedat]);
+                console.log(query, [req.params.id]);
+            }
+        }
         queries.push(response);
+        const TYPE_TIMESTAMP = 1114;
+        // const TYPE_TIMESTAMPTZ = 1184;
+        // use raw date in version
+        // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
+        query = "select distinct publishedat from versioncomposition where educationalmaterialid = $1 order by publishedat desc;";
+        console.log(query, [req.params.id]);
+        response = await t.any(query, [req.params.id]);
+        queries.push(response);
+        pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
 
         return t.batch(queries);
     })
@@ -321,11 +356,16 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         // jsonObj.inLanguage = data[13];
         jsonObj.accessibilityFeatures = data[5];
         jsonObj.accessibilityHazards = data[6];
-        jsonObj.license = data[0][0].licensecode;
+        const license: any = {};
+        license.value = data[0][0].license;
+        license.key = data[0][0].licensecode;
+        jsonObj.license = license;
         jsonObj.isBasedOn = data[12];
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
         jsonObj.attachments = data[18];
+        jsonObj.versions = data[19];
+        console.log(data[19]);
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -339,7 +379,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1' limit 1000;";
+            query = "SELECT id, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
@@ -363,6 +403,9 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.educationalLevels = response;
+                query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+                const responseObj = await t.oneOrNone(query, [q.id]);
+                q.license = responseObj;
                 return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -371,6 +414,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
             }) ;
         })
         .then((data: any) => {
+            console.log(JSON.stringify(data));
         res.status(200).json(data);
         });
     }
@@ -385,7 +429,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, licensecode as license FROM educationalmaterial WHERE obsoleted != '1' AND publishedat IS NOT NULL ORDER BY educationalmaterial.updatedAt DESC LIMIT 6;";
+            query = "SELECT id FROM educationalmaterial WHERE obsoleted = '0' AND publishedat IS NOT NULL ORDER BY updatedAt DESC LIMIT 6;";
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);
@@ -408,6 +452,9 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.educationalLevels = response;
+                query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
+                const responseObj = await t.oneOrNone(query, [q.id]);
+                q.license = responseObj;
                 return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -641,6 +688,40 @@ async function insertDataToDescription(t: any, educationalmaterialid: string, de
     return queries;
 }
 
+interface NameObject {
+    "en": string;
+    "sv": string;
+    "fi": string;
+}
+export async function insertEducationalMaterialName(materialname: NameObject, id: string, t: any) {
+    let query;
+    const queries = [];
+    console.log("inserting material name");
+    await setLanguage(materialname);
+    query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
+            "UPDATE SET materialname = $1 , slug = $3;";
+    console.log(query);
+    if (materialname.fi === null) {
+        queries.push(await t.any(query, ["", "fi", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.fi, "fi", "", id]));
+    }
+    if (materialname.sv === null) {
+        queries.push(await t.any(query, ["", "sv", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.sv, "sv", "", id]));
+    }
+    if (materialname.en === null) {
+        queries.push(await t.any(query, ["", "en", "", id]));
+    }
+    else {
+        queries.push(await t.any(query, [materialname.en, "en", "", id]));
+    }
+    return queries;
+}
+
 async function updateMaterial(req: Request , res: Response , next: NextFunction) {
     db.tx(async (t: any) => {
         let query;
@@ -659,36 +740,15 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
             // queries.push(response);
         }
         else {
-            await setLanguage(materialname);
-            query = "INSERT INTO materialname (materialname, language, slug, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (language,educationalmaterialid) DO " +
-                    "UPDATE SET materialname = $1 , slug = $3;";
-            console.log(query);
-            if (materialname.fi === null) {
-                queries.push(await t.any(query, ["", "fi", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.fi, "fi", "", req.params.id]));
-            }
-            if (materialname.sv === null) {
-                queries.push(await t.any(query, ["", "sv", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.sv, "sv", "", req.params.id]));
-            }
-            if (materialname.en === null) {
-                queries.push(await t.any(query, ["", "en", "", req.params.id]));
-            }
-            else {
-                queries.push(await t.any(query, [materialname.en, "en", "", req.params.id]));
-            }
+            queries.push(await insertEducationalMaterialName(materialname, req.params.id, t));
         }
 
         // material
         console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
-        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,publishedat, suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) where id=$6;";
+        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
         console.log(query, [req.body.expires, dnow, req.body.timeRequired, ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license]);
-        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, ((req.body.publishedAt == undefined) ? "now()" : req.body.publishedAt), req.body.suitsAllUpperSecondarySubjectsNew]));
+        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, req.body.suitsAllUpperSecondarySubjectsNew]));
 // description
         console.log("inserting description");
         const description = req.body.description;
@@ -1111,17 +1171,17 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 }
             }
             // update fileOrder
-            console.log("inserting fileOrder");
-            params = [];
-            arr = req.body.fileOrder;
-            console.log(arr);
-            if (arr) {
-                for (const element of arr) {
-                    query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
-                    console.log(query, [element.priority, element.id, req.params.id]);
-                    queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
-                }
-            }
+            // console.log("inserting fileOrder");
+            // params = [];
+            // arr = req.body.fileOrder;
+            // console.log(arr);
+            // if (arr) {
+            //     for (const element of arr) {
+            //         query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
+            //         console.log(query, [element.priority, element.id, req.params.id]);
+            //         queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
+            //     }
+            // }
 
             console.log("update attachmentDetails");
             arr = req.body.attachmentDetails;
@@ -1131,6 +1191,37 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     "and (select educationalmaterialid from material where id = (select materialid from attachment where id = $5)) = $6);";
                     console.log(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]);
                     queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]));
+                }
+            }
+            if (req.body.isVersioned) {
+                console.log("versioned true");
+                arr = req.body.materials;
+                if (req.body.materials) {
+                    query = "UPDATE educationalmaterial SET publishedat = now() WHERE id = $1 AND publishedat IS NULL;";
+                    queries.push(await t.none(query, [req.params.id]));
+                    for (const element of arr) {
+                        // query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) VALUES ($1,$2,now(),$3);";
+                        query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) select $1,$2,now()::timestamp(3),$3 where exists (select * from material where id = $2 and educationalmaterialid = $1);";
+                        console.log(query, [req.params.id, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                        // add attachments
+                        if (element.attachments) {
+                            for (const att of element.attachments) {
+                                query = "INSERT INTO attachmentversioncomposition (versioneducationalmaterialid, versionmaterialid, versionpublishedat, attachmentid) select $1,$2,now()::timestamp(3),$3 where exists (select * from attachment where id = $3 and materialid = $2);";
+                                console.log(query, [req.params.id, element.materialId, att]);
+                                queries.push(await t.none(query, [req.params.id, element.materialId, att]));
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if (arr = req.body.materials) {
+                    for (const element of arr) {
+                        query = "UPDATE versioncomposition SET priority = $3 WHERE educationalmaterialid = $1 and materialid = $2 and publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+                        console.log(query, [req.params.id, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                    }
                 }
             }
         return t.batch(queries);
@@ -1477,6 +1568,8 @@ async function isOwner(educationalmaterialid: string, username: string) {
         }
     }
 }
+
+
 
 module.exports = {
     getMaterial : getMaterial,
