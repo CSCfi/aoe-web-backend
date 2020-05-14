@@ -297,6 +297,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         }
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[14];
+        console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
         if (jsonObj.materials[0]["mimetype"] === "application/zip" || jsonObj.materials[0].mimetype === "text/html") {
             req.params.key = jsonObj.materials[0].filekey;
             console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
