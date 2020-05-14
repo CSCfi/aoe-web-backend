@@ -102,6 +102,7 @@ INSERT INTO LicenseCode (Code, License) VALUES ('CCBYNCSA4.0', 'CC BY-NC-SA 4.0'
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYND4.0', 'CC BY-ND 4.0');
 INSERT INTO LicenseCode (Code, License) VALUES ('CCBYSA4.0', 'CC BY-SA 4.0');
 
+<<<<<<< HEAD
 -- Collection
 
 CREATE TABLE CollectionName (
@@ -135,3 +136,12 @@ ALTER TABLE UsersEducationalMaterialCollection ADD CONSTRAINT FKUsersCollection 
 ALTER TABLE CollectionEducationalMaterial ADD CONSTRAINT FKCollectionMaterial FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
 ALTER TABLE UsersEducationalMaterialCollection ADD CONSTRAINT FKCollectionUsers FOREIGN KEY (EducationalMaterialCollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
 ALTER TABLE CollectionName ADD CONSTRAINT FKCollectionName FOREIGN KEY (CollectionId) REFERENCES Collection (Id);
+=======
+-- feat-674
+ALTER TABLE TemporaryAttachment ADD COLUMN AttachmentId int8 NOT NULL;
+ALTER TABLE TemporaryAttachment ADD CONSTRAINT FKTempAttachment FOREIGN KEY (AttachmentId) REFERENCES Attachment (Id);
+ALTER TABLE Attachment ALTER COLUMN filebucket drop not null;
+ALTER TABLE Attachment ALTER COLUMN filepath drop not null;
+ALTER TABLE Attachment ALTER COLUMN filekey drop not null;
+ALTER TABLE TemporaryAttachment DROP COLUMN materialid;
+>>>>>>> dev
