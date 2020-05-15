@@ -327,7 +327,6 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
         resp.results = result;
       }
       }
-      console.log(JSON.stringify(resp));
     return resp;
   }
   catch (err) {
