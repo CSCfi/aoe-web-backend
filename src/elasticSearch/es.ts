@@ -25,7 +25,7 @@ const mode = new TransactionMode({
 /** Check the ES connection status */
 async function createEsIndex () {
     console.log("Create Elasticsearch index");
-    await client.ping({
+    client.ping({
         // ping usually has a 3000ms timeout
         // requestTimeout: 1000
       }, async function (error: any) {
