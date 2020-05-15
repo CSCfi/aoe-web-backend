@@ -312,7 +312,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.educationalLevels =  (obj.educationallevel) ? obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})) : undefined,
           rObj.educationalRoles =  (obj.educationalaudience) ? obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})) : undefined,
           rObj.keywords =  (obj.keyword) ? obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})) : undefined,
-          rObj.languages = (obj.materials) ? [...Array.from(new Set(obj.materials.map(material => (material.language))))] : undefined,
+          rObj.languages = (obj.materials) ? Array.from(new Set(obj.materials.map(material => (material.language)))) : undefined,
           rObj.educationalSubjects = (obj.alignmentobject) ? obj.alignmentobject
           .filter(object => {return object.alignmenttype === "educationalSubject"; })
           .map(object => ({key : object.objectkey, source : object.source, value : object.targetname})) : undefined,
