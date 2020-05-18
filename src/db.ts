@@ -9,7 +9,7 @@ const options = {
 const pgp = require("pg-promise")(options);
 // converter for TYPE_TIMESTAMP
 const TYPE_TIMESTAMP = 1114;
-pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => moment.utc(str).format());
+pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => moment.utc(str).toISOString());
 
 // Connection string for the database, move this to a ENV.variable later
 const conString = process.env.PG_URL;

@@ -30,8 +30,8 @@ export async function insertRating(rating: Rating, username: string) {
             let query;
             query = "INSERT INTO rating (ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, educationalmaterialid, usersusername, updatedat) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) ON CONFLICT (educationalmaterialid, usersusername) DO " +
             "UPDATE SET ratingcontent = $1, ratingvisual = $2, feedbackpositive = $3, feedbacksuggest = $4, feedbackpurpose = $5, updatedat = now();";
-            console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
             const response = await t.none(query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
+            console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
             queries.push(response);
             return t.batch(queries);
         });
@@ -65,8 +65,8 @@ export async function getRatings(materialId: string) {
         const ratings: Array<RatingResponse> = [];
         const data = await db.task(async (t: any) => {
             let query;
-            console.log("RatingQueries getRatings: " + query, [materialId]);
             query = "SELECT ratingcontentaverage, ratingvisualaverage from educationalmaterial where id = $1 and obsoleted = 0;";
+            console.log("RatingQueries getRatings: " + query, [materialId]);
             const averages = await t.oneOrNone(query, [materialId]);
             if (!averages) {
                 return {};

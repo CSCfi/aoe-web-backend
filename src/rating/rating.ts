@@ -29,7 +29,6 @@ export async function addRating(req: Request , res: Response) {
 export async function getRating(req: Request, res: Response) {
   try {
     const response = await getRatings(req.params.materialId);
-    console.log(response);
     if (!response.averages) {
       res.sendStatus(404);
     }

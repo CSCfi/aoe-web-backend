@@ -169,10 +169,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         }
         else {
             if (req.params.publishedat) {
-                console.log(query, [req.params.id, req.params.publishedat]);
                 query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
                 "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
                 "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                console.log(query, [req.params.id, req.params.publishedat]);
                 response = await t.any(query, [req.params.id, req.params.publishedat]);
             }
             else {
@@ -210,7 +210,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                 // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
                 response = await t.any(query, [req.params.id, req.params.publishedat]);
-                console.log(query, [req.params.id]);
+                console.log(query, [req.params.id, req.params.publishedat]);
             }
             else {
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
@@ -219,7 +219,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
             }
         }
         queries.push(response);
-        const TYPE_TIMESTAMP = 1114;
+        // const TYPE_TIMESTAMP = 1114;
         // const TYPE_TIMESTAMPTZ = 1184;
         // use raw date in version
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
