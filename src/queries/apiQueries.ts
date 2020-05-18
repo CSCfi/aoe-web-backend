@@ -227,7 +227,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         console.log(query, [req.params.id]);
         response = await t.any(query, [req.params.id]);
         queries.push(response);
-        pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
+        // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
 
         return t.batch(queries);
     })
