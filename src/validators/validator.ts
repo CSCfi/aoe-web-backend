@@ -8,12 +8,12 @@ function ratingValidationRules() {
         // username must be an email
         body("materialId")
         .exists(),
-        body("ratingContent").exists().isInt({min: 1, max: 5}),
-        body("ratingVisual").exists().isInt({min: 1, max: 5}),
-        body("feedbackPositive").exists().isLength({ max: 1000 }),
-        body("feedbackSuggest").exists().isLength({ max: 1000 }),
+        body("ratingContent").exists().optional({nullable: true}).isInt({min: 1, max: 5}),
+        body("ratingVisual").exists().optional({nullable: true}).isInt({min: 1, max: 5}),
+        body("feedbackPositive").exists().optional({nullable: true}).isLength({ max: 1000 }),
+        body("feedbackSuggest").exists().optional({nullable: true}).isLength({ max: 1000 }),
         // password must be at least 5 chars long
-        body("feedbackPurpose").exists().isLength({ max: 1000 }),
+        body("feedbackPurpose").exists().optional({nullable: true}).isLength({ max: 1000 }),
       ];
 }
 

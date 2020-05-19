@@ -83,5 +83,7 @@ router.get("/ratings/:materialId", rating.getRating);
 
 router.post("/collection/create", ah.checkAuthenticated, collection.createCollection);
 router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.addEducationalMaterialToCollection);
+router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUserCollections);
+router.get("/collection/getCollection/:collectionId", collection.getCollection);
 // router.delete("/collection/removeMaterial");
 export = router;
