@@ -68,7 +68,7 @@ export async function userCollections(username: string) {
     }
 }
 
-export async function collectionQuery(collectionId: number, username?: string) {
+export async function collectionQuery(collectionId: string, username?: string) {
     try {
         const data = await db.tx(async (t: any) => {
             let query = "select id, publishedat from collection where id = $1;";
