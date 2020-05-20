@@ -114,34 +114,27 @@ ALTER TABLE TemporaryAttachment DROP COLUMN materialid;
 
 -- Collection
 
-CREATE TABLE CollectionName (
-  Id              BIGSERIAL NOT NULL, 
-  CollectionName text NOT NULL, 
-  Language       text NOT NULL, 
-  CollectionId   int8 NOT NULL, 
-  PRIMARY KEY (Id));
-CREATE TABLE Collection (
-  Id           BIGSERIAL NOT NULL,
-  CollectionType        text, 
-  CreatedAt   timestamp with time zone NOT NULL, 
-  UpdatedAt   timestamp with time zone, 
-  PublishedAt timestamp with time zone, 
-  CreatedBy   text NOT NULL, 
-  AgeRangeMin int4, 
-  AgeRangeMax int4, 
-  PRIMARY KEY (Id));
-CREATE TABLE UsersEducationalMaterialCollection (
-  EducationalMaterialCollectionId int8 NOT NULL, 
-  UsersUserName                   text NOT NULL, 
-  PRIMARY KEY (EducationalMaterialCollectionId, 
-  UsersUserName));
 CREATE TABLE CollectionEducationalMaterial (
   CollectionId          int8 NOT NULL, 
   EducationalMaterialId int8 NOT NULL, 
   PRIMARY KEY (CollectionId, 
   EducationalMaterialId));
+CREATE TABLE Collection (
+  Id              BIGSERIAL NOT NULL, 
+  CreatedAt      timestamp with time zone NOT NULL, 
+  UpdatedAt      timestamp with time zone, 
+  PublishedAt    timestamp with time zone, 
+  CreatedBy      text NOT NULL, 
+  AgeRangeMin    int4, 
+  AgeRangeMax    int4, 
+  CollectionName text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE UsersCollection (
+  CollectionId  int8 NOT NULL, 
+  UsersUserName text NOT NULL, 
+  PRIMARY KEY (CollectionId, 
+  UsersUserName));
 ALTER TABLE CollectionEducationalMaterial ADD CONSTRAINT FKMaterialCollection FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id) ON DELETE Restrict;
-ALTER TABLE UsersEducationalMaterialCollection ADD CONSTRAINT FKUsersCollection FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
+ALTER TABLE UsersCollection ADD CONSTRAINT FKUsersCollection FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
 ALTER TABLE CollectionEducationalMaterial ADD CONSTRAINT FKCollectionMaterial FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
-ALTER TABLE UsersEducationalMaterialCollection ADD CONSTRAINT FKCollectionUsers FOREIGN KEY (EducationalMaterialCollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
-ALTER TABLE CollectionName ADD CONSTRAINT FKCollectionName FOREIGN KEY (CollectionId) REFERENCES Collection (Id);
+ALTER TABLE UsersCollection ADD CONSTRAINT FKCollectionUsers FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
