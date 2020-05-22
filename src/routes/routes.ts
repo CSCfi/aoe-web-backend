@@ -17,7 +17,7 @@ const passport = require("passport");
 const fh = require("./../queries/fileHandling");
 const handler = require("./../metadataEngine/xlsxHandler");
 const thumbnail = require("./../queries/thumbnailHandler");
-const oajpmh = require("./../queries/oajpmh");
+const oaipmh = require("./../queries/oaipmh");
 const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
 //  const pouta = require("./../queries/pouta");
@@ -73,7 +73,7 @@ router.get("/logout", ah.logout);
 // router.post("/uploadXlsx" , handler.uploadXlsx);
 
 // oaj-pmh
-router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
+router.post("/oaipmh/metadata", oaipmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
