@@ -9,7 +9,6 @@ const db = connection.db;
 
 export async function insertCollection(username: string, collectionName: string) {
     try {
-        // await setLanguage(nameObj);
         const id = await db.tx(async (t: any) => {
             const queries: any = [];
             let query;
@@ -19,10 +18,6 @@ export async function insertCollection(username: string, collectionName: string)
             query = "INSERT INTO userscollection (usersusername, collectionid) VALUES ($1,$2) ON CONFLICT (usersusername, collectionid) DO NOTHING;";
             console.log("CollectionQueries insertCollection: " + query, [username, id.id]);
             await t.none(query, [username, id.id]);
-            // query = "INSERT INTO collectionname (collectionname, language, collectionid) VALUES ($1,$2,$3);";
-            // await t.none(query, [nameObj.fi, "fi", id.id]);
-            // await t.none(query, [nameObj.sv, "sv", id.id]);
-            // await t.none(query, [nameObj.en, "en", id.id]);
             return {id};
         });
         return id.id;
@@ -52,16 +47,16 @@ export async function userCollections(username: string) {
             console.log("userCollections:");
             const query = "select id, publishedat, collectionname as name from collection join userscollection as uc on collection.id = uc.collectionid where usersusername = $1;";
             console.log(query, [username]);
-            const collections = await db.any(query, [ username ]);
-            // const collections = await t.map(query, [username], async (q: any) => {
-            //     const query2 = "select collectionname, language from collectionname where collectionid = $1;";
-            //     const response = await t.any(query2, q.id);
-            //     q.name = response.reduce(function(map, obj) {
-            //         map[obj.language] = obj.collectionname;
-            //         return map;
-            //     }, {});
-            //     return q;
-            // }).then(t.batch);
+            const collections = await Promise.all(
+                await t.map(query, [ username ], async (q: any) => {
+                const materials = await t.any("select m.id " +
+                "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+                "left join material m on m.id = version.materialid where m.educationalmaterialid = $1", [q.id]
+                );
+                q.materials = materials.map(m => m.id);
+                return q; }
+                )
+            );
             return {collections};
         });
         return data;
