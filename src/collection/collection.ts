@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 const { check, validationResult } = require("express-validator");
-import { collectionQuery, userCollections, insertCollection, insertEducationalMaterialToCollection } from "./../queries/collectionQueries";
+import { collectionQuery, userCollections, insertCollection, deleteEducationalMaterialFromCollection, insertEducationalMaterialToCollection } from "./../queries/collectionQueries";
 export class Collection {
     constructor(public collectionId: string, public emArray: string[]) {}
 }
@@ -24,6 +24,17 @@ export async function addEducationalMaterialToCollection(req: Request , res: Res
       console.error(error);
       res.status(500).json({"error": "something went wrong"});
     }
+}
+
+export async function removeEducationalMaterialFromCollection(req: Request , res: Response) {
+  try {
+    await deleteEducationalMaterialFromCollection(req.body.collectionId, req.body.emId);
+    res.status(200).json({"status": "ok"});
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({"error": "something went wrong"});
+  }
 }
 
 export async function getUserCollections(req: Request , res: Response) {

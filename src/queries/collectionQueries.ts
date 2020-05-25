@@ -41,6 +41,20 @@ export async function insertEducationalMaterialToCollection(collectionId: string
         throw new Error(err);
     }
 }
+
+export async function deleteEducationalMaterialFromCollection(collectionId: string, emId: string[]) {
+    try {
+        const values: object[] = [];
+        emId.map(id => values.push({collectionid : collectionId, educationalmaterialid: id}));
+        const query = "DELETE FROM collectioneducationalmaterial WHERE collectionid = $1 AND educationalmaterialid IN ($2:list);";
+        console.log(pgp.as.format(query), [ collectionId, emId]);
+        await db.none(query, [ collectionId, emId]);
+    }
+    catch (err) {
+        console.log(err);
+        throw new Error(err);
+    }
+}
 export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
