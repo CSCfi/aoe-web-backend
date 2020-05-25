@@ -49,11 +49,9 @@ export async function userCollections(username: string) {
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
-                const materials = await t.any("select m.id " +
-                "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-                "left join material m on m.id = version.materialid where m.educationalmaterialid = $1", [q.id]
+                const emIds = await t.any("select educationalmaterialid as id from collectioneducationalmaterial where collectionid = $1;", [q.id]
                 );
-                q.materials = materials.map(m => m.id);
+                q.emIds = emIds.map(m => m.id);
                 return q; }
                 )
             );
