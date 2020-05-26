@@ -104,16 +104,23 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
                 q.author = await t.any(query, [q.id]);
 
-                q.materials = await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
-                "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-                "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], async (q2: any) => {
-                    const response = await t.any("select * from materialdisplayname where materialid = $1;", q2.id);
-                    q2.materialdisplayname = response.reduce(function(map, obj) {
-                        map[obj.language] = obj.displayname;
-                        return map;
-                    }, {});
-                    return q2;
-                }));
+                query = "select * from materialname where educationalmaterialid = $1;";
+                const emname =  await t.any(query, [q.id]);
+                q.name = emname.reduce(function(map, obj) {
+                    map[obj.language] = obj.materialname;
+                    return map;
+                }, {});
+
+                // q.materials = await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
+                // "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+                // "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], async (q2: any) => {
+                //     const response = await t.any("select * from materialdisplayname where materialid = $1;", q2.id);
+                //     q2.materialdisplayname = response.reduce(function(map, obj) {
+                //         map[obj.language] = obj.displayname;
+                //         return map;
+                //     }, {});
+                //     return q2;
+                // }));
                 return q;
                 }));
             return {collection, educationalmaterials};
