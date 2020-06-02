@@ -75,7 +75,7 @@ const Issuer = require("openid-client").Issuer;
 const Strategy = require("openid-client").Strategy;
 app.set("trust proxy", 1);
 app.use(session({
-    store: new RedisStore(),
+    store: new RedisStore( {client: redisclient}),
     resave: false,
     saveUninitialized: true,
     secret: process.env.SESSION_SECRET,
