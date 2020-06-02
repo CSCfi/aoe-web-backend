@@ -91,7 +91,7 @@ async function uploadbase64Image(req: Request, res: Response) {
             if (matches == undefined) {
                 return res.status(400).json({"expecting" : "data:image/png;base64,..."});
             }
-            const extension = mime.extension(matches[1]);
+            const extension = mime.getExtension(matches[1]);
             const fileName = "thumbnail" + Date.now() + "." + extension;
             const buff = Buffer.from(base64Data, "base64");
             const obj: any = await fh.uploadBase64FileToStorage(buff, fileName, process.env.THUMBNAIL_BUCKET_NAME);
