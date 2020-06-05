@@ -54,8 +54,14 @@ async function InsertUserToDatabase(userinfo: object, acr: string) {
         if (acr == process.env.SUOMIACR) {
             uid = userinfo["sub"];
         }
+        else if (acr == process.env.HAKAACR) {
+            uid = userinfo["eppn"];
+        }
+        else if (acr == process.env.MPASSACR) {
+            uid = userinfo["mpass_uid"];
+        }
         else {
-            uid = userinfo["uid"];
+            throw new Error("Unknown authentication method");
         }
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
         const data = await db.oneOrNone(query, [uid]);
