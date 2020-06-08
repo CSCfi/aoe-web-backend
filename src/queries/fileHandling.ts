@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { someLimit } from "async";
+import { ErrorHandler } from "./../helpers/errorHandler";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -33,7 +34,7 @@ const upload = multer({"storage": storage
 const connection = require("./../db");
 const db = connection.db;
 
-async function uploadAttachmentToMaterial(req: Request, res: Response) {
+async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -42,16 +43,18 @@ async function uploadAttachmentToMaterial(req: Request, res: Response) {
             try {
                 if (err) {
                     console.log(err);
-                    if (err.code === "LIMIT_FILE_SIZE") return res.status(413).send(err.message);
+                    if (err.code === "LIMIT_FILE_SIZE") {
+                        next(new ErrorHandler(413, err.message));
+                    }
                     else {
-                        console.trace(err);
-                        return res.status(500).send("Failure in file upload");
+                        console.error(err);
+                        next(new ErrorHandler(500, "Failure in file upload"));
                     }
                 }
                 const file = (<any>req).file;
                 console.log("fil: " + file);
                 if (!file) {
-                    return res.status(400).send("No file sent");
+                    next(new ErrorHandler(400, "No file sent"));
                 }
                 console.log("req.params.id: " + req.params.materialId);
                 // const emresp = await insertDataToEducationalMaterialTable(req);
@@ -88,25 +91,25 @@ async function uploadAttachmentToMaterial(req: Request, res: Response) {
                     console.log("error while sending files to pouta: " + JSON.stringify((<any>req).file));
                 }
             } catch (e) {
-                console.log(e);
+                console.error(e);
                 if ( ! res.headersSent) {
-                    return res.status(500).send("Failure in file upload");
+                    next(new ErrorHandler(500, "Failure in file upload"));
                 }
             }
         }
         );
     }
     else {
-        res.status(400).send("Not found");
+        next(new ErrorHandler(400, "Wrong contentType"));
     }
 }
 catch (err) {
-    console.log(err);
-    res.status(500).send("error");
+    console.error(err);
+    next(new ErrorHandler(500, "Not found"));
 }
 }
 
-async function uploadMaterial(req: Request, res: Response) {
+async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -115,10 +118,12 @@ async function uploadMaterial(req: Request, res: Response) {
                 try {
                     if (err) {
                         console.log(err);
-                        if (err.code === "LIMIT_FILE_SIZE") return res.status(413).send(err.message);
+                        if (err.code === "LIMIT_FILE_SIZE") {
+                            next(new ErrorHandler(413, err.message));
+                        }
                         else {
                             console.trace(err);
-                            return res.status(500).send("Failure in file upload");
+                            next(new ErrorHandler(500, "Error in upload"));
                         }
                     }
                     const file = (<any>req).file;
@@ -138,7 +143,7 @@ async function uploadMaterial(req: Request, res: Response) {
                         })
                         .catch((err: Error) => {
                             console.log(err);
-                            return res.status(500).json({"Error" : "Failure in file upload"});
+                            next(new ErrorHandler(500, "Error in upload"));
                         });
                     }
                     else {
@@ -187,7 +192,7 @@ async function uploadMaterial(req: Request, res: Response) {
                     .catch((err: Error) => {
                         console.log(err);
                         if ( ! res.headersSent) {
-                            res.status(500).send("Failure in file upload");
+                            next(new ErrorHandler(500, "Error in upload"));
                         }
                         fs.unlink("./" + file.path, (err: any) => {
                             if (err) {
@@ -203,40 +208,42 @@ async function uploadMaterial(req: Request, res: Response) {
                 } catch (e) {
                     console.log(e);
                     if ( ! res.headersSent) {
-                        return res.status(500).send("Failure in file upload");
+                        next(new ErrorHandler(500, "Error in upload"));
                     }
                 }
             }
             );
         }
         else {
-            res.status(400).send("Not found");
+            next(new ErrorHandler(400, "Not found"));
         }
     }
     catch (err) {
         console.log(err);
-        res.status(500).send("error");
+        next(new ErrorHandler(500, "Error in upload"));
     }
 }
 
-async function uploadFileToMaterial(req: Request, res: Response) {
+async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
             upload.single("file")(req , res, async function(err: any) {
                 try {
                     if (err) {
-                        console.log(err);
-                        if (err.code === "LIMIT_FILE_SIZE") return res.status(413).send(err.message);
+                        console.error(err);
+                        if (err.code === "LIMIT_FILE_SIZE") {
+                            next(new ErrorHandler(413, err.message));
+                        }
                         else {
                             console.trace(err);
-                            return res.status(500).send("Failure in file upload");
+                            next(new ErrorHandler(500, "Error in upload"));
                         }
                     }
                     const file = (<any>req).file;
                     const resp: any = {};
                     if (!file) {
-                        return res.status(400).send("No file sent");
+                        next(new ErrorHandler(400, "No file sent"));
                     }
                     else {
                         let materialid: String;
@@ -282,7 +289,7 @@ async function uploadFileToMaterial(req: Request, res: Response) {
                     .catch((err: Error) => {
                         console.log(err);
                         if ( ! res.headersSent) {
-                            res.status(500).send("Failure in file upload");
+                            next(new ErrorHandler(500, "Error in upload"));
                         }
                         fs.unlink("./" + file.path, (err: any) => {
                             if (err) {
@@ -297,19 +304,19 @@ async function uploadFileToMaterial(req: Request, res: Response) {
                 } catch (e) {
                     console.log(e);
                     if ( ! res.headersSent) {
-                        return res.status(500).send("Failure in file upload");
+                        next(new ErrorHandler(500, "Error in upload"));
                     }
                 }
             }
             );
         }
         else {
-            res.status(400).send("Not found");
+            next(new ErrorHandler(400, "Not found"));
         }
     }
     catch (err) {
-        console.log(err);
-        res.status(500).send("error");
+        console.error(err);
+        next(new ErrorHandler(500, "Error in upload"));
     }
 }
 
@@ -657,27 +664,27 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
     });
 }
 
-async function downloadFile(req: Request, res: Response, isZip?: any) {
+async function downloadFile(req: Request, res: Response, next: NextFunction, isZip?: any) {
     try {
 
         if (isZip === true) {
-            return downloadFileFromStorage(req, res, true);
+            return downloadFileFromStorage(req, res, next, true);
         }
         else {
-            const data = await downloadFileFromStorage(req, res);
+            const data = await downloadFileFromStorage(req, res, next);
             console.log("The data in DownloadFile function: " + data);
             res.status(200).send(data);
         }
     }
     catch (err) {
-        console.log(err);
+        console.error(err);
         if (!res.headersSent) {
-            res.status(400).send("Failed to download file");
+            next(new ErrorHandler(400, "Failed to download file"));
         }
     }
 }
 
-async function downloadFileFromStorage(req: Request, res: Response, isZip?: any) {
+async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any) {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
     console.log("The req.params in downloadFileFromStorage: " + req.params);
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
@@ -686,11 +693,12 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
             const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
                         "union " +
                         "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
-            console.log("The query from downloadFileFromStorage: " + query);
+            console.log("The query from downloadFileFromStorage: " + query, [req.params.key]);
             const response = await db.oneOrNone(query, [req.params.key]);
             console.log("The response from query in downloadFileFromStorage function: " + response);
             if (!response) {
-                res.status(404).send("Not found");
+                console.log("No material found from database");
+                next(new ErrorHandler(400, "Failed to download file"));
             }
             else {
                 const config = {
@@ -734,19 +742,19 @@ async function downloadFileFromStorage(req: Request, res: Response, isZip?: any)
 
                 }
                 catch (err) {
-                    console.log("The error in downloadFileFromStorage function (nested try) : " + err);
-                    res.status(500).send("err");
+                    console.error("The error in downloadFileFromStorage function (nested try) : " + err);
+                    next(new ErrorHandler(500, "Error in download"));
                 }
             }
         }
         catch (err) {
-            console.log("The error in downloadFileFromStorage function (upper try catch) : " + err);
-            res.status(500).send("err");
+            console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
+            next(new ErrorHandler(500, "Error in download"));
         }
     });
 }
 
-async function downloadMaterialFile(req: Request, res: Response) {
+async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
     try {
         console.log("downloadMaterialFile");
         const response = await db.task(async (t: any) => {
@@ -764,7 +772,8 @@ async function downloadMaterialFile(req: Request, res: Response) {
             return await db.any(query, [req.params.materialId, publishedat]);
         });
         if (response.length < 1) {
-            res.status(404).send("Not found");
+            console.log("No material found");
+            next(new ErrorHandler(404, "No material found"));
         }
         else {
             const keys = [];
@@ -776,16 +785,16 @@ async function downloadMaterialFile(req: Request, res: Response) {
             console.log(keys, req.params.materialId);
             // res.set("content-type", "application/zip");
             res.header("Content-Disposition", "attachment; filename=materials.zip");
-            const data = await downloadAndZipFromStorage(req, res, keys, archiveFiles);
+            const data = await downloadAndZipFromStorage(req, res, next, keys, archiveFiles);
         }
     }
     catch (err) {
-        console.log(err);
-        res.status(400).send("Failed to download file");
+        console.error(err);
+        next(new ErrorHandler(400, "Failed to download file"));
     }
 }
 
-async function downloadAndZipFromStorage(req: Request, res: Response, keys: any, archiveFiles: any) {
+async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
     return new Promise(async resolve => {
         try {
             const config = {
@@ -803,12 +812,13 @@ async function downloadAndZipFromStorage(req: Request, res: Response, keys: any,
                 .pipe(res);
             }
             catch (err) {
-                res.status(500).send(err);
+                console.error(err);
+                next(new ErrorHandler(500, "Failed to download file from storage"));
             }
         }
         catch (err) {
-            console.log(err);
-            res.status(500).send("error");
+            console.error(err);
+            next(new ErrorHandler(500, "Failed to download file"));
         }
     });
 

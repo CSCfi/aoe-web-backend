@@ -14,11 +14,12 @@ const passport = require("passport");
  const validator = require("../validators/validator");
 
 // File handling
- const fh = require("./../queries/fileHandling");
- const handler = require("./../metadataEngine/xlsxHandler");
- const thumbnail = require("./../queries/thumbnailHandler");
- const oajpmh = require("./../queries/oajpmh");
- const es = require("./../elasticSearch/esQueries");
+const fh = require("./../queries/fileHandling");
+const handler = require("./../metadataEngine/xlsxHandler");
+const thumbnail = require("./../queries/thumbnailHandler");
+const oaipmh = require("./../queries/oaipmh");
+const es = require("./../elasticSearch/esQueries");
+const collection = require("../collection/collection");
 //  const pouta = require("./../queries/pouta");
 // post metadata
 // post file
@@ -72,11 +73,17 @@ router.get("/logout", ah.logout);
 // router.post("/uploadXlsx" , handler.uploadXlsx);
 
 // oaj-pmh
-router.post("/oajpmh/materialMetaData", oajpmh.getMaterialMetaData);
+router.post("/oaipmh/metadata", oaipmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
 router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules() , validator.ratingValidate, rating.addRating);
 router.get("/rating/:materialId", ah.checkAuthenticated, rating.getUserRating);
 router.get("/ratings/:materialId", rating.getRating);
+
+router.post("/collection/create", ah.checkAuthenticated, collection.createCollection);
+router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.addEducationalMaterialToCollection);
+router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUserCollections);
+router.get("/collection/getCollection/:collectionId", collection.getCollection);
+router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.removeEducationalMaterialFromCollection);
 export = router;

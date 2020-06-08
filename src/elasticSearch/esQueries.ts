@@ -8,6 +8,7 @@ const index = process.env.ES_INDEX;
 const client = new Client({node: process.env.ES_NODE});
 
 import { Request, Response, NextFunction } from "express";
+import { ErrorHandler } from "./../helpers/errorHandler";
 interface MultiMatchSeachBody {
   query: {
     bool: {
@@ -312,7 +313,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.educationalLevels =  (obj.educationallevel) ? obj.educationallevel.map(el => ({value : el.value, educationallevelkey : el.educationallevelkey})) : undefined,
           rObj.educationalRoles =  (obj.educationalaudience) ? obj.educationalaudience.map(role => ({value : role.educationalrole, educationalrolekey : role.educationalrolekey})) : undefined,
           rObj.keywords =  (obj.keyword) ? obj.keyword.map(word => ({value : word.value, keywordkey : word.keywordkey})) : undefined,
-          rObj.languages = (obj.materials) ? [...new Set(obj.materials.map(material => (material.language)))] : undefined,
+          rObj.languages = (obj.materials) ? Array.from(new Set(obj.materials.map(material => (material.language)))) : undefined,
           rObj.educationalSubjects = (obj.alignmentobject) ? obj.alignmentobject
           .filter(object => {return object.alignmenttype === "educationalSubject"; })
           .map(object => ({key : object.objectkey, source : object.source, value : object.targetname})) : undefined,
@@ -355,7 +356,7 @@ function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
   }
 }
 
-async function elasticSearchQuery(req: Request, res: Response) {
+async function elasticSearchQuery(req: Request, res: Response, next: NextFunction) {
   try {
     let from = Number(process.env.ES_FROM_DEFAULT) || 0;
     let size = Number(process.env.ES_SIZE_DEFAULT) || 100;
@@ -413,27 +414,14 @@ async function elasticSearchQuery(req: Request, res: Response) {
                   "size" : size,
                   "body" : body};
     console.log("Elasticsearch query: " + JSON.stringify(query));
-    client.search(query
-    , async (err: Error, result: ApiResponse<SearchResponse<Source>>) => {
-        if (err) {
-            console.log(JSON.stringify(err));
-            res.status(500).json(err);
-        }
-        else {
-          try {
-            const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
-            res.status(200).json(responseBody);
-          }
-          catch (err) {
-            console.log(err);
-            res.status(500).json(err);
-          }
-        }
-      });
+    const result: ApiResponse<SearchResponse<Source>> = await client.search(query);
+    const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
+    res.status(200).json(responseBody);
     }
     catch (err) {
-      console.log(err);
-      res.sendStatus(500);
+      console.log("elasticSearchQuery error");
+      console.error(err);
+      next(new ErrorHandler(500, "There was an issue prosessing your request"));
     }
 }
 
