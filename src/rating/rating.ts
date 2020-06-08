@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ErrorHandler } from "./../helpers/errorHandler";
 const { check, validationResult } = require("express-validator");
 import { insertRating, insertRatingAverage, getRatings, getUserRatings } from "./../queries/ratingQueries";
 interface RateRequestBody {
@@ -13,7 +14,7 @@ interface RateRequestBody {
 export class Rating {
   constructor(public materialId: string, public ratingContent: number, public ratingVisual: number, public feedbackPositive: string, public feedbackSuggest: string, public feedbackPurpose: string) {}
 }
-export async function addRating(req: Request , res: Response) {
+export async function addRating(req: Request , res: Response, next: NextFunction) {
     try {
       const rating = new Rating(req.body.materialId, req.body.ratingContent, req.body.ratingVisual, req.body.feedbackPositive, req.body.feedbackSuggest, req.body.feedbackPurpose);
       await insertRating(rating, req.session.passport.user.uid);
@@ -22,15 +23,15 @@ export async function addRating(req: Request , res: Response) {
     }
     catch (error) {
       console.error(error);
-      res.status(500).json({"error": "something went wrong"});
+      next(new ErrorHandler(500, "Issue adding rating"));
     }
 }
 
-export async function getRating(req: Request, res: Response) {
+export async function getRating(req: Request, res: Response, next: NextFunction) {
   try {
     const response = await getRatings(req.params.materialId);
     if (!response.averages) {
-      res.sendStatus(404);
+      next(new ErrorHandler(404, "No rating found"));
     }
     else {
       res.status(200).json(response);
@@ -38,22 +39,22 @@ export async function getRating(req: Request, res: Response) {
   }
   catch (error) {
     console.error(error);
-    res.status(500).json({"error": "something went wrong"});
+    next(new ErrorHandler(500, "Issue getting rating"));
   }
 }
 
-export async function getUserRating(req: Request, res: Response) {
+export async function getUserRating(req: Request, res: Response, next: NextFunction) {
   try {
     const response = await getUserRatings(req.session.passport.user.uid, req.params.materialId);
     if (!response.materialId) {
-      res.sendStatus(404);
+      next(new ErrorHandler(404, "No rating found"));
     } else {
       res.status(200).json(response);
     }
   }
   catch (error) {
     console.error(error);
-    res.status(500).json({"error": "error in getting users ratings"});
+    next(new ErrorHandler(500, "Issue getting user rating"));
   }
 }
 export async function addRatingToDatabase(rating: Rating) {

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ErrorHandler } from "./../helpers/errorHandler";
 // import { insertDataToDisplayName } from "./fileHandling";
 const fh = require("./fileHandling");
 const parseDate = require("postgres-date");
@@ -53,13 +54,13 @@ async function addLinkToMaterial(req: Request , res: Response , next: NextFuncti
             res.status(200).json(response);
         })
         .catch((err: Error) => {
-            console.log(err);
-            res.status(400).send("error in updating");
+            console.error(err);
+            next(new ErrorHandler(400, "Issue adding link to material"));
         });
     }
     catch (err ) {
-        console.log(err);
-        res.status(400).send("error in updating");
+        console.error(err);
+        next(new ErrorHandler(500, "Issue adding link to material"));
     }
 }
 
@@ -74,8 +75,9 @@ async function getMaterial(req: Request , res: Response , next: NextFunction) {
         res.status(200).json(data);
     }
     catch (err ) {
-        console.log(err);
-        res.status(500).send("getting materials not succeeded");
+        console.error(err);
+        next(new ErrorHandler(500, "Issue getting materials "));
+        // res.status(500).send("getting materials not succeeded");
     }
 }
 
@@ -310,7 +312,8 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     })
     .catch((error: any) => {
         console.log(error);
-        res.sendStatus(400);
+        next(new ErrorHandler(400, "Issue getting material data"));
+        // res.sendStatus(400);
     });
 }
 
@@ -359,8 +362,9 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
         });
     }
     catch (err ) {
-        console.log(err);
-        res.sendStatus(500);
+        console.error(err);
+        next(new ErrorHandler(500, "Issue getting users material"));
+        // res.sendStatus(500);
     }
 }
 
@@ -407,8 +411,9 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         });
     }
     catch (err ) {
-        console.log(err);
-        res.sendStatus(500);
+        console.error(err);
+        next(new ErrorHandler(500, "Issue getting recent materials"));
+        // res.sendStatus(500);
     }
 }
 
@@ -444,7 +449,8 @@ async function deleteMaterial(req: Request , res: Response , next: NextFunction)
     }
     catch (err ) {
         console.log(err);
-        res.sendStatus(500);
+        next(new ErrorHandler(500, "Issue deleting material"));
+        // res.sendStatus(500);
     }
 }
 
@@ -472,7 +478,8 @@ async function deleteRecord(req: Request , res: Response , next: NextFunction) {
     }
     catch (err ) {
         console.log(err);
-        res.sendStatus(500);
+        next(new ErrorHandler(500, "Issue deleting record"));
+        // res.sendStatus(500);
     }
 }
 
@@ -500,7 +507,8 @@ async function deleteAttachment(req: Request , res: Response , next: NextFunctio
     }
     catch (err ) {
         console.log(err);
-        res.sendStatus(500);
+        next(new ErrorHandler(500, "Issue deleting attachment"));
+        // res.sendStatus(500);
     }
 }
 // async function postMaterial(req: Request , res: Response , next: NextFunction) {
@@ -1175,8 +1183,9 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         });
     })
     .catch ((err: Error) => {
-        console.log(err);
-        res.sendStatus(400);
+        console.error(err);
+        next(new ErrorHandler(400, "Issue updating material"));
+        // res.sendStatus(400);
     });
 }
 
@@ -1185,15 +1194,17 @@ async function createUser(req: Request , res: Response , next: NextFunction) {
         let query;
         console.log(req.body);
         if (req.body.username === undefined) {
-            res.status(500).send("username undefined");
+            next(new ErrorHandler(500, "Username cannot be undefined"));
+            // res.status(500).send("username undefined");
         }
         query = "insert into users (firstname , lastname, username, preferredlanguage,preferredtargetname,preferredalignmenttype )values ($1,$2,$3,'fi','','') RETURNING username;";
         const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.username]);
         res.status(200).json(data);
     }
     catch (err ) {
-        console.log(err);
-        res.status(500).send(err);
+        console.error(err);
+        next(new ErrorHandler(500, "Issue creating user"));
+        // res.status(500).send(err);
     }
 }
 
@@ -1206,8 +1217,9 @@ async function updateUser(req: Request , res: Response , next: NextFunction) {
         res.status(200).json("user updated");
     }
     catch (err ) {
-        console.log(err);
-        res.status(500).send("update failed");
+        console.error(err);
+        next(new ErrorHandler(500, "Issue updating user"));
+        // res.status(500).send("update failed");
     }
 }
 
@@ -1220,8 +1232,8 @@ async function updateTermsOfUsage(req: Request , res: Response , next: NextFunct
         res.status(200).json("terms of usage updated");
     }
     catch (err ) {
-        console.log(err);
-        res.status(500).send("update failed");
+        console.error(err);
+        next(new ErrorHandler(500, "Update failed"));
     }
 }
 
@@ -1234,8 +1246,9 @@ async function getUser(req: Request , res: Response , next: NextFunction) {
         res.status(200).json(data);
     }
     catch (err ) {
-        console.log(err);
-        res.status(500).send("get failed");
+        console.error(err);
+        next(new ErrorHandler(500, "Issue processing get user request"));
+        // res.status(500).send("get failed");
     }
 }
 
