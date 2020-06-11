@@ -3,7 +3,7 @@ import { scheduleJob } from "node-schedule";
 import { rmDir } from "./helpers/fileRemover";
 
 // schedule job to start 4.00 server time
-scheduleJob("4 * * *", function() {
+scheduleJob("0 0 4 * * *", function() {
     console.log("Removing files from html folder: " + process.env.HTMLFOLDER);
     rmDir(process.env.HTMLFOLDER, false);
 });
