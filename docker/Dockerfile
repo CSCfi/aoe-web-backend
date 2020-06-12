@@ -12,7 +12,6 @@ FROM centos:7
 
 # Initialize system
 RUN groupadd --gid 5606 webapp
-RUN usermod -aG 5606 node
 
 RUN useradd -ms /bin/false -d /app -u 5555 node && \
     yum install -y epel-release && \
@@ -32,7 +31,7 @@ RUN useradd -ms /bin/false -d /app -u 5555 node && \
     npm install -g pm2@2.5.0 && \
     sed --in-place -r 's/^save /# save /g' /etc/redis.conf && \
     sed --in-place -r 's/^logfile [^\n]+/logfile ""/g' /etc/redis.conf
-
+RUN usermod -aG 5606 node
 # symbolic link
 RUN ln -s /webdata /app/webdata
 
