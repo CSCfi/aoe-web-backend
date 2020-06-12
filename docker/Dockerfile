@@ -13,7 +13,7 @@ FROM centos:7
 # Initialize system
 RUN groupadd --gid 5606 webapp
 
-RUN useradd -ms /bin/false -d /app -u 5555 node && \
+RUN useradd -ms /bin/false -d /app node && \
     yum install -y epel-release && \
     yum install -y wget nano redis supervisor && \
     mkdir -p /app/data && \
