@@ -138,3 +138,48 @@ ALTER TABLE CollectionEducationalMaterial ADD CONSTRAINT FKMaterialCollection FO
 ALTER TABLE UsersCollection ADD CONSTRAINT FKUsersCollection FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
 ALTER TABLE CollectionEducationalMaterial ADD CONSTRAINT FKCollectionMaterial FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
 ALTER TABLE UsersCollection ADD CONSTRAINT FKCollectionUsers FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+
+--begin feat 112
+
+ALTER TABLE Collection ADD COLUMN Description text;
+
+CREATE TABLE CollectionKeyWord (
+  Id            BIGSERIAL NOT NULL, 
+  Value        text NOT NULL, 
+  CollectionId int8 NOT NULL, 
+  KeywordKey   text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE CollectionLearningResourceType (
+  Id                       BIGSERIAL NOT NULL, 
+  LearningResourceTypeKey text NOT NULL, 
+  CollectionId            int8 NOT NULL, 
+  Value                   text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE CollectionAlignmentObject (
+  Id                    BIGSERIAL NOT NULL, 
+  AlignmentType        text NOT NULL, 
+  CollectionId         int8 NOT NULL, 
+  TargetName           text NOT NULL, 
+  Source               text NOT NULL, 
+  EducationalFramework text NOT NULL, 
+  ObjectKey            text NOT NULL, 
+  TargetUrl            text, 
+  PRIMARY KEY (Id));
+CREATE TABLE CollectionEducationalUse (
+  Id                 BIGSERIAL NOT NULL, 
+  EducationalUseKey text NOT NULL, 
+  CollectionId      int8 NOT NULL, 
+  Value             text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE CollectionLanguage (
+  Id            BIGSERIAL NOT NULL, 
+  Language     text NOT NULL, 
+  CollectionId int8 NOT NULL, 
+  PRIMARY KEY (Id));
+ALTER TABLE CollectionEducationalUse ADD CONSTRAINT FKCollectionEducationalUse FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+ALTER TABLE CollectionAlignmentObject ADD CONSTRAINT FKCollectionAligmentObject FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+ALTER TABLE CollectionLanguage ADD CONSTRAINT FKCollectionLanguage FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+ALTER TABLE CollectionLearningResourceType ADD CONSTRAINT FKCollectionLearningResourceType FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+ALTER TABLE CollectionKeyWord ADD CONSTRAINT FKCollectionKeyWords FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+
+--end feat 112

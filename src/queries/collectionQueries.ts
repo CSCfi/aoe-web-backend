@@ -132,3 +132,97 @@ export async function collectionQuery(collectionId: string, username?: string) {
         throw new Error(err);
     }
 }
+
+export async function insertCollectionMetadata(collectionId: string, body: any) {
+    try {
+        const data = await db.tx(async (t: any) => {
+            const queries = [];
+            console.log("updateCollection:");
+            const description = (body.description) ? body.description : "";
+            console.log(description);
+            let query = "UPDATE collection SET description = $1, updatedat = now() where id = $2;";
+            console.log(query, [collectionId]);
+            let response  = await t.none(query, [description, collectionId]);
+
+            query = "DELETE FROM collectionkeyword where collectionid = $1";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            let arr;
+            if (body.keywords) {
+                arr = body.keywords;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionkeyword (collectionid, value, keywordkey) VALUES ($1,$2,$3)";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+
+            query = "DELETE FROM collectionlanguage where collectionid = $1";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.language) {
+                arr = body.language;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionlanguage (collectionid, language) VALUES ($1,$2)";
+                    console.log(query, [collectionId, element]);
+                    response =  await t.none(query, [collectionId, element]);
+                    queries.push(response);
+                }
+            }
+            query = "DELETE FROM collectionlearningresourcetype where collectionid = $1";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.educationalRoles) {
+                arr = body.educationalRoles;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionlearningresourcetype (collectionid, value, learningresourcetypekey) VALUES ($1,$2,$3)";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+            query = "DELETE FROM collectionalignmentobject where collectionid = $1";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.alignmentObjects) {
+                arr = body.alignmentObjects;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionalignmentobject (collectionid, alignmenttype, targetname, source, objectkey, educationalframework, targeturl) VALUES ($1,$2,$3,$4,$5,$6,$7)";
+                    console.log(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
+                    response =  await t.none(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
+                    queries.push(response);
+                }
+            }
+            query = "DELETE FROM collectioneducationaluse where collectionid = $1";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.educationalUses) {
+                arr = body.educationalUses;
+                for (const element of arr) {
+                    query = "INSERT INTO collectioneducationaluse (collectionid, value, educationalusekey) VALUES ($1,$2,$3)";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+            if (body.publish) {
+                query = "UPDATE collection SET publishedat = now() where id = $1 and publishedat IS NULL;";
+                console.log(query, [collectionId]);
+                response  = await t.none(query, [collectionId]);
+                queries.push(response);
+            }
+            return t.batch(queries);
+        });
+        return data;
+    }
+    catch (err) {
+        console.log(err);
+        throw new Error(err);
+    }
+}

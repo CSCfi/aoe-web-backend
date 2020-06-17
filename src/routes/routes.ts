@@ -86,4 +86,5 @@ router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToColl
 router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUserCollections);
 router.get("/collection/getCollection/:collectionId", collection.getCollection);
 router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.removeEducationalMaterialFromCollection);
+router.put("/collection/update/:collectionId", collection.updateCollection);
 export = router;
