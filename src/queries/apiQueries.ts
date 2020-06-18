@@ -770,7 +770,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         const audienceparams = [];
         const audienceArr = req.body.educationalRoles;
         if (audienceArr == undefined || audienceArr.length < 1) {
-            query = "DELETE FROM learningresourcetype where educationalmaterialid = $1;";
+            query = "DELETE FROM educationalaudience where educationalmaterialid = $1;";
             response  = await t.any(query, [req.params.id]);
             queries.push(response);
         }
@@ -799,7 +799,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
         const educationalUseParams = [];
         const educationalUseArr = req.body.educationalUses;
         if (educationalUseArr == undefined || educationalUseArr.length < 1) {
-            query = "DELETE FROM learningresourcetype where educationalmaterialid = $1;";
+            query = "DELETE FROM educationaluse where educationalmaterialid = $1;";
             response  = await t.any(query, [req.params.id]);
             queries.push(response);
         }
