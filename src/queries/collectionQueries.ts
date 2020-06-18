@@ -102,19 +102,25 @@ export async function collectionQuery(collectionId: string, username?: string) {
             query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
             const keywords = await db.any(query, [ collectionId ]);
             query = "SELECT language FROM collectionlanguage WHERE collectionid = $1;";
-            const languages = await db.any(query, [ collectionId ]);
+            const languageObjects = await db.any(query, [ collectionId ]);
+            const languages = languageObjects.map(o => o.language);
             query = "SELECT alignmenttype, targetname, source, educationalframework, objectkey, targeturl FROM collectionalignmentobject WHERE collectionid = $1;";
             const alignmentObjects = await db.any(query, [ collectionId ]);
             query = "SELECT value, educationalusekey as key FROM collectioneducationaluse WHERE collectionid = $1;";
             const educationalUses = await db.any(query, [ collectionId ]);
-            query = "SELECT value, learningresourcetypekey as key FROM collectionlearningresourcetype WHERE collectionid = $1;";
+            query = "SELECT educationalrole as value, educationalrolekey as key FROM collectioneducationalaudience WHERE collectionid = $1;";
             const educationalRoles = await db.any(query, [ collectionId ]);
+            query = "SELECT value, accessibilityhazardkey as key FROM collectionaccessibilityhazard WHERE collectionid = $1;";
+            const accessibilityHazards = await db.any(query, [ collectionId ]);
+            query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
+            const accessibilityFeatures = await db.any(query, [ collectionId ]);
 
             query = "select educationalmaterialid as id from collectioneducationalmaterial where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
                 q.author = await t.any(query, [q.id]);
-
+                query = "select licensecode as key, l.license as value from educationalmaterial as m left join licensecode as l ON l.code = m.licensecode where id = $1;";
+                q.license = await t.oneOrNone(query, [q.id]);
                 query = "select * from materialname where educationalmaterialid = $1;";
                 const emname =  await t.any(query, [q.id]);
                 q.name = emname.reduce(function(map, obj) {
@@ -134,7 +140,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 // }));
                 return q;
                 }));
-            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials};
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures};
         });
         return data;
     }
@@ -155,7 +161,7 @@ export async function insertCollectionMetadata(collectionId: string, body: any) 
             console.log(query, [collectionId]);
             let response  = await t.none(query, [description, collectionId]);
 
-            query = "DELETE FROM collectionkeyword where collectionid = $1";
+            query = "DELETE FROM collectionkeyword where collectionid = $1;";
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
@@ -163,60 +169,86 @@ export async function insertCollectionMetadata(collectionId: string, body: any) 
             if (body.keywords) {
                 arr = body.keywords;
                 for (const element of arr) {
-                    query = "INSERT INTO collectionkeyword (collectionid, value, keywordkey) VALUES ($1,$2,$3)";
+                    query = "INSERT INTO collectionkeyword (collectionid, value, keywordkey) VALUES ($1,$2,$3);";
                     console.log(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
 
-            query = "DELETE FROM collectionlanguage where collectionid = $1";
+            query = "DELETE FROM collectionlanguage where collectionid = $1;";
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (body.languages) {
                 arr = body.languages;
                 for (const element of arr) {
-                    query = "INSERT INTO collectionlanguage (collectionid, language) VALUES ($1,$2)";
+                    query = "INSERT INTO collectionlanguage (collectionid, language) VALUES ($1,$2);";
                     console.log(query, [collectionId, element]);
                     response =  await t.none(query, [collectionId, element]);
                     queries.push(response);
                 }
             }
-            query = "DELETE FROM collectionlearningresourcetype where collectionid = $1";
+            query = "DELETE FROM collectioneducationalaudience where collectionid = $1;";
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (body.educationalRoles) {
                 arr = body.educationalRoles;
                 for (const element of arr) {
-                    query = "INSERT INTO collectionlearningresourcetype (collectionid, value, learningresourcetypekey) VALUES ($1,$2,$3)";
+                    query = "INSERT INTO collectioneducationalaudience (collectionid, educationalrole, educationalrolekey) VALUES ($1,$2,$3);";
                     console.log(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
-            query = "DELETE FROM collectionalignmentobject where collectionid = $1";
+            query = "DELETE FROM collectionalignmentobject where collectionid = $1;";
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (body.alignmentObjects) {
                 arr = body.alignmentObjects;
                 for (const element of arr) {
-                    query = "INSERT INTO collectionalignmentobject (collectionid, alignmenttype, targetname, source, objectkey, educationalframework, targeturl) VALUES ($1,$2,$3,$4,$5,$6,$7)";
+                    query = "INSERT INTO collectionalignmentobject (collectionid, alignmenttype, targetname, source, objectkey, educationalframework, targeturl) VALUES ($1,$2,$3,$4,$5,$6,$7);";
                     console.log(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
                     response =  await t.none(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
                     queries.push(response);
                 }
             }
-            query = "DELETE FROM collectioneducationaluse where collectionid = $1";
+            query = "DELETE FROM collectioneducationaluse where collectionid = $1;";
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (body.educationalUses) {
                 arr = body.educationalUses;
                 for (const element of arr) {
-                    query = "INSERT INTO collectioneducationaluse (collectionid, value, educationalusekey) VALUES ($1,$2,$3)";
+                    query = "INSERT INTO collectioneducationaluse (collectionid, value, educationalusekey) VALUES ($1,$2,$3);";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+            query = "DELETE FROM collectionaccessibilityhazard where collectionid = $1;";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.accessibilityHazards) {
+                arr = body.accessibilityHazards;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionaccessibilityhazard (collectionid, value, accessibilityhazardkey) VALUES ($1,$2,$3);";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+            query = "DELETE FROM collectionaccessibilityfeature where collectionid = $1;";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (body.accessibilityFeatures) {
+                arr = body.accessibilityFeatures;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionaccessibilityfeature (collectionid, value, accessibilityfeaturekey) VALUES ($1,$2,$3);";
                     console.log(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
