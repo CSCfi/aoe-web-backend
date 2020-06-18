@@ -99,6 +99,17 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     return {};
                 }
             }
+            query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
+            const keywords = await db.any(query, [ collectionId ]);
+            query = "SELECT language FROM collectionlanguage WHERE collectionid = $1;";
+            const languages = await db.any(query, [ collectionId ]);
+            query = "SELECT alignmenttype, targetname, source, educationalframework, objectkey, targeturl FROM collectionalignmentobject WHERE collectionid = $1;";
+            const alignmentObjects = await db.any(query, [ collectionId ]);
+            query = "SELECT value, educationalusekey as key FROM collectioneducationaluse WHERE collectionid = $1;";
+            const educationalUses = await db.any(query, [ collectionId ]);
+            query = "SELECT value, learningresourcetypekey as key FROM collectionlearningresourcetype WHERE collectionid = $1;";
+            const educationalRoles = await db.any(query, [ collectionId ]);
+
             query = "select educationalmaterialid as id from collectioneducationalmaterial where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
@@ -123,7 +134,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 // }));
                 return q;
                 }));
-            return {collection, educationalmaterials};
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials};
         });
         return data;
     }
@@ -163,8 +174,8 @@ export async function insertCollectionMetadata(collectionId: string, body: any) 
             console.log(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
-            if (body.language) {
-                arr = body.language;
+            if (body.languages) {
+                arr = body.languages;
                 for (const element of arr) {
                     query = "INSERT INTO collectionlanguage (collectionid, language) VALUES ($1,$2)";
                     console.log(query, [collectionId, element]);
