@@ -668,7 +668,7 @@ async function downloadFile(req: Request, res: Response, next: NextFunction, isZ
     try {
 
         if (isZip === true) {
-            return downloadFileFromStorage(req, res, next, true);
+            return await downloadFileFromStorage(req, res, next, true);
         }
         else {
             const data = await downloadFileFromStorage(req, res, next);
