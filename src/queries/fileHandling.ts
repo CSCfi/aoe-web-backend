@@ -847,7 +847,6 @@ async function downloadAndZipFromStorage(req: Request, res: Response, next: Next
             results.push(dirInner);
           }
         });
-
         return results;
       };
 
@@ -874,7 +873,7 @@ try {
     const pathToReturn = zipFolder + "/index.html";
     console.log("The pathtoreturn: " + pathToReturn);
     const results = await searchRecursive(filenameParsedNicely, "index.html");
-    if (results != []) {
+    if (Array.isArray(results) && results.length) {
         console.log("The results: " + results);
         return results[0];
     }
