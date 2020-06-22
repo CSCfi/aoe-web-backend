@@ -306,7 +306,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
                 console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
                 const result = await fh.downloadFile(req, res, next, true);
                 console.log("The result from fh.downloadFile with isZip True value: " + result);
-                if (result != false && jsonObj.materials[i]["mimetype"] === "application/zip") {
+                if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                     /**
                      * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
                      * Write db code to replace application/zip with text/html for this specific file
@@ -318,7 +318,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
 
 
                 }
-                else  {
+                else if (result != false) {
                     /**
                      * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
                      * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter

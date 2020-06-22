@@ -898,6 +898,7 @@ try {
 }
 catch (err) {
     console.log("The error in unzipAndExtract function for HTML zip: " + err);
+    return false;
 }
  }
 
