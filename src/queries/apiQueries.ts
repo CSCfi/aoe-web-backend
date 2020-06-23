@@ -304,7 +304,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
             if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;
                 console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
-                const result = await fh.downloadFile(req, res, next, true);
+                const result = await fh.downloadFileFromStorage(req, res, next, true);
                 console.log("The result from fh.downloadFile with isZip True value: " + result);
                 if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                     /**

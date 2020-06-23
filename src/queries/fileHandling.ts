@@ -664,17 +664,12 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
     });
 }
 
-async function downloadFile(req: Request, res: Response, next: NextFunction, isZip?: any) {
-    try {
 
-        if (isZip === true) {
-            return await downloadFileFromStorage(req, res, next, true);
-        }
-        else {
-            const data = await downloadFileFromStorage(req, res, next);
-            console.log("The data in DownloadFile function: " + data);
-            res.status(200).send(data);
-        }
+async function downloadFile(req: Request, res: Response, next: NextFunction) {
+    try {
+        const data = await downloadFileFromStorage(req, res, next);
+        console.log("The data in DownloadFile function: " + data);
+        res.status(200).send(data);
     }
     catch (err) {
         console.error(err);
