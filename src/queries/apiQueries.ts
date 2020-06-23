@@ -300,30 +300,32 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[14];
         console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
-        if (jsonObj.materials[0] && (jsonObj.materials[0]["mimetype"] === "application/zip" || jsonObj.materials[0].mimetype === "text/html")) {
-            req.params.key = jsonObj.materials[0].filekey;
-            console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
-            const result = await fh.downloadFile(req, res, next, true);
-            console.log("The result from fh.downloadFile with isZip True value: " + result);
-            if (result != false && jsonObj.materials[0]["mimetype"] === "application/zip") {
-                /**
-                 * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
-                 * Write db code to replace application/zip with text/html for this specific file
-                 * mimetype = text/html + result
-                 */
-                jsonObj.materials[0]["mimetype"] = "text/html";
-                jsonObj.materials[0]["filepath"] = result;
-                console.log("The jsonObj: " + JSON.stringify(jsonObj));
+        for (const i in jsonObj.materials) {
+            if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
+                req.params.key = jsonObj.materials[i].filekey;
+                console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
+                const result = await fh.downloadFile(req, res, next, true);
+                console.log("The result from fh.downloadFile with isZip True value: " + result);
+                if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
+                    /**
+                     * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
+                     * Write db code to replace application/zip with text/html for this specific file
+                     * mimetype = text/html + result
+                     */
+                    jsonObj.materials[i]["mimetype"] = "text/html";
+                    jsonObj.materials[i]["filepath"] = result;
+                    console.log("The jsonObj: " + JSON.stringify(jsonObj));
 
 
-            }
-            else  {
-                /**
-                 * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
-                 * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
-                 */
-                jsonObj.materials[0]["filepath"] = result;
-                console.log("The jsonObj: " + JSON.stringify(jsonObj));
+                }
+                else if (result != false) {
+                    /**
+                     * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
+                     * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
+                     */
+                    jsonObj.materials[i]["filepath"] = result;
+                    console.log("The jsonObj: " + JSON.stringify(jsonObj));
+                }
             }
         }
         jsonObj.owner = owner;

@@ -668,7 +668,7 @@ async function downloadFile(req: Request, res: Response, next: NextFunction, isZ
     try {
 
         if (isZip === true) {
-            return downloadFileFromStorage(req, res, next, true);
+            return await downloadFileFromStorage(req, res, next, true);
         }
         else {
             const data = await downloadFileFromStorage(req, res, next);
@@ -847,7 +847,6 @@ async function downloadAndZipFromStorage(req: Request, res: Response, next: Next
             results.push(dirInner);
           }
         });
-
         return results;
       };
 
@@ -874,7 +873,7 @@ try {
     const pathToReturn = zipFolder + "/index.html";
     console.log("The pathtoreturn: " + pathToReturn);
     const results = await searchRecursive(filenameParsedNicely, "index.html");
-    if (results != []) {
+    if (Array.isArray(results) && results.length) {
         console.log("The results: " + results);
         return results[0];
     }
@@ -899,6 +898,7 @@ try {
 }
 catch (err) {
     console.log("The error in unzipAndExtract function for HTML zip: " + err);
+    return false;
 }
  }
 
