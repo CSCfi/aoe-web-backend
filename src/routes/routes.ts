@@ -77,14 +77,14 @@ router.post("/oaipmh/metadata", oaipmh.getMaterialMetaData);
 // router.get("/login", ah.authservice);
 // router.get("/materialtest", ah.getMaterial);
 router.post("/elasticSearch/search", es.elasticSearchQuery);
-router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules() , validator.ratingValidate, rating.addRating);
+router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules(), validator.rulesValidate, rating.addRating);
 router.get("/rating/:materialId", ah.checkAuthenticated, rating.getUserRating);
 router.get("/ratings/:materialId", rating.getRating);
 
 router.post("/collection/create", ah.checkAuthenticated, collection.createCollection);
-router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.addEducationalMaterialToCollection);
+router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, validator.addCollectionValidationRules(), validator.rulesValidate, collection.addEducationalMaterialToCollection);
 router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUserCollections);
 router.get("/collection/getCollection/:collectionId", collection.getCollection);
-router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, collection.removeEducationalMaterialFromCollection);
-router.put("/collection/update/:collectionId", collection.updateCollection);
+router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, validator.removeCollectionValidationRules(), validator.rulesValidate, collection.removeEducationalMaterialFromCollection);
+router.put("/collection/update", ah.checkAuthenticated, ah.hasAccessToCollection, validator.updateCollectionValidationRules(), validator.rulesValidate, collection.updateCollection);
 export = router;

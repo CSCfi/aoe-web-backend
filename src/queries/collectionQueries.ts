@@ -150,8 +150,9 @@ export async function collectionQuery(collectionId: string, username?: string) {
     }
 }
 
-export async function insertCollectionMetadata(collectionId: string, body: any) {
+export async function insertCollectionMetadata(body: any) {
     try {
+        const collectionId = body.collectionId;
         const data = await db.tx(async (t: any) => {
             const queries = [];
             console.log("updateCollection:");

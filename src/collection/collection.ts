@@ -68,7 +68,7 @@ export async function getCollection(req: Request , res: Response, next: NextFunc
 
 export async function updateCollection(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = await insertCollectionMetadata(req.params.collectionId, req.body);
+    const data = await insertCollectionMetadata(req.body);
     res.status(200).json({"status": "success"});
   }
   catch (error) {
