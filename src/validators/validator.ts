@@ -43,6 +43,7 @@ function removeCollectionValidationRules() {
 function updateCollectionValidationRules() {
     return [
         body("collectionId", "Integer collectionId must exist").exists().bail().isInt(),
+        body("name", "String name must exist").exists().bail().isString(),
         body("publish", "publish boolean expected").if(body("publish").exists()).isBoolean(),
         body("description", "string description expected ").if(body("description").exists()).isString(),
         body("keywords.*.key", "string key expected ").if(body("keywords").exists())

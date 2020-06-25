@@ -1,36 +1,41 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { collectionQuery, userCollections, insertCollection, deleteEducationalMaterialFromCollection, insertEducationalMaterialToCollection, insertCollectionMetadata } from "./../queries/collectionQueries";
-// export class Collection {
-//     constructor(public collectionId: string,
-//       public name: string,
-//       public emId: string[],
-//       public publish: boolean,
-//       public description: string,
-//       public keywords: object[],
-//       public languages: string[],
-//       public educationalRoles: object[],
-//       public alignmentObjects: object[],
-//       public accessibilityFeatures: object[],
-//       public accessibilityHazards: object[],
+export class Collection {
+      public collectionId?: string;
+      public name: string;
+      public emId?: string[];
+      public publish?: boolean;
+      public description?: string;
+      public keywords?: object[];
+      public languages?: string[];
+      public educationalRoles?: object[];
+      public alignmentObjects?: object[];
+      public educationalUses?: object[];
+      public accessibilityFeatures?: object[];
+      public accessibilityHazards?: object[];
+    constructor(data?: Collection) {
+      this.collectionId = data.collectionId;
+      this.name = data.name;
+      this.emId = data.emId;
+      this.publish = data.publish;
+      this.description = data.description;
+      this.keywords = data.keywords;
+      this.languages = data.languages;
+      this.educationalRoles = data.educationalRoles;
+      this.alignmentObjects = data.alignmentObjects;
+      this.educationalUses = data.educationalUses;
+      this.accessibilityFeatures = data.accessibilityFeatures;
+      this.accessibilityHazards = data.accessibilityHazards;
+    }
 
-//       ) {
-//       this.collectionId = collectionId;
-//       this.name = name;
-//       this.emId = emId;
-//       this.publish = publish;
-//       this.description = description;
-//       this.keywords = keywords;
-//       this.educationalRoles = educationalRoles;
-//       this.alignmentObjects = alignmentObjects;
-//       this.accessibilityFeatures = accessibilityFeatures;
-//       this.accessibilityHazards = accessibilityHazards;
-//     }
-// }
+}
 
 export async function createCollection(req: Request , res: Response, next: NextFunction) {
     try {
-      const id = await insertCollection(req.session.passport.user.uid, req.body.name);
+      const collection = new Collection(req.body);
+      console.log(collection);
+      const id = await insertCollection(req.session.passport.user.uid, collection);
       res.status(200).json(id);
     }
     catch (error) {
@@ -40,7 +45,8 @@ export async function createCollection(req: Request , res: Response, next: NextF
 }
 export async function addEducationalMaterialToCollection(req: Request , res: Response, next: NextFunction) {
     try {
-      await insertEducationalMaterialToCollection(req.body.collectionId, req.body.emId);
+      const collection = new Collection(req.body);
+      await insertEducationalMaterialToCollection(collection);
       res.status(200).json({"status": "ok"});
     }
     catch (error) {
@@ -51,7 +57,8 @@ export async function addEducationalMaterialToCollection(req: Request , res: Res
 
 export async function removeEducationalMaterialFromCollection(req: Request , res: Response, next: NextFunction) {
   try {
-    await deleteEducationalMaterialFromCollection(req.body.collectionId, req.body.emId);
+    const collection = new Collection(req.body);
+    await deleteEducationalMaterialFromCollection(collection);
     res.status(200).json({"status": "ok"});
   }
   catch (error) {
@@ -90,7 +97,9 @@ export async function getCollection(req: Request , res: Response, next: NextFunc
 
 export async function updateCollection(req: Request, res: Response, next: NextFunction) {
   try {
-    const data = await insertCollectionMetadata(req.body);
+    const collection = new Collection(req.body);
+    console.log(collection);
+    const data = await insertCollectionMetadata(collection);
     res.status(200).json({"status": "success"});
   }
   catch (error) {
