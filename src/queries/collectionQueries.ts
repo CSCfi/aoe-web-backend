@@ -1,16 +1,16 @@
-import { identifier, objectExpression } from "babel-types";
-import { NameObject , setLanguage } from "./apiQueries";
-
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 
-
-
+/**
+ *
+ * @param username
+ * @param collectionName
+ * create new collection to database
+ */
 export async function insertCollection(username: string, collectionName: string) {
     try {
         const id = await db.tx(async (t: any) => {
-            const queries: any = [];
             let query;
             query = "insert into collection (createdat, updatedat, createdby, collectionname) values (now(),now(),$1, $2) returning id;";
             console.log("CollectionQueries insertCollection: " + query, [username, collectionName]);
@@ -27,6 +27,12 @@ export async function insertCollection(username: string, collectionName: string)
         throw new Error(err);
     }
 }
+/**
+ *
+ * @param collectionId
+ * @param emId
+ * insert educational materials to collection
+ */
 export async function insertEducationalMaterialToCollection(collectionId: string, emId: string[]) {
     try {
         const values: object[] = [];
@@ -41,7 +47,12 @@ export async function insertEducationalMaterialToCollection(collectionId: string
         throw new Error(err);
     }
 }
-
+/**
+ *
+ * @param collectionId
+ * @param emId
+ * remove educational materials from collection
+ */
 export async function deleteEducationalMaterialFromCollection(collectionId: string, emId: string[]) {
     try {
         const values: object[] = [];
@@ -55,6 +66,11 @@ export async function deleteEducationalMaterialFromCollection(collectionId: stri
         throw new Error(err);
     }
 }
+/**
+ *
+ * @param username
+ * get collection for user
+ */
 export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
@@ -78,12 +94,18 @@ export async function userCollections(username: string) {
         throw new Error(err);
     }
 }
-
+/**
+ *
+ * @param collectionId
+ * @param username
+ * get collection educational materials and metadata
+ * if published username is not required
+ * otherwise check if username is owner of the collection to return data
+ */
 export async function collectionQuery(collectionId: string, username?: string) {
     try {
         const data = await db.tx(async (t: any) => {
             let query = "select id, publishedat, collectionname as name from collection where id = $1;";
-            console.log("collectionQuery username: " + username);
             console.log(query, [ collectionId ]);
             const collection = await db.oneOrNone(query, [ collectionId ]);
             if (!collection) {
@@ -127,18 +149,6 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     map[obj.language] = obj.materialname;
                     return map;
                 }, {});
-
-                // q.materials = await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
-                // "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-                // "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1", [q.id], async (q2: any) => {
-                //     const response = await t.any("select * from materialdisplayname where materialid = $1;", q2.id);
-                //     q2.materialdisplayname = response.reduce(function(map, obj) {
-                //         map[obj.language] = obj.displayname;
-                //         return map;
-                //     }, {});
-                //     return q2;
-                // }));
-                return q;
                 }));
             return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures};
         });
@@ -149,7 +159,11 @@ export async function collectionQuery(collectionId: string, username?: string) {
         throw new Error(err);
     }
 }
-
+/**
+ *
+ * @param body
+ * insert metadata to collection
+ */
 export async function insertCollectionMetadata(body: any) {
     try {
         const collectionId = body.collectionId;

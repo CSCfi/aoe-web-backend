@@ -81,7 +81,7 @@ router.post("/rating", ah.checkAuthenticated, validator.ratingValidationRules(),
 router.get("/rating/:materialId", ah.checkAuthenticated, rating.getUserRating);
 router.get("/ratings/:materialId", rating.getRating);
 
-router.post("/collection/create", ah.checkAuthenticated, collection.createCollection);
+router.post("/collection/create", ah.checkAuthenticated, validator.createCollectionValidationRules(), validator.rulesValidate, collection.createCollection);
 router.post("/collection/addMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, validator.addCollectionValidationRules(), validator.rulesValidate, collection.addEducationalMaterialToCollection);
 router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUserCollections);
 router.get("/collection/getCollection/:collectionId", collection.getCollection);

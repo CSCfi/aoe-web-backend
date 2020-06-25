@@ -1,10 +1,32 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-const { check, validationResult } = require("express-validator");
 import { collectionQuery, userCollections, insertCollection, deleteEducationalMaterialFromCollection, insertEducationalMaterialToCollection, insertCollectionMetadata } from "./../queries/collectionQueries";
-export class Collection {
-    constructor(public collectionId: string, public emArray: string[]) {}
-}
+// export class Collection {
+//     constructor(public collectionId: string,
+//       public name: string,
+//       public emId: string[],
+//       public publish: boolean,
+//       public description: string,
+//       public keywords: object[],
+//       public languages: string[],
+//       public educationalRoles: object[],
+//       public alignmentObjects: object[],
+//       public accessibilityFeatures: object[],
+//       public accessibilityHazards: object[],
+
+//       ) {
+//       this.collectionId = collectionId;
+//       this.name = name;
+//       this.emId = emId;
+//       this.publish = publish;
+//       this.description = description;
+//       this.keywords = keywords;
+//       this.educationalRoles = educationalRoles;
+//       this.alignmentObjects = alignmentObjects;
+//       this.accessibilityFeatures = accessibilityFeatures;
+//       this.accessibilityHazards = accessibilityHazards;
+//     }
+// }
 
 export async function createCollection(req: Request , res: Response, next: NextFunction) {
     try {

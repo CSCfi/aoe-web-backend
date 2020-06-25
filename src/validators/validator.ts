@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
 import { body, validationResult } from "express-validator";
-import { every } from "async";
 
 function ratingValidationRules() {
     return [
         // materialId mandatory
-        body("materialId")
-        .exists(),
+        body("materialId").exists(),
         body("ratingContent").exists().optional({nullable: true}).isInt({min: 1, max: 5}),
         body("ratingVisual").exists().optional({nullable: true}).isInt({min: 1, max: 5}),
         // feedback maximum length 1000
@@ -15,6 +13,12 @@ function ratingValidationRules() {
         body("feedbackSuggest").exists().optional({nullable: true}).isLength({ max: 1000 }),
         body("feedbackPurpose").exists().optional({nullable: true}).isLength({ max: 1000 }),
       ];
+}
+
+function createCollectionValidationRules() {
+    return [
+        body("name", "String name must exist").exists().bail().isString(),
+    ];
 }
 
 function addCollectionValidationRules() {
@@ -33,7 +37,6 @@ function removeCollectionValidationRules() {
         body("emId", "emId expected").exists(),
         body("emId", "Array emId expected").isArray(),
         body("emId.*").isInt(),
-        // body("emId").custom(arr => arr.every((e) => { return Number.isInteger(parseInt(e)); })),
     ];
 }
 
@@ -97,6 +100,7 @@ async function rulesValidate(req: Request, res: Response, next: NextFunction) {
 module.exports = {
     ratingValidationRules,
     rulesValidate,
+    createCollectionValidationRules,
     addCollectionValidationRules,
     removeCollectionValidationRules,
     updateCollectionValidationRules
