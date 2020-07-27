@@ -23,7 +23,7 @@ async function getMaterialMetaData(req: Request , res: Response) {
         db.task(async (t: any)  => {
             const params: any = [];
             let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-            " from educationalmaterial as em where em.publishedat is not null order by em.id asc;";
+            " from educationalmaterial as em where em.publishedat is not null and em.obsoleted = 0 order by em.id asc;";
             if (req.body.dateMin !== undefined && req.body.dateMax !== undefined && req.body.materialPerPage !== undefined && req.body.pageNumber !== undefined) {
                 console.log(req.body.dateMin);
                 console.log(req.body.dateMax);
@@ -33,7 +33,7 @@ async function getMaterialMetaData(req: Request , res: Response) {
                 params.push(req.body.pageNumber * req.body.materialPerPage);
                 params.push(req.body.materialPerPage);
                 query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-                " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 and em.publishedat is not null order by em.id asc OFFSET $3 LIMIT $4;";
+                " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 and em.publishedat is not null and em.obsoleted = 0 order by em.id asc OFFSET $3 LIMIT $4;";
             }
             console.log(query, params);
             return t.map(query, params, async (q: any) => {
