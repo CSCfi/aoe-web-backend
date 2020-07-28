@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl } from "../services/urlService";
+import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -118,6 +119,12 @@ async function getMaterialMetaData(req: Request , res: Response) {
             query = "select * from educationalaudience where educationalmaterialid = $1;";
             response = await t.any(query, [q.id]);
             q.educationalaudience = response;
+
+            query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+            response = await db.oneOrNone(query, [q.id]);
+            if (response) {
+                q.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+            }
             return q;
             }).then(t.batch)
             .catch((error: any) => {

@@ -20,34 +20,18 @@ const thumbnail = require("./../queries/thumbnailHandler");
 const oaipmh = require("./../queries/oaipmh");
 const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
-//  const pouta = require("./../queries/pouta");
-// post metadata
-// post file
-// get metadata
-// get file
-// put metadata
-// get omat
-// delete file
-// delete metadata
 
-//  router.get("/login", passport.authenticate("oidc"), function (req, res) {
-//     res.send("hello!!");
-// });
-//  router.post("/callback", function (req, res) {
-//     console.log("In callback", req.user);
-//     res.send(200);
-// });
-// router.post("/authtest", ah.authtest);
 router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
 router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
 router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
+router.get("/thumbnail/:id", thumbnail.downloadThumbnail);
 
 router.get("/download/:key", fh.downloadFile);
 router.get("/material/file/:materialId/:publishedat?", fh.downloadMaterialFile);
-// router.get("/logintest", ah.authservice);
+
 router.get("/userdata", ah.checkAuthenticated, ah.getUserData);
 router.get("/material", db.getMaterial);
 router.get("/material/:id/:publishedat?", db.getMaterialData);

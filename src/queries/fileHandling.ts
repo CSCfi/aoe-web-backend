@@ -696,57 +696,71 @@ async function downloadFileFromStorage(req: Request, res: Response, next: NextFu
                 next(new ErrorHandler(400, "Failed to download file"));
             }
             else {
-                const config = {
-                    accessKeyId: process.env.USER_KEY,
-                    secretAccessKey: process.env.USER_SECRET,
-                    endpoint: process.env.POUTA_END_POINT,
-                    region: process.env.REGION
-                    };
-                AWS.config.update(config);
-                const s3 = new AWS.S3();
-                const bucketName = process.env.BUCKET_NAME;
-                // const filename = req.body.key;
-                const key = req.params.key;
-                try {
-                    const params = {
-                        Bucket: bucketName,
-                        Key: key
-                    };
-                    const fileStream = s3.getObject(params).createReadStream();
-                    if (isZip === true) {
-                        console.log("We came to the if-statement in downloadFileFromStorage!");
-                        /**
-                         * Here implement the code to
-                         * download straight to server
-                         */
-                        const folderpath = process.env.HTMLFOLDER + "/" + response.originalfilename;
-                        const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
-                        zipStream.on("finish", async function() {
-                            console.log("We finished the zipstream!");
-                             resolve(await unZipAndExtract(folderpath));
-                            // return unZipAndExtract(folderpath);
-                        });
-                        // unZipAndExtract(folderpath);
-                    }
-                    else {
-                        res.attachment(key);
-                        res.header("Content-Disposition", contentDisposition(response.originalfilename));
-                        console.log("The response.originalfilename is: " + response.originalfilename);
-                        fileStream.pipe(res);
-                    }
-
-                }
-                catch (err) {
-                    console.error("The error in downloadFileFromStorage function (nested try) : " + err);
-                    next(new ErrorHandler(500, "Error in download"));
-                }
+                const params = {Bucket: process.env.BUCKET_NAME,
+                    Key: req.params.key
+                };
+                const resp = await downloadFromStorage(req, res, next, params, response.originalfilename, isZip);
+                resolve(resp);
             }
+
         }
         catch (err) {
             console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
             next(new ErrorHandler(500, "Error in download"));
         }
     });
+}
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @param params
+ * @param filename
+ * @param isZip
+ * function to download file from Pouta
+ */
+export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: {Bucket: string; Key: string; }, filename: string, isZip?: any) {
+    return new Promise(async (resolve) => {
+        try {
+    const config = {
+        accessKeyId: process.env.USER_KEY,
+        secretAccessKey: process.env.USER_SECRET,
+        endpoint: process.env.POUTA_END_POINT,
+        region: process.env.REGION
+        };
+    AWS.config.update(config);
+    const s3 = new AWS.S3();
+    const key = params.Key;
+    try {
+        const fileStream = s3.getObject(params).createReadStream();
+        if (isZip === true) {
+            console.log("We came to the if-statement in downloadFileFromStorage!");
+            const folderpath = process.env.HTMLFOLDER + "/" + filename;
+            const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
+            zipStream.on("finish", async function() {
+                console.log("We finished the zipstream!");
+                 resolve(await unZipAndExtract(folderpath));
+            });
+        }
+        else {
+            res.attachment(key);
+            res.header("Content-Disposition", contentDisposition(filename));
+            console.log("The response.originalfilename is: " + filename);
+            fileStream.pipe(res);
+        }
+
+    }
+    catch (err) {
+        console.error("The error in downloadFileFromStorage function (nested try) : " + err);
+        next(new ErrorHandler(500, "Error in download"));
+    }
+}
+catch (err) {
+    console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
+    next(new ErrorHandler(500, "Error in download"));
+}
+});
 }
 
 async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
@@ -876,20 +890,6 @@ try {
         console.log("the unzipandextract returns false");
         return false;
     }
-
-    // console.log("The pathtoreturn: " + pathToReturn);
-    // if (fs.existsSync(pathToReturn)) {
-    //     // Here we check if a index.html file exists in the unzipped folder, ensuring that it is a HTML file.console.error;
-    //     // if the index.html file exists, we return the unzipped folderpath, and change the mimetype to HTML.
-    //     return pathToReturn;
-    // }
-    // else {
-    //     // If we come here, the index.html file doesnt exist, which means the zipped file is not a html file
-    //     // Then we dont want to return the pathtothefolder, and we dont want to store the unzipped folder so we delete it here.
-    //     return false;
-    // }
-    // This is the path we return to the frontend, the folderpath + unzipped filename + index.html
-
 }
 catch (err) {
     console.log("The error in unzipAndExtract function for HTML zip: " + err);
@@ -910,5 +910,6 @@ module.exports = {
     uploadBase64FileToStorage : uploadBase64FileToStorage,
     uploadAttachmentToMaterial : uploadAttachmentToMaterial,
     checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue,
-    insertDataToDisplayName : insertDataToDisplayName
+    insertDataToDisplayName : insertDataToDisplayName,
+    downloadFromStorage : downloadFromStorage
 };

@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from "express";
+import { ErrorHandler } from "./../helpers/errorHandler";
+import { downloadFromStorage } from "./fileHandling";
 const fs = require("fs");
 const multer  = require("multer");
 const fh = require("./fileHandling");
@@ -115,7 +117,50 @@ async function uploadbase64Image(req: Request, res: Response) {
     }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * download thumbnail from Pouta
+ */
+async function downloadThumbnail(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = req.params.id;
+        const key = await getThumbnailKey(id);
+        if (!key) {
+            return res.status(200).json({});
+        }
+        const params = {
+            Bucket: process.env.THUMBNAIL_BUCKET_NAME,
+            Key: key.filekey};
+        await downloadFromStorage(req, res, next, params, key.filekey);
+      }
+      catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue downloading thumbnail"));
+      }
+}
+
+/**
+ *
+ * @param id
+ * get thumbnail pouta key based on educationalmaterial id
+ */
+async function getThumbnailKey(id: string) {
+    try {
+        const query = "select filekey from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
+        return await db.oneOrNone(query, [id]);
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
+
 module.exports = {
     uploadImage : uploadImage,
-    uploadbase64Image : uploadbase64Image
+    uploadbase64Image : uploadbase64Image,
+    downloadThumbnail : downloadThumbnail
 };

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-// import { insertDataToDisplayName } from "./fileHandling";
+import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 const fh = require("./fileHandling");
 const parseDate = require("postgres-date");
 
@@ -11,8 +11,6 @@ const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 const elasticSearch = require("./../elasticSearch/es");
-// const dbHelpers = require("./../databaseHelpers");
-
 
 async function addLinkToMaterial(req: Request , res: Response , next: NextFunction) {
     try {
@@ -155,11 +153,6 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         return q;
         });
         queries.push(response);
-
-        // query = "select * from inlanguage where educationalmaterialid = $1;";
-        // response = await t.any(query, [req.params.id]);
-        // queries.push(response);
-
         query = "select * from alignmentobject where educationalmaterialid = $1;";
         response = await t.any(query, [req.params.id]);
         queries.push(response);
@@ -185,43 +178,6 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
             }
         }
         queries.push(response);
-       // console.log("The response that hopefully includes mimetype: " + JSON.stringify(response));
-        // console.log("Maybe this is where we see mimetype: " + response[0].mimetype + " and filekey: " + response[0].filekey);
-
-        // if (response[0].mimetype === "application/zip" || response[0].mimetype === "text/html") {
-        //     req.params.key = response[0].filekey;
-        //     console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
-        //     const result = await fh.downloadFile(req, res, true);
-        //     console.log("The result from fh.downloadFile with isZip True value: " + result);
-        //     if (result != false && response[0].mimetype === "application/zip") {
-        //         /**
-        //          * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
-        //          * Write db code to replace application/zip with text/html for this specific file
-        //          * mimetype = text/html + result
-        //          */
-
-        //          /**
-        //           * Here we will insert the correct mimetype, and after, and only after that; we do the query and push the response.
-        //           */
-        //         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        //         response = await t.any(query, [req.params.id]);
-        //         queries.push(response);
-        //         console.log("The unzipAndExtract function did not return false so we came here!, and here is the result: " + JSON.stringify(result));
-        //     }
-        //     else  {
-        //         /**
-        //          * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
-        //          * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
-        //          */
-        //         query = "select m.id, m.materiallanguagekey as language, link, priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-        //         response = await t.any(query, [req.params.id]);
-        //         queries.push(response);
-        //     }
-
-        // }
-        // query = "SELECT users.id, users.firstname, users.lastname FROM educationalmaterial INNER JOIN users ON educationalmaterial.usersusername = users.username WHERE educationalmaterial.id = $1 and educationalmaterial.obsoleted != '1';";
-        // response = await t.any(query, [req.params.id]);
-        // queries.push(response);
 
         query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
         response = await t.any(query, [req.params.id]);
@@ -368,6 +324,10 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.isBasedOn = data[12];
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
+        if (jsonObj.thumbnail) {
+            jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.id);
+        }
+        jsonObj.thumbnail = data[17];
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
         res.status(200).json(jsonObj);
@@ -375,7 +335,6 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     .catch((error: any) => {
         console.log(error);
         next(new ErrorHandler(400, "Issue getting material data"));
-        // res.sendStatus(400);
     });
 }
 
@@ -404,6 +363,9 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
                 q.authors = response;
                 query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
                 response = await db.oneOrNone(query, [q.id]);
+                if (response) {
+                    response.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                }
                 q.thumbnail = response;
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
@@ -425,7 +387,6 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
     catch (err ) {
         console.error(err);
         next(new ErrorHandler(500, "Issue getting users material"));
-        // res.sendStatus(500);
     }
 }
 
@@ -453,6 +414,9 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
                 q.authors = response;
                 query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
                 response = await db.oneOrNone(query, [q.id]);
+                if (response) {
+                    response.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                }
                 q.thumbnail = response;
                 query = "select * from educationallevel where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
@@ -474,7 +438,6 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
     catch (err ) {
         console.error(err);
         next(new ErrorHandler(500, "Issue getting recent materials"));
-        // res.sendStatus(500);
     }
 }
 
@@ -511,7 +474,6 @@ async function deleteMaterial(req: Request , res: Response , next: NextFunction)
     catch (err ) {
         console.log(err);
         next(new ErrorHandler(500, "Issue deleting material"));
-        // res.sendStatus(500);
     }
 }
 
@@ -540,7 +502,6 @@ async function deleteRecord(req: Request , res: Response , next: NextFunction) {
     catch (err ) {
         console.log(err);
         next(new ErrorHandler(500, "Issue deleting record"));
-        // res.sendStatus(500);
     }
 }
 
@@ -572,20 +533,7 @@ async function deleteAttachment(req: Request , res: Response , next: NextFunctio
         // res.sendStatus(500);
     }
 }
-// async function postMaterial(req: Request , res: Response , next: NextFunction) {
-//     try {
-//         let query;
-//         const params = req.params;
 
-//         query = "insert into educationalmaterial (materialName,slug,CreatedAt,PublishedAt,UpdatedAt,TechnicalName,timeRequired,agerangeMin,agerangeMax,UsersId) values ('matskun nimi 3','slugi',to_date('1900-01-01', 'YYYY-MM-DD'),to_date('1900-01-01', 'YYYY-MM-DD'),to_date('1900-01-01', 'YYYY-MM-DD'),'" + req.query.materialName + "','tekninen nimi','300','1','12','" + req.query.usersid + "') RETURNING id;";
-//         const data = await db.any(query);
-//         res.status(200).json(data);
-//     }
-//     catch (err ) {
-//         console.log(err);
-//         res.sendStatus(500);
-//     }
-// }
 export async function setLanguage(obj: any) {
     try {
         if (obj) {
@@ -854,34 +802,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                 queries.push(await t.any(query, [element.value, req.params.id, element.key]));
             }
         }
-        // inLanguage
-        // console.log("inserting inLanguage");
-        // const inLanguageParams = [];
-        // const inLanguageArr = req.body.inLanguage;
-        // if (inLanguageArr == undefined) {
-        //     query = "DELETE FROM inlanguage where educationalmaterialid = $1;";
-        //     response  = await t.any(query, [req.params.id]);
-        //     queries.push(response);
-        // }
-        // else {
-        //     for (let i = 1; i <= inLanguageArr.length; i++) {
-        //         inLanguageParams.push("('" + inLanguageArr[i - 1].value + "')");
-        //     }
-        //     query = "select id from (select * from inlanguage where educationalmaterialid = $1) as i left join" +
-        //     "(select t.inlanguage from ( values " + inLanguageParams.join(",") + " ) as t(inlanguage)) as a on i.inlanguage = a.inlanguage where a.inlanguage is null;";
-        //     response  = await t.any(query, [req.params.id]);
-        //     queries.push(response);
-        //     for (const element of response) {
-        //         query = "DELETE FROM inlanguage where id = " + element.id + ";";
-        //         console.log(query);
-        //         queries.push(await t.any(query));
-        //     }
-        //     for (const element of inLanguageArr) {
-        //         query = "INSERT INTO inlanguage (inlanguage, url, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (inlanguage, educationalmaterialid) DO NOTHING;";
-        //         console.log(query);
-        //         queries.push(await t.any(query, [element.value, element.url, req.params.id]));
-        //     }
-        // }
+
         // keywords
         console.log("inserting keywords");
         let params = [];
@@ -1031,16 +952,10 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     values.push(obj);
                     // updateValues.push({educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework)});
                 });
-                // console.log(arr); (alignmentType, targetName, source, educationalmaterialid)
                 console.log(values);
                 query = pgp.helpers.insert(values, cs) + " ON CONFLICT ON CONSTRAINT constraint_alignmentobject DO UPDATE Set educationalframework = excluded.educationalframework";
                 console.log(query);
                 queries.push(await t.any(query));
-                // for (const element of arr) {
-                //     query = "INSERT INTO alignmentobject (alignmentType, targetName, source, educationalmaterialid) VALUES ($1,$2,$3,$4) ON CONFLICT (alignmentType, targetName, source, educationalmaterialid) DO NOTHING;";
-                //     console.log(query);
-                //     queries.push(await t.any(query, [element.alignmentType, element.targetName, element.source, req.params.id]));
-                // }
             }
 // author
         console.log("inserting author");
@@ -1179,18 +1094,6 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
                     queries.push(await t.any(query, [element.key, element.value, req.params.id]));
                 }
             }
-            // update fileOrder
-            // console.log("inserting fileOrder");
-            // params = [];
-            // arr = req.body.fileOrder;
-            // console.log(arr);
-            // if (arr) {
-            //     for (const element of arr) {
-            //         query = "update material set priority = $1 where id = $2 and educationalmaterialid = $3;";
-            //         console.log(query, [element.priority, element.id, req.params.id]);
-            //         queries.push(await t.none(query, [element.priority, element.id, req.params.id]));
-            //     }
-            // }
 
             console.log("update attachmentDetails");
             arr = req.body.attachmentDetails;
@@ -1246,7 +1149,6 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
     .catch ((err: Error) => {
         console.error(err);
         next(new ErrorHandler(400, "Issue updating material"));
-        // res.sendStatus(400);
     });
 }
 
@@ -1256,7 +1158,6 @@ async function createUser(req: Request , res: Response , next: NextFunction) {
         console.log(req.body);
         if (req.body.username === undefined) {
             next(new ErrorHandler(500, "Username cannot be undefined"));
-            // res.status(500).send("username undefined");
         }
         query = "insert into users (firstname , lastname, username, preferredlanguage,preferredtargetname,preferredalignmenttype )values ($1,$2,$3,'fi','','') RETURNING username;";
         const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.username]);
@@ -1265,7 +1166,6 @@ async function createUser(req: Request , res: Response , next: NextFunction) {
     catch (err ) {
         console.error(err);
         next(new ErrorHandler(500, "Issue creating user"));
-        // res.status(500).send(err);
     }
 }
 
@@ -1280,7 +1180,6 @@ async function updateUser(req: Request , res: Response , next: NextFunction) {
     catch (err ) {
         console.error(err);
         next(new ErrorHandler(500, "Issue updating user"));
-        // res.status(500).send("update failed");
     }
 }
 
@@ -1309,7 +1208,6 @@ async function getUser(req: Request , res: Response , next: NextFunction) {
     catch (err ) {
         console.error(err);
         next(new ErrorHandler(500, "Issue processing get user request"));
-        // res.status(500).send("get failed");
     }
 }
 
