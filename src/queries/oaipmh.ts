@@ -120,10 +120,11 @@ async function getMaterialMetaData(req: Request , res: Response) {
             response = await t.any(query, [q.id]);
             q.educationalaudience = response;
 
-            query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+            query = "Select filepath, mimetype from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
             response = await db.oneOrNone(query, [q.id]);
             if (response) {
-                q.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+                q.thumbnail = response;
             }
             return q;
             }).then(t.batch)
