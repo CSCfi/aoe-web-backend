@@ -1,3 +1,4 @@
+import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const path = require("path");
@@ -217,6 +218,9 @@ async function metadataToEs(offset: number, limit: number) {
 
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
+            if (response) {
+                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+            }
             q.thumbnail = response;
 
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
@@ -364,6 +368,9 @@ async function updateEsDocument() {
 
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
+            if (response) {
+                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+            }
             q.thumbnail = response;
 
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
