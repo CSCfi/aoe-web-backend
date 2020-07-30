@@ -74,7 +74,7 @@ export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
             console.log("userCollections:");
-            const query = "select id, publishedat, collectionname as name from collection join userscollection as uc on collection.id = uc.collectionid where usersusername = $1;";
+            const query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection join userscollection as uc on collection.id = uc.collectionid where usersusername = $1;";
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
@@ -104,7 +104,7 @@ export async function userCollections(username: string) {
 export async function collectionQuery(collectionId: string, username?: string) {
     try {
         const data = await db.tx(async (t: any) => {
-            let query = "select id, publishedat, collectionname as name from collection where id = $1;";
+            let query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection where id = $1;";
             console.log(query, [ collectionId ]);
             const collection = await db.oneOrNone(query, [ collectionId ]);
             if (!collection) {
@@ -138,15 +138,15 @@ export async function collectionQuery(collectionId: string, username?: string) {
             console.log(query, [collection.id]);
             query = "select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
-                console.log(query, [collection.id]);
+                console.log(query, [q.id]);
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
-                console.log(query, [collection.id]);
+                console.log(query, [q.id]);
                 q.author = await t.any(query, [q.id]);
                 query = "select licensecode as key, l.license as value from educationalmaterial as m left join licensecode as l ON l.code = m.licensecode where id = $1;";
-                console.log(query, [collection.id]);
+                console.log(query, [q.id]);
                 q.license = await t.oneOrNone(query, [q.id]);
                 query = "select * from materialname where educationalmaterialid = $1;";
-                console.log(query, [collection.id]);
+                console.log(query, [q.id]);
                 const emname =  await t.any(query, [q.id]);
                 q.name = emname.reduce(function(map, obj) {
                     map[obj.language] = obj.materialname;

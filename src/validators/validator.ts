@@ -17,7 +17,7 @@ function ratingValidationRules() {
 
 function createCollectionValidationRules() {
     return [
-        body("name", "String name must exist").exists().bail().isString(),
+        body("name", "String name must exist max length 255 characters").exists().bail().isString().isLength({ max: 255 }),
     ];
 }
 
@@ -43,9 +43,9 @@ function removeCollectionValidationRules() {
 function updateCollectionValidationRules() {
     return [
         body("collectionId", "Integer collectionId must exist").exists().bail().isInt(),
-        body("name", "String name must exist").exists().bail().isString(),
+        body("name", "String name must exist max length 255 characters").exists().bail().isString().isLength({ max: 255 }),
         body("publish", "publish boolean expected").if(body("publish").exists()).isBoolean(),
-        body("description", "string description expected ").if(body("description").exists()).isString(),
+        body("description", "string description expected max length 2000 characters").if(body("description").exists()).isString().isLength({ max: 2000 }),
         body("keywords.*.key", "string key expected ").if(body("keywords").exists())
         .isString(),
         body("keywords.*.value", "string value expected ").if(body("keywords").exists())
@@ -82,6 +82,16 @@ function updateCollectionValidationRules() {
         .isString(),
         body("accessibilityFeatures.*.value", "string value expected ").if(body("accessibilityFeatures").exists())
         .isString(),
+        body("materials.*.id", "educationalmaterial id expected").if(body("materials").exists())
+        .isInt(),
+        body("materials.*.priority", "priority expected").if(body("materials").exists())
+        .isInt(),
+        body("headings.*.heading", "heading expected max length 255 characters").if(body("headings").exists())
+        .isString().isLength({ max: 255 }),
+        body("headings.*.description", "description max length 2000 characters").if(body("headings").exists())
+        .optional({nullable: true}).isString().isLength({ max: 2000 }),
+        body("headings.*.priority", "priority expected").if(body("headings").exists())
+        .isInt()
     ];
 }
 
