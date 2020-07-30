@@ -5,6 +5,9 @@ export class Collection {
       public collectionId?: string;
       public name: string;
       public emId?: string[];
+      public materials?: Array<CollectionMaterial>;
+      public headings: Array<CollectionHeading>;
+
       public publish?: boolean;
       public description?: string;
       public keywords?: object[];
@@ -27,8 +30,31 @@ export class Collection {
       this.educationalUses = data.educationalUses;
       this.accessibilityFeatures = data.accessibilityFeatures;
       this.accessibilityHazards = data.accessibilityHazards;
+      this.materials = data.materials;
+      this.headings = data.headings;
     }
+}
 
+export class CollectionMaterial {
+  public id: string;
+  public priority: number;
+  constructor(data?: CollectionMaterial) {
+    this.id = data.id;
+    this.priority = data.priority;
+  }
+}
+
+export class CollectionHeading {
+  public id: string;
+  public heading: string;
+  public description: string;
+  public priority: number;
+  constructor(data?: CollectionHeading) {
+    this.id = data.id;
+    this.heading = data.heading;
+    this.description = data.description;
+    this.priority = data.priority;
+  }
 }
 
 export async function createCollection(req: Request , res: Response, next: NextFunction) {

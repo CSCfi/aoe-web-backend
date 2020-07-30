@@ -78,7 +78,7 @@ export async function userCollections(username: string) {
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
-                const emIds = await t.any("select educationalmaterialid as id from collectioneducationalmaterial where collectionid = $1;", [q.id]
+                const emIds = await t.any("select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;", [q.id]
                 );
                 q.emIds = emIds.map(m => m.id);
                 return q; }
@@ -136,7 +136,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
             const accessibilityFeatures = await db.any(query, [ collectionId ]);
             console.log(query, [collection.id]);
-            query = "select educationalmaterialid as id from collectioneducationalmaterial where collectionid = $1;";
+            query = "select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
                 console.log(query, [collection.id]);
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
@@ -153,8 +153,10 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     return map;
                 }, {});
                 return q;
-                }));
-            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures};
+            }));
+            query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
+            const headings = await db.any(query, [ collectionId ]);
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, headings};
         });
         return data;
     }
@@ -278,6 +280,29 @@ export async function insertCollectionMetadata(collection: Collection) {
                 console.log(query, [collectionId]);
                 response  = await t.none(query, [collectionId]);
                 queries.push(response);
+            }
+            if (collection.materials) {
+                arr = collection.materials;
+                for (const element of arr) {
+                    query = "UPDATE collectioneducationalmaterial SET priority = $1 where collectionid = $2 and educationalmaterialid = $3;";
+                    console.log(query, [element.priority, collectionId, element.id]);
+                    response  = await t.none(query, [element.priority, collectionId, element.id]);
+                    queries.push(response);
+                }
+            }
+
+            query = "DELETE FROM collectionheading where collectionid = $1;";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (collection.headings) {
+                arr = collection.headings;
+                for (const element of arr) {
+                    query = "INSERT INTO collectionheading (collectionid, heading, description, priority) VALUES ($1,$2,$3,$4);";
+                    console.log(query, [collectionId, element.heading, element.description, element.priority]);
+                    response  = await t.none(query, [collectionId, element.heading, element.description, element.priority]);
+                    queries.push(response);
+                }
             }
             return t.batch(queries);
         });

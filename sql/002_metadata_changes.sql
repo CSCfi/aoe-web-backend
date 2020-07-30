@@ -198,3 +198,17 @@ ALTER TABLE CollectionLanguage ADD CONSTRAINT FKCollectionLanguage FOREIGN KEY (
 ALTER TABLE CollectionKeyWord ADD CONSTRAINT FKCollectionKeyWords FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
 
 --end feat 112
+
+-- faet 112 headings and priority
+ALTER TABLE Collection ALTER COLUMN Description TYPE varchar(2000);
+ALTER TABLE Collection ALTER COLUMN CollectionName TYPE varchar(255);
+ALTER TABLE CollectionEducationalMaterial ADD COLUMN Priority int4 DEFAULT 0 NOT NULL;
+
+CREATE TABLE CollectionHeading (
+  Id            BIGSERIAL NOT NULL, 
+  Heading      varchar(255) NOT NULL, 
+  Description  varchar(2000), 
+  Priority     int4 DEFAULT 0 NOT NULL, 
+  CollectionId int8 NOT NULL, 
+  PRIMARY KEY (Id));
+ALTER TABLE CollectionHeading ADD CONSTRAINT FKCollectionHeading FOREIGN KEY (CollectionId) REFERENCES Collection (Id);
