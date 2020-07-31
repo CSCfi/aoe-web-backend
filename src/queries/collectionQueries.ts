@@ -107,17 +107,33 @@ export async function collectionQuery(collectionId: string, username?: string) {
             let query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection where id = $1;";
             console.log(query, [ collectionId ]);
             const collection = await db.oneOrNone(query, [ collectionId ]);
+            let owner = false;
             if (!collection) {
                 return {};
             }
-            else if (!collection.publishedat) {
+            query = "Select * from userscollection where collectionid = $1 and usersusername = $2;";
+            if (!collection.publishedat) {
                 if (!username) {
                     return {};
                 }
-                query = "Select * from userscollection where collectionid = $1 and usersusername = $2;";
-                const owner = await db.oneOrNone(query, [ collectionId , username]);
-                if (!owner) {
+                const ownerResult = await db.oneOrNone(query, [ collectionId , username]);
+                if (!ownerResult) {
                     return {};
+                }
+                else {
+                    owner = true;
+                }
+            }
+            else {
+                if (!username) {
+                    owner = false;
+                }
+                const ownerResult = await db.oneOrNone(query, [ collectionId , username]);
+                if (!ownerResult) {
+                    owner = false;
+                }
+                else {
+                    owner = true;
                 }
             }
             query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
@@ -156,7 +172,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             }));
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
             const headings = await db.any(query, [ collectionId ]);
-            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, headings};
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, headings, owner};
         });
         return data;
     }
