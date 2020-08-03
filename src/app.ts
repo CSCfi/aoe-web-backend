@@ -26,6 +26,7 @@ const redis = require("redis");
 const redisclient = redis.createClient({
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASS,
 }
 );
 const RedisStore = require("connect-redis")(session);
