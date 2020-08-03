@@ -23,7 +23,11 @@ import * as homeController from "./controllers/home";
 const apiRouter = require("./routes/routes");
 // Create Express server
 const redis = require("redis");
-const redisclient = redis.createClient();
+const redisclient = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+}
+);
 const RedisStore = require("connect-redis")(session);
 
 // setInterval(() => ah.authIssuer(), 30000);
