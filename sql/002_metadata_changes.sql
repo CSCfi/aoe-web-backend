@@ -212,3 +212,12 @@ CREATE TABLE CollectionHeading (
   CollectionId int8 NOT NULL, 
   PRIMARY KEY (Id));
 ALTER TABLE CollectionHeading ADD CONSTRAINT FKCollectionHeading FOREIGN KEY (CollectionId) REFERENCES Collection (Id);
+
+CREATE TABLE CollectionEducationalLevel (
+  Id                   BIGSERIAL NOT NULL, 
+  EducationalLevelKey text NOT NULL, 
+  CollectionId        int8 NOT NULL, 
+  Value               text NOT NULL, 
+  PRIMARY KEY (Id));
+ALTER TABLE CollectionEducationalLevel ADD CONSTRAINT FKCollectionEducationalLevel FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
+
