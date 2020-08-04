@@ -152,6 +152,9 @@ export async function collectionQuery(collectionId: string, username?: string) {
             query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
             const accessibilityFeatures = await db.any(query, [ collectionId ]);
             console.log(query, [collection.id]);
+            query = "SELECT value, educationallevelkey as key FROM collectioneducationallevel WHERE collectionid = $1;";
+            const educationalLevels = await db.any(query, [ collectionId ]);
+
             query = "select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
                 console.log(query, [q.id]);
@@ -172,7 +175,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             }));
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
             const headings = await db.any(query, [ collectionId ]);
-            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, headings, owner};
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, educationalLevels, headings, owner};
         });
         return data;
     }
@@ -291,6 +294,21 @@ export async function insertCollectionMetadata(collection: Collection) {
                     queries.push(response);
                 }
             }
+
+            query = "DELETE FROM collectioneducationallevel where collectionid = $1;";
+            console.log(query, [collectionId]);
+            response  = await t.none(query, [collectionId]);
+            queries.push(response);
+            if (collection.educationalLevels) {
+                arr = collection.educationalLevels;
+                for (const element of arr) {
+                    query = "INSERT INTO collectioneducationallevel (collectionid, value, educationallevelkey) VALUES ($1,$2,$3);";
+                    console.log(query, [collectionId, element.value, element.key]);
+                    response =  await t.none(query, [collectionId, element.value, element.key]);
+                    queries.push(response);
+                }
+            }
+
             if (collection.publish) {
                 query = "UPDATE collection SET publishedat = now() where id = $1 and publishedat IS NULL;";
                 console.log(query, [collectionId]);

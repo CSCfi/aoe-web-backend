@@ -17,6 +17,7 @@ export class Collection {
       public educationalUses?: object[];
       public accessibilityFeatures?: object[];
       public accessibilityHazards?: object[];
+      public educationalLevels: object[];
     constructor(data?: Collection) {
       this.collectionId = data.collectionId;
       this.name = data.name;
@@ -32,6 +33,7 @@ export class Collection {
       this.accessibilityHazards = data.accessibilityHazards;
       this.materials = data.materials;
       this.headings = data.headings;
+      this.educationalLevels = data.educationalLevels;
     }
 }
 
