@@ -2,6 +2,7 @@ const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 import { Collection } from "./../collection/collection";
+import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 
 /**
  *
@@ -155,7 +156,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             query = "SELECT value, educationallevelkey as key FROM collectioneducationallevel WHERE collectionid = $1;";
             const educationalLevels = await db.any(query, [ collectionId ]);
 
-            query = "select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;";
+            query = "select educationalmaterialid as id, priority, publishedat from collectioneducationalmaterial as cem left join educationalmaterial as em on cem.educationalmaterialid = em.id where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
                 console.log(query, [q.id]);
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
@@ -171,6 +172,22 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     map[obj.language] = obj.materialname;
                     return map;
                 }, {});
+                query = "select * from materialdescription where educationalmaterialid = $1;";
+                const emdescription =  await t.any(query, [q.id]);
+                q.description = emdescription.reduce(function(map, obj) {
+                    map[obj.language] = obj.description;
+                    return map;
+                }, {});
+                query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+                const thumbnailresponse = await db.oneOrNone(query, [q.id]);
+                if (thumbnailresponse) {
+                    thumbnailresponse.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                }
+                q.thumbnail = thumbnailresponse;
+
+                query = "select * from learningresourcetype where educationalmaterialid = $1;";
+                q.learningResourceTypes = await t.any(query, [q.id]);
+
                 return q;
             }));
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";

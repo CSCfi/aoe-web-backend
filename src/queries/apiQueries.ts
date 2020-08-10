@@ -327,7 +327,6 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         if (jsonObj.thumbnail) {
             jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.id);
         }
-        jsonObj.thumbnail = data[17];
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
         res.status(200).json(jsonObj);
