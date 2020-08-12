@@ -83,7 +83,9 @@ app.use(session({
     credentials: "include",
     cookie: {
         httpOnly: true,
-        maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000}
+        maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000},
+        sameSite: "none",
+        secure: true
 }));
 
 passport.serializeUser(function (user, done) {
