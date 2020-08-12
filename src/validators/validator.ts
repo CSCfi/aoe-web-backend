@@ -62,11 +62,7 @@ function updateCollectionValidationRules() {
         .exists(),
         body("alignmentObjects.*.source", "source expected ").if(body("alignmentObjects").exists())
         .exists(),
-        body("alignmentObjects.*.educationalFramework", "educationalFramework expected ").if(body("alignmentObjects").exists())
-        .exists(),
         body("alignmentObjects.*.key", "key expected ").if(body("alignmentObjects").exists())
-        .exists(),
-        body("alignmentObjects.*.targetUrl", "targetUrl expected ").if(body("alignmentObjects").exists())
         .exists(),
         body("educationalUses.*.key", "string key expected ").if(body("educationalUses").exists())
         .isString(),

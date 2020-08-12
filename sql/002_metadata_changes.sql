@@ -221,3 +221,6 @@ CREATE TABLE CollectionEducationalLevel (
   PRIMARY KEY (Id));
 ALTER TABLE CollectionEducationalLevel ADD CONSTRAINT FKCollectionEducationalLevel FOREIGN KEY (CollectionId) REFERENCES Collection (Id) ON DELETE Cascade;
 
+-- CollectionAlignmentObject educationalframework can be null
+
+ALTER TABLE collectionalignmentobject ALTER COLUMN educationalframework drop not null;
