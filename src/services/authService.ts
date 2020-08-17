@@ -148,8 +148,8 @@ async function hasAccessToAttachmentFile(req: Request, res: Response, next: Next
 
 async function hasAccessToCollection(req: Request, res: Response, next: NextFunction) {
     const id = req.body.collectionId;
-    const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
-    const result = await db.oneOrNone(query, [id, req.session.passport.user.uid]);
+    // const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
+    const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
         return res.sendStatus(401);
@@ -158,6 +158,31 @@ async function hasAccessToCollection(req: Request, res: Response, next: NextFunc
         return next();
     }
 }
+
+async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction) {
+    const id = req.params.id;
+    // const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
+    const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
+    if (!result) {
+        console.log("No result found for " + [id, req.session.passport.user.uid]);
+        return res.sendStatus(401);
+    }
+    else {
+        return next();
+    }
+}
+
+async function hasAccessToCollectionId(id: string, username: string) {
+    const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
+    const result = await db.oneOrNone(query, [id, username]);
+    if (!result) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
 
 function logout(req: Request, res: Response) {
     req.logout();
@@ -173,6 +198,7 @@ module.exports = {
     logout: logout,
     hasAccessToMaterial : hasAccessToMaterial,
     hasAccessToAttachmentFile : hasAccessToAttachmentFile,
-    hasAccessToCollection
+    hasAccessToCollection,
+    hasAccessToCollectionParams
     // hasAccess: hasAccess,
 };

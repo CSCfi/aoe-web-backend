@@ -71,6 +71,6 @@ router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUs
 router.get("/collection/getCollection/:collectionId", collection.getCollection);
 router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, validator.removeCollectionValidationRules(), validator.rulesValidate, collection.removeEducationalMaterialFromCollection);
 router.put("/collection/update", ah.checkAuthenticated, ah.hasAccessToCollection, validator.updateCollectionValidationRules(), validator.rulesValidate, collection.updateCollection);
-router.post("/collection/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToCollection, thumbnail.uploadCollectionBase64Image);
+router.post("/collection/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToCollectionParams, thumbnail.uploadCollectionBase64Image);
 router.get("/collection/thumbnail/:id", thumbnail.downloadCollectionThumbnail);
 export = router;
