@@ -83,7 +83,29 @@ async function uploadImage(req: Request, res: Response) {
     }
 }
 
-async function uploadbase64Image(req: Request, res: Response) {
+export async function uploadCollectionBase64Image(req: Request, res: Response, next: NextFunction) {
+    try {
+        const obj: any = uploadbase64Image(req, res, false);
+        return res.status(200).json({"url" : obj.Location});
+    }
+    catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue uploading thumbnail"));
+    }
+}
+
+export async function uploadEmBase64Image(req: Request, res: Response, next: NextFunction) {
+    try {
+        const obj: any = uploadbase64Image(req, res, true);
+        return res.status(200).json({"url" : obj.Location});
+    }
+    catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue uploading thumbnail"));
+    }
+}
+
+export async function uploadbase64Image(req: Request, res: Response, isEm: boolean) {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("application/json")) {
@@ -97,26 +119,61 @@ async function uploadbase64Image(req: Request, res: Response) {
             const fileName = "thumbnail" + Date.now() + "." + extension;
             const buff = Buffer.from(base64Data, "base64");
             const obj: any = await fh.uploadBase64FileToStorage(buff, fileName, process.env.THUMBNAIL_BUCKET_NAME);
-            let query;
-            query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
-            console.log(query);
-            await db.none(query, [req.params.id]);
-            query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
-            console.log(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
-            await db.any(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
-            return res.status(200).json({"url" : obj.Location});
+            // let query;
+            // query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
+            // console.log(query);
+            // await db.none(query, [req.params.id]);
+            // query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
+            // console.log(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
+            // await db.any(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
+            if (isEm) {
+                await updateEmThumbnailData(obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket);
+            }
+            else {
+                await updateCollectionThumbnailData(obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket);
+            }
+            return obj;
         }
         else {
             return res.status(400).json({"error": "application/json expected"});
         }
 
     }
-    catch (e) {
-        console.log(e);
-        return res.status(500).json({"error": "upload failed"});
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
     }
 }
 
+export async function downloadEmThumbnail(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = req.params.id;
+        const key = await getThumbnailKey(id);
+        if (!key) {
+            return res.status(200).json({});
+        }
+        downloadThumbnail(req, res, next, key.filekey);
+    }
+    catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue downloading thumbnail"));
+    }
+}
+
+export async function downloadCollectionThumbnail(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = req.params.id;
+        const key = await getColectionThumbnailKey(id);
+        if (!key) {
+            return res.status(200).json({});
+        }
+        downloadThumbnail(req, res, next, key.filekey);
+    }
+    catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue downloading thumbnail"));
+    }
+}
 /**
  *
  * @param req
@@ -124,17 +181,15 @@ async function uploadbase64Image(req: Request, res: Response) {
  * @param next
  * download thumbnail from Pouta
  */
-async function downloadThumbnail(req: Request, res: Response, next: NextFunction) {
+async function downloadThumbnail(req: Request, res: Response, next: NextFunction, key: string) {
     try {
-        const id = req.params.id;
-        const key = await getThumbnailKey(id);
         if (!key) {
             return res.status(200).json({});
         }
         const params = {
             Bucket: process.env.THUMBNAIL_BUCKET_NAME,
-            Key: key.filekey};
-        await downloadFromStorage(req, res, next, params, key.filekey);
+            Key: key};
+        await downloadFromStorage(req, res, next, params, key);
       }
       catch (error) {
         console.error(error);
@@ -158,9 +213,55 @@ async function getThumbnailKey(id: string) {
     }
 }
 
+async function getColectionThumbnailKey(id: string) {
+    try {
+        const query = "select filekey from collectionthumbnail where collectionid = $1 and obsoleted = 0 limit 1;";
+        return await db.oneOrNone(query, [id]);
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
+async function updateEmThumbnailData(filepath: string, mimetype: string, educationalmaterialid: string, filename: string, fileKey: string, fileBucket: string) {
+    try {
+        let query;
+        query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
+        console.log(query);
+        await db.none(query, [educationalmaterialid]);
+        query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
+        console.log(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
+        await db.any(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
+async function updateCollectionThumbnailData(filepath: string, mimetype: string, collectionid: string, filename: string, fileKey: string, fileBucket: string) {
+    try {
+        let query;
+        query = "update collectionthumbnail set obsoleted = 1 where collectionid = $1 and obsoleted = 0;";
+        console.log(query);
+        await db.none(query, [collectionid]);
+        query = "INSERT INTO collectionthumbnail (filepath, mimetype, collectionid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
+        console.log(query, [filepath, mimetype, collectionid, filename, fileKey, fileBucket]);
+        await db.any(query, [filepath, mimetype, collectionid, filename, fileKey, fileBucket]);
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
 
 module.exports = {
     uploadImage : uploadImage,
     uploadbase64Image : uploadbase64Image,
-    downloadThumbnail : downloadThumbnail
+    uploadEmBase64Image : uploadEmBase64Image,
+    uploadCollectionBase64Image : uploadCollectionBase64Image,
+    downloadEmThumbnail : downloadEmThumbnail,
+    downloadCollectionThumbnail : downloadCollectionThumbnail,
 };

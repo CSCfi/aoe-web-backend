@@ -2,7 +2,7 @@ const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 import { Collection } from "./../collection/collection";
-import { aoeThumbnailDownloadUrl } from "./../services/urlService";
+import { aoeThumbnailDownloadUrl, aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
 
 /**
  *
@@ -75,13 +75,16 @@ export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
             console.log("userCollections:");
-            const query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection join userscollection as uc on collection.id = uc.collectionid where usersusername = $1;";
+            const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filepath as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid where usersusername = $1;";
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
                 const emIds = await t.any("select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;", [q.id]
                 );
                 q.emIds = emIds.map(m => m.id);
+                if (q.thumbnail) {
+                    q.thumbnail = await aoeCollectionThumbnailDownloadUrl(q.id);
+                }
                 return q; }
                 )
             );
@@ -192,7 +195,18 @@ export async function collectionQuery(collectionId: string, username?: string) {
             }));
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
             const headings = await db.any(query, [ collectionId ]);
-            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, educationalLevels, headings, owner};
+
+            query = "Select filepath as thumbnail from collectionthumbnail where collectionid = $1 and obsoleted = 0;";
+            let response = await db.oneOrNone(query, [collectionId]);
+            let thumbnail = undefined;
+            if (response) {
+                thumbnail = await aoeCollectionThumbnailDownloadUrl(collectionId);
+            }
+            query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = 12;";
+            response = await db.any(query, [collectionId]);
+            const authors = [];
+            response.map(o => authors.push(o.name));
+            return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, educationalLevels, headings, owner, thumbnail, authors};
         });
         return data;
     }

@@ -224,3 +224,17 @@ ALTER TABLE CollectionEducationalLevel ADD CONSTRAINT FKCollectionEducationalLev
 -- CollectionAlignmentObject educationalframework can be null
 
 ALTER TABLE collectionalignmentobject ALTER COLUMN educationalframework drop not null;
+
+--feat 739
+
+CREATE TABLE collectionthumbnail (
+  id            BIGSERIAL NOT NULL, 
+  filepath     text NOT NULL, 
+  mimetype     text NOT NULL, 
+  filename     text NOT NULL, 
+  obsoleted    int4 DEFAULT 0 NOT NULL, 
+  filekey      text NOT NULL, 
+  filebucket   text NOT NULL, 
+  collectionid int8 NOT NULL, 
+  PRIMARY KEY (id));
+ALTER TABLE collectionthumbnail ADD CONSTRAINT FKCollectionThumbnail FOREIGN KEY (collectionid) REFERENCES Collection (Id);

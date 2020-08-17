@@ -26,8 +26,8 @@ router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToP
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
-router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadbase64Image);
-router.get("/thumbnail/:id", thumbnail.downloadThumbnail);
+router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
+router.get("/thumbnail/:id", thumbnail.downloadEmThumbnail);
 
 router.get("/download/:key", fh.downloadFile);
 router.get("/material/file/:materialId/:publishedat?", fh.downloadMaterialFile);
@@ -71,4 +71,6 @@ router.get("/collection/userCollection", ah.checkAuthenticated, collection.getUs
 router.get("/collection/getCollection/:collectionId", collection.getCollection);
 router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToCollection, validator.removeCollectionValidationRules(), validator.rulesValidate, collection.removeEducationalMaterialFromCollection);
 router.put("/collection/update", ah.checkAuthenticated, ah.hasAccessToCollection, validator.updateCollectionValidationRules(), validator.rulesValidate, collection.updateCollection);
+router.post("/collection/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToCollection, thumbnail.uploadCollectionBase64Image);
+router.get("/collection/thumbnail/:id", thumbnail.downloadCollectionThumbnail);
 export = router;
