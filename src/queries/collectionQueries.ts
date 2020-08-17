@@ -202,7 +202,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             if (response) {
                 thumbnail = await aoeCollectionThumbnailDownloadUrl(collectionId);
             }
-            query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = 12;";
+            query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = $1;";
             response = await db.any(query, [collectionId]);
             const authors = [];
             response.map(o => authors.push(o.name));
