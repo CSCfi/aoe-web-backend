@@ -148,7 +148,6 @@ async function hasAccessToAttachmentFile(req: Request, res: Response, next: Next
 
 async function hasAccessToCollection(req: Request, res: Response, next: NextFunction) {
     const id = req.body.collectionId;
-    // const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
@@ -161,7 +160,6 @@ async function hasAccessToCollection(req: Request, res: Response, next: NextFunc
 
 async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction) {
     const id = req.params.id;
-    // const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
@@ -171,18 +169,17 @@ async function hasAccessToCollectionParams(req: Request, res: Response, next: Ne
         return next();
     }
 }
-
 async function hasAccessToCollectionId(id: string, username: string) {
     const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await db.oneOrNone(query, [id, username]);
     if (!result) {
+        console.log("No result found for " + [id, username]);
         return false;
     }
     else {
         return true;
     }
 }
-
 
 function logout(req: Request, res: Response) {
     req.logout();

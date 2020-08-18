@@ -257,6 +257,16 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.materials = data[14];
         console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
         for (const i in jsonObj.materials) {
+            if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
+                const ext = jsonObj.materials[i]["originalfilename"].substring(jsonObj.materials[i]["originalfilename"].lastIndexOf("."), jsonObj.materials[i]["originalfilename"].length);
+                console.log("ext is: " + ext);
+                if (ext === ".h5p") {
+                    req.params.key = jsonObj.materials[i].filekey;
+                    console.log("h5p file found !!!!!!");
+                    const result = await fh.downloadFileFromStorage(req, res, next, true);
+                    console.log("The result from fh.downloadFile with isZip True value: " + result);
+                }
+            }
             if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;
                 console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);

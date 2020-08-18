@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { NextFunction } from "connect";
+import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
 const connection = require("./../db");
 // const pgp = connection.pgp;
 const db2 = connection.db;
@@ -73,4 +74,9 @@ router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToC
 router.put("/collection/update", ah.checkAuthenticated, ah.hasAccessToCollection, validator.updateCollectionValidationRules(), validator.rulesValidate, collection.updateCollection);
 router.post("/collection/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToCollectionParams, thumbnail.uploadCollectionBase64Image);
 router.get("/collection/thumbnail/:id", thumbnail.downloadCollectionThumbnail);
+
+const h5p = require("./../h5p/h5p");
+// import { play } from "./";
+router.get("/play/:contentid", h5p.play);
+router.get("/h5p/", () => console.log("in h5p route"), h5p.ajaxRoute);
 export = router;

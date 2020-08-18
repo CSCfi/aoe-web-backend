@@ -217,6 +217,8 @@ app.use((err, req, res, next) => {
 
 require("./aoeScheduler");
 const es = require("./elasticSearch/es");
+// import { startH5Pplayer } from "./h5p/h5p";
+// startH5Pplayer();
 
 module.exports = app;
 export default app;
