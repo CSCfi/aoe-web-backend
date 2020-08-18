@@ -75,7 +75,7 @@ export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
             console.log("userCollections:");
-            const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filepath as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid where usersusername = $1;";
+            const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filepath as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid and ct.obsoleted = 0 where usersusername = $1;";
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
