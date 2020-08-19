@@ -200,7 +200,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             let response = await db.oneOrNone(query, [collectionId]);
             let thumbnail = undefined;
             if (response) {
-                thumbnail = await aoeCollectionThumbnailDownloadUrl(response.filekey);
+                thumbnail = await aoeCollectionThumbnailDownloadUrl(response.thumbnail);
             }
             query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = $1;";
             response = await db.any(query, [collectionId]);
