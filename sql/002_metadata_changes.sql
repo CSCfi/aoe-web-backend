@@ -238,3 +238,7 @@ CREATE TABLE collectionthumbnail (
   collectionid int8 NOT NULL, 
   PRIMARY KEY (id));
 ALTER TABLE collectionthumbnail ADD CONSTRAINT FKCollectionThumbnail FOREIGN KEY (collectionid) REFERENCES Collection (Id);
+
+-- Change default priority
+ALTER TABLE collectioneducationalmaterial ALTER COLUMN priority SET DEFAULT 999;
+ALTER TABLE collectionheading ALTER COLUMN priority SET DEFAULT 999;
