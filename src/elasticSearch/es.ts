@@ -219,7 +219,7 @@ async function metadataToEs(offset: number, limit: number) {
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
             if (response) {
-                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+                response.filepath = await aoeThumbnailDownloadUrl(response.filekey);
             }
             q.thumbnail = response;
 
@@ -369,7 +369,7 @@ async function updateEsDocument() {
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
             if (response) {
-                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+                response.filepath = await aoeThumbnailDownloadUrl(response.filekey);
             }
             q.thumbnail = response;
 

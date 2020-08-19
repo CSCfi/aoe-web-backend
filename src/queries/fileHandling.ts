@@ -700,6 +700,7 @@ async function downloadFileFromStorage(req: Request, res: Response, next: NextFu
                     Key: req.params.key
                 };
                 const resp = await downloadFromStorage(req, res, next, params, response.originalfilename, isZip);
+                console.log("This is response: " + resp);
                 resolve(resp);
             }
 
@@ -737,7 +738,9 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
         if (isZip === true) {
             console.log("We came to the if-statement in downloadFileFromStorage!");
             const folderpath = process.env.HTMLFOLDER + "/" + filename;
-            const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
+            const zipStream = fileStream.on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+            }).pipe(fs.createWriteStream(folderpath));
             zipStream.on("finish", async function() {
                 console.log("We finished the zipstream!");
                  resolve(await unZipAndExtract(folderpath));
@@ -747,7 +750,13 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             res.attachment(key);
             res.header("Content-Disposition", contentDisposition(filename));
             console.log("The response.originalfilename is: " + filename);
-            fileStream.pipe(res);
+            fileStream.on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+
+            })
+            .pipe(res).on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+            });
         }
 
     }

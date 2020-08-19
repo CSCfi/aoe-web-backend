@@ -325,7 +325,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
         jsonObj.educationalRoles = data[16];
         jsonObj.thumbnail = data[17];
         if (jsonObj.thumbnail) {
-            jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.id);
+            jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.thumbnail.filekey);
         }
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
@@ -360,10 +360,10 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
                 query = "select * from author where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.authors = response;
-                query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+                query = "Select filekey as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
                 response = await db.oneOrNone(query, [q.id]);
                 if (response) {
-                    response.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                    response.thumbnail = await aoeThumbnailDownloadUrl(response.thumbnail);
                 }
                 q.thumbnail = response;
                 query = "select * from educationallevel where educationalmaterialid = $1;";
@@ -411,10 +411,10 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
                 query = "select * from author where educationalmaterialid = $1;";
                 response = await t.any(query, [q.id]);
                 q.authors = response;
-                query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+                query = "Select filekey as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
                 response = await db.oneOrNone(query, [q.id]);
                 if (response) {
-                    response.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                    response.thumbnail = await aoeThumbnailDownloadUrl(response.thumbnail);
                 }
                 q.thumbnail = response;
                 query = "select * from educationallevel where educationalmaterialid = $1;";

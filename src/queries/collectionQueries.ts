@@ -75,7 +75,7 @@ export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
             console.log("userCollections:");
-            const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filepath as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid and ct.obsoleted = 0 where usersusername = $1;";
+            const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filekey as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid and ct.obsoleted = 0 where usersusername = $1;";
             console.log(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
@@ -83,7 +83,7 @@ export async function userCollections(username: string) {
                 );
                 q.emIds = emIds.map(m => m.id);
                 if (q.thumbnail) {
-                    q.thumbnail = await aoeCollectionThumbnailDownloadUrl(q.id);
+                    q.thumbnail = await aoeCollectionThumbnailDownloadUrl(q.thumbnail);
                 }
                 return q; }
                 )
@@ -181,10 +181,10 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     map[obj.language] = obj.description;
                     return map;
                 }, {});
-                query = "Select filepath as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
+                query = "Select filekey as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
                 const thumbnailresponse = await db.oneOrNone(query, [q.id]);
                 if (thumbnailresponse) {
-                    thumbnailresponse.thumbnail = await aoeThumbnailDownloadUrl(q.id);
+                    thumbnailresponse.thumbnail = await aoeThumbnailDownloadUrl(thumbnailresponse.thumbnail);
                 }
                 q.thumbnail = thumbnailresponse;
 
@@ -196,11 +196,11 @@ export async function collectionQuery(collectionId: string, username?: string) {
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
             const headings = await db.any(query, [ collectionId ]);
 
-            query = "Select filepath as thumbnail from collectionthumbnail where collectionid = $1 and obsoleted = 0;";
+            query = "Select filepath, filekey as thumbnail from collectionthumbnail where collectionid = $1 and obsoleted = 0;";
             let response = await db.oneOrNone(query, [collectionId]);
             let thumbnail = undefined;
             if (response) {
-                thumbnail = await aoeCollectionThumbnailDownloadUrl(collectionId);
+                thumbnail = await aoeCollectionThumbnailDownloadUrl(response.filekey);
             }
             query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = $1;";
             response = await db.any(query, [collectionId]);
