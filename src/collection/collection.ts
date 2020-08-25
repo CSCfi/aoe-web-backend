@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { collectionQuery, userCollections, insertCollection, deleteEducationalMaterialFromCollection, insertEducationalMaterialToCollection, insertCollectionMetadata } from "./../queries/collectionQueries";
+import { collectionQuery, userCollections, insertCollection, deleteEducationalMaterialFromCollection, insertEducationalMaterialToCollection, insertCollectionMetadata, recentCollectionQuery } from "./../queries/collectionQueries";
+import { updateEsCollectionIndex } from "./../elasticSearch/es";
 export class Collection {
       public collectionId?: string;
       public name: string;
@@ -129,9 +130,27 @@ export async function updateCollection(req: Request, res: Response, next: NextFu
     console.log(collection);
     const data = await insertCollectionMetadata(collection);
     res.status(200).json({"status": "success"});
+    try {
+      await updateEsCollectionIndex();
+    }
+    catch (err) {
+      console.log("Collection Es update failed data out of sync");
+    }
   }
   catch (error) {
     console.error(error);
     next(new ErrorHandler(500, "Issue updating collection"));
+  }
+}
+
+export async function getRecentCollection(req: Request , res: Response, next: NextFunction) {
+  try {
+    let data;
+    data = await recentCollectionQuery();
+    res.status(200).json(data);
+  }
+  catch (error) {
+    console.error(error);
+    next(new ErrorHandler(500, "Issue getting recent collection"));
   }
 }

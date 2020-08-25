@@ -20,6 +20,7 @@ const thumbnail = require("./../queries/thumbnailHandler");
 const oaipmh = require("./../queries/oaipmh");
 const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
+const esCollection = require("./../elasticSearch/es");
 
 router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
 router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
@@ -73,4 +74,8 @@ router.post("/collection/removeMaterial", ah.checkAuthenticated, ah.hasAccessToC
 router.put("/collection/update", ah.checkAuthenticated, ah.hasAccessToCollection, validator.updateCollectionValidationRules(), validator.rulesValidate, collection.updateCollection);
 router.post("/collection/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToCollectionParams, thumbnail.uploadCollectionBase64Image);
 router.get("/collection/thumbnail/:id", thumbnail.downloadCollectionThumbnail);
+router.get("/collection/recentCollection", collection.getRecentCollection);
+
+router.post("/elasticSearch/collection/search", esCollection.getCollectionEsData);
+
 export = router;
