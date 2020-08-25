@@ -42,6 +42,7 @@ COPY ./package.json /app
 COPY ./package-lock.json /app
 COPY ./.env.example /app
 COPY ./src/elasticSearch/aoemapping.json /app
+COPY ./src/elasticSearch/aoecollectionmapping.json /app
 
 RUN (cd /app && npm install --only=production) && \
     npm uninstall -g npm
