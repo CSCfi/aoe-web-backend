@@ -407,29 +407,34 @@ async function updateEsDocument() {
 }
 
 async function createEsCollectionIndex() {
-    const collectionIndex = process.env.ES_COLLECTION_INDEX;
-    const result: boolean = await indexExists(collectionIndex);
-    console.log("COLLECTION INDEX RESULT: " + result);
-    if (result) {
-        const deleteResult = await deleteIndex(collectionIndex);
-        console.log("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
+    try {
+        const collectionIndex = process.env.ES_COLLECTION_INDEX;
+        const result: boolean = await indexExists(collectionIndex);
+        console.log("COLLECTION INDEX RESULT: " + result);
+        if (result) {
+            const deleteResult = await deleteIndex(collectionIndex);
+            console.log("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
+        }
+        const createIndexResult = await createIndex(collectionIndex);
+        console.log("createIndexResult: " + JSON.stringify(createIndexResult));
+        if (createIndexResult) {
+        const mappingResult = await addMapping(collectionIndex, process.env.ES_COLLECTION_MAPPING_FILE);
+        console.log("mappingResult: " + JSON.stringify(mappingResult));
+        let i = 0;
+        let dataToEs;
+        do {
+            dataToEs = await getCollectionDataToEs(i, 1000);
+            i++;
+            await collectionDataToEs(collectionIndex, dataToEs.collections);
+        } while (dataToEs.collections && dataToEs.collections.length > 0);
+        // set new date CollectionEsUpdated
+        Es.CollectionEsUpdated.value = new Date();
+        }
     }
-    const createIndexResult = await createIndex(collectionIndex);
-    console.log("createIndexResult: " + JSON.stringify(createIndexResult));
-    if (createIndexResult) {
-    const mappingResult = await addMapping(collectionIndex, process.env.ES_COLLECTION_MAPPING_FILE);
-    console.log("mappingResult: " + JSON.stringify(mappingResult));
-    let i = 0;
-    let dataToEs;
-    do {
-        dataToEs = await getCollectionDataToEs(i, 1000);
-        i++;
-        await collectionDataToEs(collectionIndex, dataToEs.collections);
-    } while (dataToEs.collections && dataToEs.collections.length > 0);
-    // set new date CollectionEsUpdated
-    Es.CollectionEsUpdated.value = new Date();
+    catch (err) {
+        console.log("Error creating collection index");
+        console.error(err);
     }
-
 }
 
 export async function getCollectionEsData(req: Request , res: Response , next: NextFunction) {
