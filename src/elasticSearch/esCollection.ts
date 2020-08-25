@@ -1,11 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
-import { Client, ApiResponse } from "@elastic/elasticsearch";
-import { ErrorHandler } from "./../helpers/errorHandler";
+// import { Client, ApiResponse } from "@elastic/elasticsearch";
+const elasticsearch = require("@elastic/elasticsearch");
 import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResult } from "./esTypes";
 import { createMatchAllObject } from "./esQueries";
+import { ApiResponse } from "@elastic/elasticsearch";
 
-const client = new Client({ node: process.env.ES_NODE});
+const client = new elasticsearch.Client({ node: process.env.ES_NODE,
+    log: "trace",
+    keepAlive: true});
+// const client = new Client({ node: process.env.ES_NODE});
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -139,7 +143,7 @@ export async function collectionDataToEs(index: string, data: any) {
         const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
         // console.log("THIS IS BODY:");
         // console.log(JSON.stringify(body));
-        const { body: bulkResponse } = await client.bulk({ refresh: "true", body });
+        const { body: bulkResponse } = await client.bulk({ refresh: true, body });
         if (bulkResponse.errors) {
             const erroredDocuments = [];
             // The items array has the same order of the dataset we just indexed.
