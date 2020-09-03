@@ -164,6 +164,28 @@ Issuer.discover(process.env.PROXY_URI)
         }));
     });
 app.use(flash());
+
+import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
+import { h5pEditor } from "./h5p/h5p";
+console.log("h5pEditor.config.contentFilesUrl " + h5pEditor.config.contentFilesUrl);
+console.log("path.resolve(h5p/core) " + path.resolve("h5p/core"));
+console.log("h5p/editor " + path.resolve("h5p/editor"));
+// app.get(path.resolve("h5p/core") + "/:id/:file(*)", () => { console.log("now h5p"); });
+// app.get(h5pEditor.config.contentFilesUrl + "/:id/:file(*)", () => { console.log("now h5p"); });
+const routeOptions = { "handleErrors": false,
+                        "routeGetContentFile": true };
+app.use(
+    // server is an object initialized with express()
+    "/h5p", // the route under which all the Ajax calls will be registered
+    h5pAjaxExpressRouter(
+        h5pEditor, // an H5P.H5PEditor object
+        path.resolve("h5p/core"), // the path to the h5p core files (of the player)
+        path.resolve("h5p/editor"), // the path to the h5p core files (of the editor)
+        routeOptions, // the options are optional and can be left out
+        // languageOverride // (optional) can be used to override the language used by i18next http middleware
+    )
+);
+
 app.use(passport.initialize());
 app.use(passport.session());
 

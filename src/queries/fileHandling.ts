@@ -700,6 +700,7 @@ async function downloadFileFromStorage(req: Request, res: Response, next: NextFu
                     Key: req.params.key
                 };
                 const resp = await downloadFromStorage(req, res, next, params, response.originalfilename, isZip);
+                console.log("This is response: " + resp);
                 resolve(resp);
             }
 
@@ -720,6 +721,24 @@ async function downloadFileFromStorage(req: Request, res: Response, next: NextFu
  * @param isZip
  * function to download file from Pouta
  */
+export async function readStreamFromStorage(params: {Bucket: string; Key: string; }) {
+    try {
+        const config = {
+            accessKeyId: process.env.USER_KEY,
+            secretAccessKey: process.env.USER_SECRET,
+            endpoint: process.env.POUTA_END_POINT,
+            region: process.env.REGION
+        };
+        AWS.config.update(config);
+        const s3 = new AWS.S3();
+        console.log("Returning stream");
+        return s3.getObject(params).createReadStream();
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
 export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: {Bucket: string; Key: string; }, filename: string, isZip?: any) {
     return new Promise(async (resolve) => {
         try {
@@ -737,7 +756,9 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
         if (isZip === true) {
             console.log("We came to the if-statement in downloadFileFromStorage!");
             const folderpath = process.env.HTMLFOLDER + "/" + filename;
-            const zipStream = fileStream.pipe(fs.createWriteStream(folderpath));
+            const zipStream = fileStream.on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+            }).pipe(fs.createWriteStream(folderpath));
             zipStream.on("finish", async function() {
                 console.log("We finished the zipstream!");
                  resolve(await unZipAndExtract(folderpath));
@@ -747,7 +768,13 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             res.attachment(key);
             res.header("Content-Disposition", contentDisposition(filename));
             console.log("The response.originalfilename is: " + filename);
-            fileStream.pipe(res);
+            fileStream.on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+
+            })
+            .pipe(res).on("error", function(e) {
+                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+            });
         }
 
     }
@@ -911,5 +938,6 @@ module.exports = {
     uploadAttachmentToMaterial : uploadAttachmentToMaterial,
     checkTemporaryAttachmentQueue : checkTemporaryAttachmentQueue,
     insertDataToDisplayName : insertDataToDisplayName,
-    downloadFromStorage : downloadFromStorage
+    downloadFromStorage : downloadFromStorage,
+    readStreamFromStorage
 };

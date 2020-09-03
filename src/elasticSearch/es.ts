@@ -1,15 +1,18 @@
 import { aoeThumbnailDownloadUrl } from "./../services/urlService";
+import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollectionDataToUpdate } from "./esCollection";
+import { ErrorHandler } from "./../helpers/errorHandler";
+import { Request, Response, NextFunction } from "express";
+import { AoeBody, AoeCollectionResult } from "./esTypes";
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
-const path = require("path");
 const index = process.env.ES_INDEX;
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
 log: "trace",
 keepAlive: true});
 export namespace Es {
     export let ESupdated = {value : new Date()};
+    export let CollectionEsUpdated = {value : new Date()};
 }
-import { Request, Response, NextFunction } from "express";
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -44,7 +47,7 @@ async function createEsIndex () {
             const createIndexResult: boolean = await createIndex(index);
             if (createIndexResult) {
                 try {
-                    await addMapping(index);
+                    await addMapping(index, process.env.ES_MAPPING_FILE);
                     let i = 0;
                     let n;
                     console.log(Es.ESupdated);
@@ -104,9 +107,9 @@ function indexExists (index: string): boolean {
       });
       return b;
 }
-async function addMapping(index: string) {
+export async function addMapping(index: string, fileLocation) {
     return new Promise(async (resolve, reject) => {
-        const rawdata = fs.readFileSync(process.env.ES_MAPPING_FILE);
+        const rawdata = fs.readFileSync(fileLocation);
         const data = JSON.parse(rawdata);
         client.indices.putMapping({
             index: index,
@@ -118,8 +121,8 @@ async function addMapping(index: string) {
             reject(new Error(err));
             }
             else {
-            console.log("ES mapping created: ", resp.body);
-            resolve();
+            console.log("ES mapping created: ", index, resp.body);
+            resolve({"status" : "success"});
             }
         });
     });
@@ -197,12 +200,7 @@ async function metadataToEs(offset: number, limit: number) {
                 });
             return q2;
             });
-            // response = await t.any(query, [q.id]);
             q.isbasedon = response;
-
-            // query = "select * from inlanguage where educationalmaterialid = $1;";
-            // response = await t.any(query, [q.id]);
-            // q.inlanguage = response;
 
             query = "select * from alignmentobject where educationalmaterialid = $1;";
             response = await t.any(query, [q.id]);
@@ -219,7 +217,7 @@ async function metadataToEs(offset: number, limit: number) {
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
             if (response) {
-                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+                response.filepath = await aoeThumbnailDownloadUrl(response.filekey);
             }
             q.thumbnail = response;
 
@@ -369,7 +367,7 @@ async function updateEsDocument() {
             query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
             response = await t.oneOrNone(query, [q.id]);
             if (response) {
-                response.filepath = await aoeThumbnailDownloadUrl(q.id);
+                response.filepath = await aoeThumbnailDownloadUrl(response.filekey);
             }
             q.thumbnail = response;
 
@@ -408,12 +406,74 @@ async function updateEsDocument() {
 });
 }
 
+async function createEsCollectionIndex() {
+    try {
+        const collectionIndex = process.env.ES_COLLECTION_INDEX;
+        const result: boolean = await indexExists(collectionIndex);
+        console.log("COLLECTION INDEX RESULT: " + result);
+        if (result) {
+            const deleteResult = await deleteIndex(collectionIndex);
+            console.log("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
+        }
+        const createIndexResult = await createIndex(collectionIndex);
+        console.log("createIndexResult: " + JSON.stringify(createIndexResult));
+        if (createIndexResult) {
+        const mappingResult = await addMapping(collectionIndex, process.env.ES_COLLECTION_MAPPING_FILE);
+        console.log("mappingResult: " + JSON.stringify(mappingResult));
+        let i = 0;
+        let dataToEs;
+        do {
+            dataToEs = await getCollectionDataToEs(i, 1000);
+            i++;
+            await collectionDataToEs(collectionIndex, dataToEs.collections);
+        } while (dataToEs.collections && dataToEs.collections.length > 0);
+        // set new date CollectionEsUpdated
+        Es.CollectionEsUpdated.value = new Date();
+        }
+    }
+    catch (err) {
+        console.log("Error creating collection index");
+        console.error(err);
+    }
+}
+
+export async function getCollectionEsData(req: Request , res: Response , next: NextFunction) {
+    try {
+        const responseBody: AoeBody<AoeCollectionResult> = await collectionFromEs(req.body);
+        res.status(200).json(responseBody);
+    }
+    catch (err) {
+        console.log("elasticSearchQuery error");
+        console.error(err);
+        next(new ErrorHandler(500, "There was an issue prosessing your request"));
+    }
+}
+
+export async function updateEsCollectionIndex() {
+    try {
+        const collectionIndex = process.env.ES_COLLECTION_INDEX;
+        const newDate = new Date();
+        const dataToEs = await getCollectionDataToUpdate(Es.CollectionEsUpdated.value);
+        await collectionDataToEs(collectionIndex, dataToEs.collections);
+
+        Es.CollectionEsUpdated.value = newDate;
+    }
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
 if (process.env.CREATE_ES_INDEX) {
-        createEsIndex();
+    createEsIndex();
+
+    createEsCollectionIndex();
 }
 
 
 module.exports = {
     createEsIndex : createEsIndex,
-    updateEsDocument : updateEsDocument
+    updateEsDocument : updateEsDocument,
+    getCollectionEsData,
+    updateEsCollectionIndex
 };

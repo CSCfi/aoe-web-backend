@@ -147,12 +147,13 @@ export async function uploadbase64Image(req: Request, res: Response, isEm: boole
 
 export async function downloadEmThumbnail(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id;
-        const key = await getThumbnailKey(id);
+        // const id = req.params.id;
+        // const key = await getThumbnailKey(id);
+        const key = req.params.id;
         if (!key) {
             return res.status(200).json({});
         }
-        downloadThumbnail(req, res, next, key.filekey);
+        downloadThumbnail(req, res, next, key);
     }
     catch (error) {
         console.error(error);
@@ -162,12 +163,13 @@ export async function downloadEmThumbnail(req: Request, res: Response, next: Nex
 
 export async function downloadCollectionThumbnail(req: Request, res: Response, next: NextFunction) {
     try {
-        const id = req.params.id;
-        const key = await getColectionThumbnailKey(id);
+        // const id = req.params.id;
+        // const key = await getColectionThumbnailKey(id);
+        const key = req.params.id;
         if (!key) {
             return res.status(200).json({});
         }
-        downloadThumbnail(req, res, next, key.filekey);
+        downloadThumbnail(req, res, next, key);
     }
     catch (error) {
         console.error(error);
