@@ -735,7 +735,7 @@ export async function readStreamFromStorage(params: {Bucket: string; Key: string
         return s3.getObject(params).createReadStream();
     }
     catch (error) {
-        console.log(error);
+        console.log("throw readStreamFromStorage error");
         throw new Error(error);
     }
 }

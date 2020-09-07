@@ -94,7 +94,7 @@ export async function startH5Pplayer(contentid: string) {
         "Key" : contentid
     };
     const stream = await readStreamFromStorage(params);
-    const filepath = "/opt/sources/htmlfiles/" + contentid;
+    const filepath = process.env.HTMLFOLDER + "/" + contentid;
     stream.on("error", (e) => reject(e));
     stream.pipe(fs.createWriteStream(filepath));
     let page;
