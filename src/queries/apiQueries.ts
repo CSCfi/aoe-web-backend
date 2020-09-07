@@ -270,7 +270,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
             }
             if (ext === ".h5p") {
                 jsonObj.materials[i]["mimetype"] = "text/html";
-                jsonObj.materials[i]["filepath"] = "http://10.10.10.10:3001/play/" + jsonObj.materials[i]["filekey"];
+                jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
             }
             else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;

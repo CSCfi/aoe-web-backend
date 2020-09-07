@@ -42,7 +42,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provider "virtualbox" do |vbox|
-    vbox.memory = 2048
+    vbox.memory = 1024
     vbox.gui = false
   end
 end
