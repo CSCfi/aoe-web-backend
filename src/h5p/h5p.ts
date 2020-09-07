@@ -11,8 +11,9 @@ import { resolve, reject } from "bluebird";
 console.log("This is H5P: " + H5P);
 const config = new H5P.H5PConfig();
 // const config = await new H5P.H5PConfig(new H5P.fsImplementations.InMemoryStorage());
+config.baseUrl = process.env.H5P_BASE_URL || "h5p";
 console.log("This is config: " + JSON.stringify(config));
-config.contentFilesUrl = "/opt/sources/h5p/content";
+// config.contentFilesUrl = "/opt/sources/h5p/content";
 export const h5pEditor: H5P.H5PEditor = H5P.fs(
     config,
     path.resolve("h5p/libraries"), // the path on the local disc where libraries should be stored
