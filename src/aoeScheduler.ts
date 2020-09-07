@@ -6,6 +6,10 @@ import { rmDir } from "./helpers/fileRemover";
 scheduleJob("0 0 4 * * *", function() {
     console.log("Removing files from html folder: " + process.env.HTMLFOLDER);
     rmDir(process.env.HTMLFOLDER, false);
+    console.log("Removing H5P files");
+    rmDir(process.env.H5PFOLDER + "/content", false);
+    rmDir(process.env.H5PFOLDER + "/libraries", false);
+    rmDir(process.env.H5PFOLDER + "/temporary-storage", false);
 });
 
 setInterval(() => fh.checkTemporaryRecordQueue(), 3600000);

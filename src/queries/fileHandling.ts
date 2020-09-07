@@ -679,7 +679,7 @@ async function downloadFile(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any) {
+export async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any) {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
     console.log("The req.params in downloadFileFromStorage: " + req.params);
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);

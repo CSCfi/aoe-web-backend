@@ -3,11 +3,11 @@ import compression from "compression";  // compresses requests
 import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
+
 // Load environment variables from .env file, where API keys and passwords are configured
 dotenv.config({path: ".env"});
 const util = require("util");
 const ah = require("./services/authService");
-import expressValidator from "express-validator";
 
 const passport = require("passport");
 const flash = require("connect-flash");
@@ -19,6 +19,8 @@ const morgan = require("morgan");
 const bodyParser = require("body-parser");
 
 import * as homeController from "./controllers/home";
+import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
+import { h5pEditor } from "./h5p/h5p";
 
 const apiRouter = require("./routes/routes");
 // Create Express server
@@ -165,27 +167,6 @@ Issuer.discover(process.env.PROXY_URI)
     });
 app.use(flash());
 
-import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
-import { h5pEditor } from "./h5p/h5p";
-console.log("h5pEditor.config.contentFilesUrl " + h5pEditor.config.contentFilesUrl);
-console.log("path.resolve(h5p/core) " + path.resolve("h5p/core"));
-console.log("h5p/editor " + path.resolve("h5p/editor"));
-// app.get(path.resolve("h5p/core") + "/:id/:file(*)", () => { console.log("now h5p"); });
-// app.get(h5pEditor.config.contentFilesUrl + "/:id/:file(*)", () => { console.log("now h5p"); });
-const routeOptions = { "handleErrors": false,
-                        "routeGetContentFile": true };
-app.use(
-    // server is an object initialized with express()
-    "/h5p", // the route under which all the Ajax calls will be registered
-    h5pAjaxExpressRouter(
-        h5pEditor, // an H5P.H5PEditor object
-        path.resolve("h5p/core"), // the path to the h5p core files (of the player)
-        path.resolve("h5p/editor"), // the path to the h5p core files (of the editor)
-        routeOptions, // the options are optional and can be left out
-        // languageOverride // (optional) can be used to override the language used by i18next http middleware
-    )
-);
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -206,6 +187,20 @@ app.get("/secure/redirect", function (req: Request, res: Response, next: NextFun
         failureFlash: true,
         successRedirect: process.env.SUCCESS_REDIRECT_URI
     })
+);
+// handle h5p ajax request here
+const routeOptions = { "handleErrors": false,
+                        "routeGetContentFile": true };
+app.use(
+    // server is an object initialized with express()
+    "/h5p", // the route under which all the Ajax calls will be registered
+    h5pAjaxExpressRouter(
+        h5pEditor, // an H5P.H5PEditor object
+        path.resolve("h5p/core"), // the path to the h5p core files (of the player)
+        path.resolve("h5p/editor"), // the path to the h5p core files (of the editor)
+        routeOptions, // the options are optional and can be left out
+        // languageOverride // (optional) can be used to override the language used by i18next http middleware
+    )
 );
 
 const cookieParser = require("cookie-parser");
@@ -239,8 +234,6 @@ app.use((err, req, res, next) => {
 
 require("./aoeScheduler");
 const es = require("./elasticSearch/es");
-// import { startH5Pplayer } from "./h5p/h5p";
-// startH5Pplayer();
 
 module.exports = app;
 export default app;
