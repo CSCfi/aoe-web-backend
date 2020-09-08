@@ -16,9 +16,9 @@ console.log("This is config: " + JSON.stringify(config));
 // config.contentFilesUrl = "/opt/sources/h5p/content";
 export const h5pEditor: H5P.H5PEditor = H5P.fs(
     config,
-    path.resolve("h5p/libraries"), // the path on the local disc where libraries should be stored
-    path.resolve("h5p/temporary-storage"), // the path on the local disc where temporary files (uploads) should be stored
-    path.resolve("h5p/content") // the path on the local disc where content is stored
+    process.env.H5P_LIBRARY_PATH || path.resolve("h5p/libraries"), // the path on the local disc where libraries should be stored
+    process.env.H5P_TEMPORARY_STORAGE_PATH || path.resolve("h5p/temporary-storage"), // the path on the local disc where temporary files (uploads) should be stored
+    process.env.H5P_CONTENT_PATH || path.resolve("h5p/content") // the path on the local disc where content is stored
 );
 export async function play(req: Request, res: Response, next: NextFunction) {
     try {
