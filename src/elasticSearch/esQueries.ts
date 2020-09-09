@@ -9,7 +9,7 @@ const client = new Client({node: process.env.ES_NODE});
 
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { SearchResponse, Source, AoeBody, AoeResult, AoeRequestFilter, MultiMatchSeachBody, MatchObject, FilterTerm } from "./esTypes";
+import { SearchResponse, Source, AoeBody, AoeResult, AoeRequestFilter, MultiMatchSeachBody, MatchObject, FilterTerm, expiresFilterObject } from "./esTypes";
 
 async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
   try {
@@ -126,10 +126,12 @@ async function elasticSearchQuery(req: Request, res: Response, next: NextFunctio
       const filters = filterMapper(req.body.filters);
       filters.map(filter => mustList.push(filter));
     }
+
     const body: MultiMatchSeachBody = {
       "query": {
         "bool" : {
-          "must" : mustList
+          "must" : mustList,
+          "filter" : expiresFilterObject
         }
       }
     };
@@ -265,6 +267,7 @@ function createMustMatchObject(key: string, type: string) {
     throw new Error(err);
   }
 }
+
 module.exports = {
     elasticSearchQuery : elasticSearchQuery,
     createShouldObject,

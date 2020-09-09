@@ -1,10 +1,32 @@
 export interface MultiMatchSeachBody {
     query: {
       bool: {
-        must: Array<object>
+        must: Array<object>,
+        filter?: object
       }
     };
   }
+
+  export const expiresFilterObject = {
+  "bool" : {
+    "should": [{
+      "range": {
+        "expires": {
+          "gte": "now"
+        }
+      }
+    }, {
+      "bool": {
+        "must_not": {
+          "exists": {
+            "field": "expires"
+          }
+        }
+      }
+    }
+    ]
+  }
+};
   export interface FilterTerm {
     term: {
       [key: string]: string

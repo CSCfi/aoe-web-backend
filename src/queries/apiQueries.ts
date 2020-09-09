@@ -409,7 +409,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id FROM educationalmaterial WHERE obsoleted = '0' AND publishedat IS NOT NULL ORDER BY updatedAt DESC LIMIT 6;";
+            query = "SELECT id FROM educationalmaterial WHERE obsoleted = '0' AND publishedat IS NOT NULL AND ( expires IS NULL OR expires > now() )  ORDER BY updatedAt DESC LIMIT 6;";
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";
                 let response = await t.any(query, [q.id]);

@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { someLimit } from "async";
 import { ErrorHandler } from "./../helpers/errorHandler";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
@@ -34,7 +33,7 @@ const upload = multer({"storage": storage
 const connection = require("./../db");
 const db = connection.db;
 
-async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -109,7 +108,7 @@ catch (err) {
 }
 }
 
-async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -224,7 +223,7 @@ async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
@@ -320,7 +319,7 @@ async function uploadFileToMaterial(req: Request, res: Response, next: NextFunct
     }
 }
 
-async function fileToStorage(file: any, materialid: String) {
+export async function fileToStorage(file: any, materialid: String) {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
     await deleteDataFromTempRecordTable(file.filename, materialid);
@@ -331,7 +330,7 @@ async function fileToStorage(file: any, materialid: String) {
     });
 }
 
-async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
+export async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     // await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
     await updateAttachment(obj.Key, obj.Bucket, obj.Location, attachmentId);
@@ -343,7 +342,7 @@ async function attachmentFileToStorage(file: any, metadata: any, materialid: str
     });
 }
 
-async function checkTemporaryRecordQueue() {
+export async function checkTemporaryRecordQueue() {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
@@ -372,7 +371,7 @@ async function checkTemporaryRecordQueue() {
     }
 }
 
-async function checkTemporaryAttachmentQueue() {
+export async function checkTemporaryAttachmentQueue() {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
@@ -407,7 +406,7 @@ async function checkTemporaryAttachmentQueue() {
     }
 }
 
-async function insertDataToEducationalMaterialTable(req: Request, t: any) {
+export async function insertDataToEducationalMaterialTable(req: Request, t: any) {
     const query = "insert into educationalmaterial (Usersusername)" +
                     " values ($1) returning id;";
     const data = await t.one(query, [req.session.passport.user.uid]);
@@ -417,7 +416,7 @@ async function insertDataToEducationalMaterialTable(req: Request, t: any) {
 
 
 
-async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
+export async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     if (fileDetails.displayName && materialid) {
@@ -475,7 +474,7 @@ async function insertDataToDisplayName(t: any, educationalmaterialid: String, ma
     return queries;
 }
 
-async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String, priority: number) {
+export async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String, priority: number) {
     let query;
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
@@ -485,7 +484,7 @@ async function insertDataToMaterialTable(t: any, materialID: String, location: a
     return data;
 }
 
-async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
+export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
     const queries = [];
     let query;
     const data = await db.tx(async (t: any) => {
@@ -502,7 +501,7 @@ async function insertDataToAttachmentTable(files: any, materialID: any, fileKey:
     return data[1].id;
 }
 
-async function updateAttachment(fileKey: any, fileBucket: any, location: string, attachmentId: string) {
+export async function updateAttachment(fileKey: any, fileBucket: any, location: string, attachmentId: string) {
     const queries = [];
     let query;
     await db.tx(async (t: any) => {
@@ -516,7 +515,7 @@ async function updateAttachment(fileKey: any, fileBucket: any, location: string,
     });
 }
 
-async function insertDataToTempAttachmentTable(files: any, metadata: any, attachmentId: string) {
+export async function insertDataToTempAttachmentTable(files: any, metadata: any, attachmentId: string) {
     let query;
     query = "insert into temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, defaultfile, kind, label, srclang, attachmentid) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id;";
     console.log(query);
@@ -524,7 +523,7 @@ async function insertDataToTempAttachmentTable(files: any, metadata: any, attach
     return data;
 }
 
-async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String) {
+export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String) {
     const queries = [];
     let query;
     await db.tx(async (t: any) => {
@@ -540,7 +539,7 @@ async function insertDataToRecordTable(files: any, materialID: any, fileKey: any
     });
 }
 
-async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {
+export async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {
     let query;
     query = "insert into temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, materialid) values ($1,$2,$3,$4,$5,$6,$7) returning id;";
     console.log(query);
@@ -548,7 +547,7 @@ async function insertDataToTempRecordTable(t: any, files: any, materialId: any) 
     return data;
 }
 
-async function deleteDataFromTempRecordTable(filename: any, materialId: any) {
+export async function deleteDataFromTempRecordTable(filename: any, materialId: any) {
     let query;
     query = "delete from temporaryrecord where filename = $1 and materialid = $2;";
     console.log(query);
@@ -556,7 +555,7 @@ async function deleteDataFromTempRecordTable(filename: any, materialId: any) {
     return data;
 }
 
-async function deleteDataToTempAttachmentTable(filename: any, materialId: any) {
+export async function deleteDataToTempAttachmentTable(filename: any, materialId: any) {
     let query;
     query = "delete from temporaryattachment where filename = $1 and id = $2;";
     console.log(query, [filename, materialId]);
@@ -565,7 +564,7 @@ async function deleteDataToTempAttachmentTable(filename: any, materialId: any) {
 }
 
 
-async function uploadFileToStorage(filePath: String, filename: String, bucketName: String) {
+export async function uploadFileToStorage(filePath: String, filename: String, bucketName: String) {
     return new Promise(async (resolve, reject) => {
         try {
             const util = require("util");
@@ -619,7 +618,7 @@ async function uploadFileToStorage(filePath: String, filename: String, bucketNam
     });
 }
 
-async function uploadBase64FileToStorage(base64data: String, filename: String, bucketName: String) {
+export async function uploadBase64FileToStorage(base64data: String, filename: String, bucketName: String) {
     return new Promise(async (resolve, reject) => {
         try {
             const config = {
@@ -665,7 +664,7 @@ async function uploadBase64FileToStorage(base64data: String, filename: String, b
 }
 
 
-async function downloadFile(req: Request, res: Response, next: NextFunction) {
+export async function downloadFile(req: Request, res: Response, next: NextFunction) {
     try {
         const data = await downloadFileFromStorage(req, res, next);
         console.log("The data in DownloadFile function: " + data);
@@ -790,7 +789,7 @@ catch (err) {
 });
 }
 
-async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
+export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
     try {
         console.log("downloadMaterialFile");
         const response = await db.task(async (t: any) => {
@@ -830,7 +829,7 @@ async function downloadMaterialFile(req: Request, res: Response, next: NextFunct
     }
 }
 
-async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
+export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
     return new Promise(async resolve => {
         try {
             const config = {
@@ -860,7 +859,7 @@ async function downloadAndZipFromStorage(req: Request, res: Response, next: Next
 
 
 }
- async function unZipAndExtract(zipFolder: any) {
+ export async function unZipAndExtract(zipFolder: any) {
     const searchRecursive = function(dir, pattern) {
         // This is where we store pattern matches of all files inside the directory
         let results = [];
