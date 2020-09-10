@@ -1494,23 +1494,3 @@ export async function isOwner(educationalmaterialid: string, username: string) {
         }
     }
 }
-
-
-
-module.exports = {
-    getMaterial : getMaterial,
-    getMaterialData : getMaterialData,
-    getRecentMaterial : getRecentMaterial,
-    getUserMaterial : getUserMaterial,
-    updateMaterial : updateMaterial,
-    createUser : createUser,
-    updateUser : updateUser,
-    getUser : getUser,
-    deleteMaterial : deleteMaterial,
-    deleteRecord : deleteRecord,
-    deleteAttachment : deleteAttachment,
-    insertEducationalMaterial : insertEducationalMaterial,
-    updateTermsOfUsage : updateTermsOfUsage,
-    addLinkToMaterial : addLinkToMaterial,
-    setLanguage : setLanguage
-};
