@@ -12,7 +12,7 @@ const pgp = connection.pgp;
 const db = connection.db;
 const elasticSearch = require("./../elasticSearch/es");
 
-async function addLinkToMaterial(req: Request , res: Response , next: NextFunction) {
+export async function addLinkToMaterial(req: Request , res: Response , next: NextFunction) {
     try {
         db.tx(async (t: any) => {
             const queries: any = [];
@@ -63,7 +63,7 @@ async function addLinkToMaterial(req: Request , res: Response , next: NextFuncti
 }
 
 
-async function getMaterial(req: Request , res: Response , next: NextFunction) {
+export async function getMaterial(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         // let params = { };
@@ -89,7 +89,7 @@ const mode = new TransactionMode({
     deferrable: true
 });
 
-async function getMaterialData(req: Request , res: Response , next: NextFunction) {
+export async function getMaterialData(req: Request , res: Response , next: NextFunction) {
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
@@ -352,7 +352,7 @@ async function getMaterialData(req: Request , res: Response , next: NextFunction
     });
 }
 
-async function getUserMaterial(req: Request , res: Response , next: NextFunction) {
+export async function getUserMaterial(req: Request , res: Response , next: NextFunction) {
     try {
         db.task(async (t: any) => {
             const params: any = [];
@@ -404,7 +404,7 @@ async function getUserMaterial(req: Request , res: Response , next: NextFunction
     }
 }
 
-async function getRecentMaterial(req: Request , res: Response , next: NextFunction) {
+export async function getRecentMaterial(req: Request , res: Response , next: NextFunction) {
     try {
         db.task(async (t: any) => {
             const params: any = [];
@@ -455,7 +455,7 @@ async function getRecentMaterial(req: Request , res: Response , next: NextFuncti
     }
 }
 
-async function deleteMaterial(req: Request , res: Response , next: NextFunction) {
+export async function deleteMaterial(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         let data;
@@ -491,7 +491,7 @@ async function deleteMaterial(req: Request , res: Response , next: NextFunction)
     }
 }
 
-async function deleteRecord(req: Request , res: Response , next: NextFunction) {
+export async function deleteRecord(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         let data;
@@ -519,7 +519,7 @@ async function deleteRecord(req: Request , res: Response , next: NextFunction) {
     }
 }
 
-async function deleteAttachment(req: Request , res: Response , next: NextFunction) {
+export async function deleteAttachment(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         let data;
@@ -598,7 +598,7 @@ export async function setLanguage(obj: any) {
     }
 }
 
-async function insertDataToDescription(t: any, educationalmaterialid: string, description: any) {
+export async function insertDataToDescription(t: any, educationalmaterialid: string, description: any) {
     const queries = [];
     // const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     const query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
@@ -693,7 +693,7 @@ export async function insertEducationalMaterialName(materialname: NameObject, id
     return queries;
 }
 
-async function updateMaterial(req: Request , res: Response , next: NextFunction) {
+export async function updateMaterial(req: Request , res: Response , next: NextFunction) {
     db.tx(async (t: any) => {
         let query;
         const queries: any = [];
@@ -1166,7 +1166,7 @@ async function updateMaterial(req: Request , res: Response , next: NextFunction)
     });
 }
 
-async function createUser(req: Request , res: Response , next: NextFunction) {
+export async function createUser(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         console.log(req.body);
@@ -1183,7 +1183,7 @@ async function createUser(req: Request , res: Response , next: NextFunction) {
     }
 }
 
-async function updateUser(req: Request , res: Response , next: NextFunction) {
+export async function updateUser(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         query = "update users set (firstname, lastname, preferredlanguage,preferredtargetname,preferredalignmenttype ) = ($1,$2,$3,$4,$5) where username = $6;";
@@ -1197,7 +1197,7 @@ async function updateUser(req: Request , res: Response , next: NextFunction) {
     }
 }
 
-async function updateTermsOfUsage(req: Request , res: Response , next: NextFunction) {
+export async function updateTermsOfUsage(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         query = "update users set termsofusage = '1' where username = $1;";
@@ -1211,7 +1211,7 @@ async function updateTermsOfUsage(req: Request , res: Response , next: NextFunct
     }
 }
 
-async function getUser(req: Request , res: Response , next: NextFunction) {
+export async function getUser(req: Request , res: Response , next: NextFunction) {
     try {
         let query;
         query = "SELECT * FROM users where username = $1;";
@@ -1225,7 +1225,7 @@ async function getUser(req: Request , res: Response , next: NextFunction) {
     }
 }
 
-async function insertEducationalMaterial(obj: any, func: any) {
+export async function insertEducationalMaterial(obj: any, func: any) {
     await db.any("BEGIN");
     try {
         const response = await insertIntoEducationalMaterial(obj.educationalmaterial[0]);
@@ -1296,7 +1296,7 @@ async function insertEducationalMaterial(obj: any, func: any) {
     }
 }
 
-async function insertIntoEducationalMaterial(obj: any) {
+export async function insertIntoEducationalMaterial(obj: any) {
     const materialData = {
         technicalname : obj.technicalname,
         createdat : obj.createdat,
@@ -1319,7 +1319,7 @@ async function insertIntoEducationalMaterial(obj: any) {
     return data;
 }
 
-async function insertIntoMaterialName(obj: any, materialid: any) {
+export async function insertIntoMaterialName(obj: any, materialid: any) {
     const data = {
         materialname : obj.MaterialName,
         language : obj.Language,
@@ -1331,7 +1331,7 @@ async function insertIntoMaterialName(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoMaterialDescription(obj: any, materialid: any) {
+export async function insertIntoMaterialDescription(obj: any, materialid: any) {
     const data = {
         description : obj.Description,
         language : obj.Language,
@@ -1342,7 +1342,7 @@ async function insertIntoMaterialDescription(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoEducationalAudience(obj: any, materialid: any) {
+export async function insertIntoEducationalAudience(obj: any, materialid: any) {
     const data = {
         educationalrole : obj.EducationalRole,
         educationalmaterialid : materialid
@@ -1352,7 +1352,7 @@ async function insertIntoEducationalAudience(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoLearningResourceType(obj: any, materialid: any) {
+export async function insertIntoLearningResourceType(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         educationalmaterialid : materialid
@@ -1362,7 +1362,7 @@ async function insertIntoLearningResourceType(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoAuthor(obj: any, materialid: any) {
+export async function insertIntoAuthor(obj: any, materialid: any) {
     const data = {
         authorname : obj.authorname,
         organization : obj.organization,
@@ -1372,7 +1372,7 @@ async function insertIntoAuthor(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoAccessibilityFeature(obj: any, materialid: any) {
+export async function insertIntoAccessibilityFeature(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         educationalmaterialid : materialid
@@ -1382,7 +1382,7 @@ async function insertIntoAccessibilityFeature(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoAccessibilityHazard(obj: any, materialid: any) {
+export async function insertIntoAccessibilityHazard(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         educationalmaterialid : materialid
@@ -1392,7 +1392,7 @@ async function insertIntoAccessibilityHazard(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoKeyWord(obj: any, materialid: any) {
+export async function insertIntoKeyWord(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         keyurl : "",
@@ -1403,7 +1403,7 @@ async function insertIntoKeyWord(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoEducationalLevel(obj: any, materialid: any) {
+export async function insertIntoEducationalLevel(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         educationalmaterialid : materialid
@@ -1413,7 +1413,7 @@ async function insertIntoEducationalLevel(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoEducationalUse(obj: any, materialid: any) {
+export async function insertIntoEducationalUse(obj: any, materialid: any) {
     const data = {
         value : obj.value,
         educationalmaterialid : materialid
@@ -1423,7 +1423,7 @@ async function insertIntoEducationalUse(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoPublisher(obj: any, materialid: any) {
+export async function insertIntoPublisher(obj: any, materialid: any) {
     const data = {
         name : obj.name,
         educationalmaterialid : materialid
@@ -1433,7 +1433,7 @@ async function insertIntoPublisher(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoInLanguage(obj: any, materialid: any) {
+export async function insertIntoInLanguage(obj: any, materialid: any) {
     const data = {
         inlanguage : obj.name,
         url : "",
@@ -1444,7 +1444,7 @@ async function insertIntoInLanguage(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoAlignmentObject(obj: any, materialid: any) {
+export async function insertIntoAlignmentObject(obj: any, materialid: any) {
     const data = {
         alignmenttype : obj.alignmenttype,
         targetname : obj.targetname,
@@ -1456,7 +1456,7 @@ async function insertIntoAlignmentObject(obj: any, materialid: any) {
     await db.any(query);
 }
 
-async function insertIntoMaterial(obj: any, materialid: any) {
+export async function insertIntoMaterial(obj: any, materialid: any) {
     const data = {
         // materialname : obj.materialname,
         link : obj.link,
@@ -1476,7 +1476,7 @@ function createSlug(str: String) {
     return str;
 }
 
-async function isOwner(educationalmaterialid: string, username: string) {
+export async function isOwner(educationalmaterialid: string, username: string) {
     if (educationalmaterialid && username) {
         const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
         console.log(query);
