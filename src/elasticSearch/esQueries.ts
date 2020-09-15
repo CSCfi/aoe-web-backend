@@ -65,7 +65,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
  * @param materials
  * return true if any material has pouta filekey
  */
-function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
+export function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
   try {
     for (const element of materials) {
       if (element.filekey) {

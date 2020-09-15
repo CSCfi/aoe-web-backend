@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { aoeThumbnailDownloadUrl } from "./../services/urlService";
+import { hasDownloadableFiles } from "./../elasticSearch/esQueries";
 const fh = require("./fileHandling");
 const parseDate = require("postgres-date");
 
@@ -344,6 +345,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         }
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
+        jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         res.status(200).json(jsonObj);
     })
     .catch((error: any) => {
@@ -357,7 +359,7 @@ export async function getUserMaterial(req: Request , res: Response , next: NextF
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, publishedat FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
+            query = "SELECT id, publishedat, expires FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";

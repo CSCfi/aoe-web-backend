@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
+import { insertEducationalMaterialName } from "./apiQueries";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -12,7 +13,7 @@ const contentDisposition = require("content-disposition");
 
 // File upload dependencies
 const multer  = require("multer");
-import { insertEducationalMaterialName } from "./apiQueries";
+
 
 const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
     destination: function(req: Request, file: any, cb: any) {
