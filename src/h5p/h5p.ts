@@ -40,9 +40,9 @@ export async function getH5PContent(req: Request, res: Response) {
         console.log(req.params.id);
         console.log(req.params.file);
         const user = {
-            canCreateRestricted: false,
-            canInstallRecommended: false,
-            canUpdateAndInstallLibraries: false,
+            canCreateRestricted: true,
+            canInstallRecommended: true,
+            canUpdateAndInstallLibraries: true,
             id: req.params.id,
             name: "aoerobot",
             type: "local"
@@ -109,13 +109,18 @@ export async function startH5Pplayer(contentid: string) {
             };
             const result = await h5pEditor.uploadPackage(data, user, options);
             console.log("saving h5p package");
+            let mainlib;
+            for (const lib of result.metadata.preloadedDependencies) {
+                if (lib.machineName == result.metadata.mainLibrary) {
+                    mainlib = lib;
+                }
+            }
+
             const saveresult = await h5pEditor.saveOrUpdateContent(
                 undefined,
                 result.parameters,
                 result.metadata,
-                H5P.LibraryName.toUberName(result.metadata.preloadedDependencies[0], {
-                    useWhitespace: true
-                }),
+                H5P.LibraryName.toUberName(mainlib, {useWhitespace: true}),
                 user
             );
             contentid = saveresult;
@@ -124,9 +129,10 @@ export async function startH5Pplayer(contentid: string) {
                 h5pEditor.contentStorage,
                 config
             );
-            const content = result.parameters;
-            console.log("rendering h5p page");
-            page = await h5pPlayer.render(contentid, content);
+            // const content = result.parameters;
+            console.log("rendering h5p page: " + contentid);
+            // page = await h5pPlayer.render(contentid, content);
+            page = await h5pPlayer.render(contentid);
             resolve(page);
         }
         catch (error) {
