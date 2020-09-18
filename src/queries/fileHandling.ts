@@ -913,6 +913,11 @@ try {
         console.log("The results: " + results);
         return results[0];
     }
+    const resultshtm = await searchRecursive(filenameParsedNicely, "index.htm");
+    if (Array.isArray(resultshtm) && resultshtm.length) {
+        console.log("The resultshtm: " + resultshtm);
+        return resultshtm[0];
+    }
     else {
         console.log("the unzipandextract returns false");
         return false;
