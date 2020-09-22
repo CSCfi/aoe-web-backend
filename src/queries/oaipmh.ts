@@ -39,8 +39,8 @@ async function getMaterialMetaData(req: Request , res: Response) {
             console.log(query, params);
             return t.map(query, params, async (q: any) => {
             const m: any = [];
-            await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, priority, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
-            "from (select materialid, publishedat from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
+            await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, version.priority, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
+            "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
             "left join material as m on version.materialid = m.id left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;", [q.id], async (q2: any) => {
                 q2.filepath = await aoeFileDownloadUrl(q2.filekey);
                 t.any("select * from materialdisplayname where materialid = $1;", q2.id)
