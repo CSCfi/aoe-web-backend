@@ -30,7 +30,7 @@ RUN useradd -ms /bin/false -d /app node && \
     yum install -y nodejs && \
     npm install -g pm2@2.5.0 && \
     sed --in-place -r 's/^save /# save /g' /etc/redis.conf && \
-    sed --in-place -r 's/^logfile [^\n]+/logfile ""/g' /etc/redis.conf \
+    sed --in-place -r 's/^logfile [^\n]+/logfile ""/g' /etc/redis.conf && \
     yum install -y libreoffice
 
 RUN usermod -aG 5606 node
