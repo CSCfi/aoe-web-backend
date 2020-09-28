@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 import { hasDownloadableFiles } from "./../elasticSearch/esQueries";
+import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter";
+import { readStreamFromStorage } from "./../queries/fileHandling";
 const fh = require("./fileHandling");
 const parseDate = require("postgres-date");
 
@@ -272,6 +274,10 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
             if (ext === ".h5p") {
                 jsonObj.materials[i]["mimetype"] = "text/html";
                 jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
+            }
+            else if (jsonObj.materials[i] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
+                jsonObj.materials[i]["mimetype"] = "text/html";
+                jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["filekey"];
             }
             else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;
