@@ -276,7 +276,6 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
                 jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
             }
             else if (jsonObj.materials[i] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
-                jsonObj.materials[i]["mimetype"] = "text/html";
                 jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["filekey"];
             }
             else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
