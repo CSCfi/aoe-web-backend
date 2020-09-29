@@ -129,7 +129,7 @@ export async function officeToPdf(filepath: string, filename: string, res: Respo
         const extend = "pdf";
         const file = fs.readFileSync(filepath);
         console.log(filepath);
-        const outputPath = path.join("./htmlfiles/" + filename);
+        const outputPath = path.join(process.env.HTMLFOLDER + filename);
         console.log("Strating officeToPdf");
         const promise = new Promise((resolve, reject) => {
             libre.convert(file, extend, undefined, (err, done) => {
