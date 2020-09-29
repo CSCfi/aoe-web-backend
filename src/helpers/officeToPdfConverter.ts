@@ -95,7 +95,7 @@ export async function convertOfficeToPdf(req: Request, res: Response, next: Next
             next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
         });
         stream.pipe(fs.createWriteStream(folderpath));
-        stream.on("finish", async function() {
+        stream.on("end", async function() {
             try {
             console.log("officeToPdf");
             console.log(folderpath);
@@ -134,8 +134,8 @@ export async function officeToPdf(filepath: string, filename: string, res: Respo
         const promise = new Promise((resolve, reject) => {
             libre.convert(file, extend, undefined, (err, done) => {
                 if (err) {
-                    console.log("Error converting file:" + err);
-                    // return reject(err);
+                    console.error("Error converting file:" + err);
+                    return reject(err);
                 }
                 console.log("officeToPdf write to file: " + outputPath);
                 fs.writeFileSync(outputPath, done);
