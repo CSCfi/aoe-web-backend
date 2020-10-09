@@ -5,6 +5,7 @@ export interface MultiMatchSeachBody {
         filter?: object
       }
     };
+    sort?: Array<object>;
   }
 
   export const expiresFilterObject = {
@@ -224,6 +225,7 @@ export interface MultiMatchSeachBody {
             lastname: string;
     }>;
     thumbnail: string;
+    popularity: number;
 }
 
 // interface AoeBody {
@@ -348,4 +350,5 @@ export interface AoeCollectionResult {
         }>;
         thumbnail?: string;
         hasDownloadableFiles?: boolean;
+        popularity?: number;
       }

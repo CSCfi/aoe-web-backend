@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertEducationalMaterialName } from "./apiQueries";
+import { updateDownloadCounter } from "./analyticsQueries";
+import { hasAccesstoPublication } from "./../services/authService";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -757,6 +759,7 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             console.log("We came to the if-statement in downloadFileFromStorage!");
             const folderpath = process.env.HTMLFOLDER + "/" + filename;
             const zipStream = fileStream.on("error", function(e) {
+                console.error(e);
                 next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
             }).pipe(fs.createWriteStream(folderpath));
             zipStream.on("finish", async function() {
@@ -769,10 +772,12 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             res.header("Content-Disposition", contentDisposition(filename));
             console.log("The response.originalfilename is: " + filename);
             fileStream.on("error", function(e) {
+                console.error(e);
                 next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
 
             })
             .pipe(res).on("error", function(e) {
+                console.error(e);
                 next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
             });
         }
@@ -821,7 +826,19 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             console.log(keys, req.params.materialId);
             // res.set("content-type", "application/zip");
             res.header("Content-Disposition", "attachment; filename=materials.zip");
-            const data = await downloadAndZipFromStorage(req, res, next, keys, archiveFiles);
+            await downloadAndZipFromStorage(req, res, next, keys, archiveFiles);
+            // update downloadcounter here
+            const idnumber = parseInt(req.params.materialId);
+            console.log("Starting update downloadcounter");
+            if (!req.isAuthenticated() || !hasAccesstoPublication(idnumber, req)) {
+                console.log("update downloadcounter");
+                try {
+                    updateDownloadCounter(req.params.materialId);
+                }
+                catch (error) {
+                    console.error("update downloadcounter failed: " + error);
+                }
+            }
         }
     }
     catch (err) {
@@ -842,10 +859,19 @@ export async function downloadAndZipFromStorage(req: Request, res: Response, nex
             AWS.config.update(config);
             const s3 = new AWS.S3();
             const bucketName = process.env.BUCKET_NAME;
+            console.log("Starting s3Zip zipstream!");
             try {
                 s3Zip
                 .archive({ s3: s3, bucket: bucketName }, "", keys, archiveFiles)
-                .pipe(res);
+                .pipe(res).on("finish", async function() {
+                    console.log("We finished the s3Zip zipstream!");
+                    resolve();
+                    }
+                )
+                .on("error", function(e) {
+                    console.error(e);
+                    next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                });
             }
             catch (err) {
                 console.error(err);

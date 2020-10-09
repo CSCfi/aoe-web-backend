@@ -3,6 +3,7 @@ import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollect
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
+import { getPopularityQuery } from "./../queries/analyticsQueries";
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const index = process.env.ES_INDEX;
@@ -27,7 +28,7 @@ const mode = new TransactionMode({
 });
 
 /** Check the ES connection status */
-async function createEsIndex () {
+export async function createEsIndex () {
     console.log("Create Elasticsearch index");
     client.ping({
         // ping usually has a 3000ms timeout
@@ -67,7 +68,7 @@ async function createEsIndex () {
       });
     }
 
-async function deleteIndex (index: string) {
+export async function deleteIndex (index: string) {
     const b = client.indices.delete({
         index: index
     }).then((data: any) => {
@@ -81,7 +82,7 @@ async function deleteIndex (index: string) {
     return b;
 }
 
-async function createIndex (index: string) {
+export async function createIndex (index: string) {
     const b = client.indices.create({
         index: index
     }).then((data: any) => {
@@ -95,7 +96,7 @@ async function createIndex (index: string) {
     return b;
 }
 
-function indexExists (index: string): boolean {
+export function indexExists (index: string): boolean {
     const b = client.indices.exists({
         index: index
       }).then((data: any) => {
@@ -128,7 +129,7 @@ export async function addMapping(index: string, fileLocation) {
     });
 }
 
-async function metadataToEs(offset: number, limit: number) {
+export async function metadataToEs(offset: number, limit: number) {
     return new Promise(async (resolve, reject) => {
     const countquery = "select count(*) from educationalmaterial";
     db.tx({mode}, async (t: any)  => {
@@ -224,6 +225,11 @@ async function metadataToEs(offset: number, limit: number) {
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
             const responseObj = await t.oneOrNone(query, [q.id]);
             q.license = responseObj;
+
+            response = await t.oneOrNone(getPopularityQuery, [q.id]);
+            if (response) {
+                q.popularity = response.popularity;
+            }
             return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -273,7 +279,7 @@ async function metadataToEs(offset: number, limit: number) {
 });
 }
 
-async function updateEsDocument() {
+export async function updateEsDocument() {
     return new Promise(async (resolve, reject) => {
     db.tx({mode}, async (t: any)  => {
         const params: any = [];
@@ -374,6 +380,11 @@ async function updateEsDocument() {
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
             const responseObj = await t.oneOrNone(query, [q.id]);
             q.license = responseObj;
+
+            response = await t.oneOrNone(getPopularityQuery, [q.id]);
+            if (response) {
+                q.popularity = response.popularity;
+            }
             return q;
             }).then(t.batch)
             .catch((error: any) => {
@@ -406,7 +417,7 @@ async function updateEsDocument() {
 });
 }
 
-async function createEsCollectionIndex() {
+export async function createEsCollectionIndex() {
     try {
         const collectionIndex = process.env.ES_COLLECTION_INDEX;
         const result: boolean = await indexExists(collectionIndex);
@@ -471,9 +482,9 @@ if (process.env.CREATE_ES_INDEX) {
 }
 
 
-module.exports = {
-    createEsIndex : createEsIndex,
-    updateEsDocument : updateEsDocument,
-    getCollectionEsData,
-    updateEsCollectionIndex
-};
+// module.exports = {
+//     createEsIndex : createEsIndex,
+//     updateEsDocument : updateEsDocument,
+//     getCollectionEsData,
+//     updateEsCollectionIndex
+// };

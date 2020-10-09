@@ -3,13 +3,9 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 import { hasDownloadableFiles } from "./../elasticSearch/esQueries";
 import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter";
-import { readStreamFromStorage } from "./../queries/fileHandling";
+import { hasAccesstoPublication } from "./../services/authService";
+import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 const fh = require("./fileHandling");
-const parseDate = require("postgres-date");
-
-
-
-
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -97,7 +93,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
-        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage " +
+        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage, viewcounter, downloadcounter " +
         "FROM educationalmaterial as m left join licensecode as l ON l.code = m.licensecode WHERE id = $1 and obsoleted != '1';";
         let response = await t.any(query, [req.params.id]);
         const isPublished = (response[0] && response[0].publishedat) ? true : false;
@@ -222,7 +218,8 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         response = await t.any(query, [req.params.id]);
         queries.push(response);
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
-
+        // const popularity = await t.one(getPopularityQuery, [req.params.id]);
+        // queries.push(popularity);
         return t.batch(queries);
     })
     .then(async (data: any) => {
@@ -321,6 +318,8 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         jsonObj.suitsAllUpperSecondarySubjectsNew = data[0][0].suitsalluppersecondarysubjectsnew;
         jsonObj.ratingContentAverage = data[0][0].ratingcontentaverage;
         jsonObj.ratingVisualAverage = data[0][0].ratingvisualaverage;
+        jsonObj.viewCounter = data[0][0].viewcounter;
+        jsonObj.downloadCounter = data[0][0].downloadcounter;
         jsonObj.author = data[11];
         jsonObj.publisher = data[10];
         jsonObj.description = data[2];
@@ -352,6 +351,12 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         jsonObj.versions = data[19];
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         res.status(200).json(jsonObj);
+        if (!req.isAuthenticated() || !hasAccesstoPublication(jsonObj.id, req)) {
+            updateViewCounter(jsonObj.id)
+            .catch((error: any) => {
+                console.error("update viewcounter failed: " + error);
+            });
+        }
     })
     .catch((error: any) => {
         console.log(error);
@@ -364,7 +369,7 @@ export async function getUserMaterial(req: Request , res: Response , next: NextF
         db.task(async (t: any) => {
             const params: any = [];
             let query;
-            query = "SELECT id, publishedat, expires FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
+            query = "SELECT id, publishedat, expires, viewcounter, downloadcounter FROM educationalmaterial WHERE usersusername = $1 and obsoleted != '1';";
             params.push(req.session.passport.user.uid);
             return t.map(query, params, async (q: any) => {
                 query = "select * from materialname where educationalmaterialid = $1;";

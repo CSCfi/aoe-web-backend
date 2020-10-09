@@ -606,6 +606,9 @@
               }
             }
           },
+          "popularity" : {
+            "type" : "float"
+          },
           "publishedat" : {
             "type" : "date"
           },

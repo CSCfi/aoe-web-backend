@@ -46,6 +46,7 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           .map(object => ({key : object.objectkey, value : object.targetname})) : undefined,
           rObj.hasDownloadableFiles = (obj.materials) ? hasDownloadableFiles(obj.materials) : false,
           rObj.thumbnail =  obj.thumbnail;
+          rObj.popularity = obj.popularity;
           return rObj;
           }
         );
@@ -135,6 +136,23 @@ async function elasticSearchQuery(req: Request, res: Response, next: NextFunctio
         }
       }
     };
+
+    if (req.body.sort) {
+      const sort = [];
+      // allways sort using popularity if sort exists in body
+      if (req.body.sort.popularity === "asc") {
+        sort.push({
+          "popularity": "asc"
+        });
+      }
+      else {
+        sort.push({
+            "popularity": "desc"
+          });
+        }
+      body.sort = sort;
+    }
+
     const query = {"index" : index,
                   "from" : from,
                   "size" : size,

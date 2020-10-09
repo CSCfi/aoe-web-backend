@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 const connection = require("./../db");
 const db = connection.db;
 
-function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
+export function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
     if (req.isAuthenticated()) {
         return next();
     }
@@ -11,7 +11,7 @@ function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
     }
 }
 
-async function getUserData(req: Request, res: Response) {
+export async function getUserData(req: Request, res: Response) {
     const query = "SELECT termsofusage FROM users WHERE username = $1;";
     const termsofusage = await db.oneOrNone(query, [req.session.passport.user.uid]);
     res.status(200).json({"userdata" : req.session.passport.user,
@@ -19,7 +19,7 @@ async function getUserData(req: Request, res: Response) {
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
-function isUser(req: Request) {
+export function isUser(req: Request) {
     // Checking that the user actually exists, for this, the userdata has to be present
     // in the session data
         if (!req.session.userdata.id) {
@@ -33,7 +33,7 @@ function isUser(req: Request) {
         }
 }
 
-async function hasAccesstoPublication(id: number, req: Request) {
+export async function hasAccesstoPublication(id: number, req: Request) {
     // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
     // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
     const params = {"id": id};
@@ -47,7 +47,7 @@ async function hasAccesstoPublication(id: number, req: Request) {
     }
 }
 
-async function InsertUserToDatabase(userinfo: object, acr: string) {
+export async function InsertUserToDatabase(userinfo: object, acr: string) {
     try {
         console.log("The userinfo in function at authservice: " + userinfo);
         let uid: string;
@@ -76,7 +76,7 @@ async function InsertUserToDatabase(userinfo: object, acr: string) {
     }
 }
 
-async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction) {
     let id = req.params.id;
     if (req.params.id) {
         id = req.params.id;
@@ -103,7 +103,7 @@ async function hasAccessToPublicaticationMW(req: Request, res: Response, next: N
     }
 }
 
-async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {
     let id = req.params.materialId;
     if (req.params.materialId) {
         id = req.params.materialId;
@@ -127,7 +127,7 @@ async function hasAccessToMaterial(req: Request, res: Response, next: NextFuncti
     }
 }
 
-async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction) {
     const id = req.params.attachmentid;
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = " +
                     "(select materialid from attachment where attachment.id =$1);";
@@ -146,7 +146,7 @@ async function hasAccessToAttachmentFile(req: Request, res: Response, next: Next
     }
 }
 
-async function hasAccessToCollection(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToCollection(req: Request, res: Response, next: NextFunction) {
     const id = req.body.collectionId;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
@@ -158,7 +158,7 @@ async function hasAccessToCollection(req: Request, res: Response, next: NextFunc
     }
 }
 
-async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction) {
     const id = req.params.id;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
@@ -169,7 +169,7 @@ async function hasAccessToCollectionParams(req: Request, res: Response, next: Ne
         return next();
     }
 }
-async function hasAccessToCollectionId(id: string, username: string) {
+export async function hasAccessToCollectionId(id: string, username: string) {
     const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await db.oneOrNone(query, [id, username]);
     if (!result) {
@@ -181,21 +181,21 @@ async function hasAccessToCollectionId(id: string, username: string) {
     }
 }
 
-function logout(req: Request, res: Response) {
+export function logout(req: Request, res: Response) {
     req.logout();
     res.redirect("/");
 }
-module.exports = {
-    isUser: isUser,
-    getUserData: getUserData,
-    hasAccesstoPublication,
-    checkAuthenticated: checkAuthenticated,
-    InsertUserToDatabase: InsertUserToDatabase,
-    hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
-    logout: logout,
-    hasAccessToMaterial : hasAccessToMaterial,
-    hasAccessToAttachmentFile : hasAccessToAttachmentFile,
-    hasAccessToCollection,
-    hasAccessToCollectionParams
-    // hasAccess: hasAccess,
-};
+// module.exports = {
+//     isUser: isUser,
+//     getUserData: getUserData,
+//     hasAccesstoPublication,
+//     checkAuthenticated: checkAuthenticated,
+//     InsertUserToDatabase: InsertUserToDatabase,
+//     hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
+//     logout: logout,
+//     hasAccessToMaterial : hasAccessToMaterial,
+//     hasAccessToAttachmentFile : hasAccessToAttachmentFile,
+//     hasAccessToCollection,
+//     hasAccessToCollectionParams
+//     // hasAccess: hasAccess,
+// };
