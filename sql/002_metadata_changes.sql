@@ -245,3 +245,4 @@ ALTER TABLE collectionheading ALTER COLUMN priority SET DEFAULT 999;
 
 ALTER TABLE educationalmaterial ADD COLUMN viewcounter int8 DEFAULT 0;
 ALTER TABLE educationalmaterial ADD COLUMN downloadcounter int8 DEFAULT 0;
+ALTER TABLE educationalmaterial ADD COLUMN counterupdatedat timestamp with time zone;

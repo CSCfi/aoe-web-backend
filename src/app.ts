@@ -42,7 +42,8 @@ custom.setHttpOptionsDefaults({
 //   hooks: {
 //     beforeRequest: [
 //       (options) => {
-//         console.log("--> %s %s", options.method.toUpperCase(), options.href);
+//         console.log(options.url.href);
+//         console.log("--> %s %s", options.method.toUpperCase(), options.url.href);
 //         console.log("--> HEADERS %o", options.headers);
 //         if (options.body) {
 //           console.log("--> BODY %s", options.body);
@@ -164,7 +165,11 @@ Issuer.discover(process.env.PROXY_URI)
                 throw new ErrorHandler(400, "Unknown authentication method");
             }
         }));
-    });
+    })
+    .catch((error: any) => {
+        console.error(error);
+    })
+    ;
 app.use(flash());
 
 app.use(passport.initialize());

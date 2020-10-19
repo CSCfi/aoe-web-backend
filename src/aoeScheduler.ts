@@ -12,7 +12,7 @@ scheduleJob("0 0 4 * * *", function() {
     rmDir(process.env.H5PFOLDER + "/libraries", false);
     rmDir(process.env.H5PFOLDER + "/temporary-storage", false);
     console.log("update ES");
-    updateEsDocument();
+    updateEsDocument(true);
 });
 
 setInterval(() => fh.checkTemporaryRecordQueue(), 3600000);

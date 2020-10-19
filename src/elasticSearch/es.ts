@@ -12,6 +12,7 @@ log: "trace",
 keepAlive: true});
 export namespace Es {
     export let ESupdated = {value : new Date()};
+    export let ESCounterUpdated = {value : new Date()};
     export let CollectionEsUpdated = {value : new Date()};
 }
 const connection = require("./../db");
@@ -279,14 +280,28 @@ export async function metadataToEs(offset: number, limit: number) {
 });
 }
 
-export async function updateEsDocument() {
+/**
+ *
+ * @param updateCounters
+ * update elasticsearch
+ * when updatedat has changed or
+ * if updateCounters is true when counterupdatedat has changed
+ */
+export async function updateEsDocument(updateCounters?: boolean) {
     return new Promise(async (resolve, reject) => {
     db.tx({mode}, async (t: any)  => {
         const params: any = [];
-        params.push(Es.ESupdated.value);
-        let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-        " from educationalmaterial as em where updatedat > $1 and em.publishedat IS NOT NULL;";
-        // console.log(query);
+        let query = "";
+        if (updateCounters) {
+            params.push(Es.ESCounterUpdated.value);
+            query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
+            " from educationalmaterial as em where counterupdatedat > $1 and em.publishedat IS NOT NULL;";
+        }
+        else {
+            params.push(Es.ESupdated.value);
+            query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
+            " from educationalmaterial as em where updatedat > $1 and em.publishedat IS NOT NULL;";
+        }
         return t.map(query, params, async (q: any) => {
             const m: any = [];
             t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
@@ -401,7 +416,12 @@ export async function updateEsDocument() {
             }
             else {
                 console.log("Elasticsearch updated");
-                Es.ESupdated.value = new Date();
+                if (updateCounters) {
+                    Es.ESCounterUpdated.value = new Date();
+                }
+                else {
+                    Es.ESupdated.value = new Date();
+                }
             }
             resolve(data.length);
         }
