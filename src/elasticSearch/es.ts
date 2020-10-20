@@ -139,6 +139,7 @@ export async function metadataToEs(offset: number, limit: number) {
         params.push(limit);
         let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
         " from educationalmaterial as em where em.obsoleted = 0 and em.publishedat IS NOT NULL order by em.id asc OFFSET $1 LIMIT $2;";
+        console.log(query, params);
         return t.map(query, params, async (q: any) => {
             const m: any = [];
             t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
@@ -226,7 +227,7 @@ export async function metadataToEs(offset: number, limit: number) {
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
             const responseObj = await t.oneOrNone(query, [q.id]);
             q.license = responseObj;
-
+            console.log(getPopularityQuery, [q.id]);
             response = await t.oneOrNone(getPopularityQuery, [q.id]);
             if (response) {
                 q.popularity = response.popularity;
@@ -234,7 +235,7 @@ export async function metadataToEs(offset: number, limit: number) {
             return q;
             }).then(t.batch)
             .catch((error: any) => {
-                console.trace(error);
+                console.error(error);
                 return error;
             }) ;
         })
