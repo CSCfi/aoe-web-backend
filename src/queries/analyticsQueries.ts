@@ -28,7 +28,7 @@ export async function updateDownloadCounter(id: string) {
     }
 }
 
-export const getPopularityQuery = "select a/b as popularity from" +
+export const getPopularityQuery = "select a/NULLIF(b,0) as popularity from" +
                             "(select" +
                             "(select (viewcounter + downloadcounter + (select count(*) from rating where id = $1)) " +
                             "from educationalmaterial where id = $1) as a, " +

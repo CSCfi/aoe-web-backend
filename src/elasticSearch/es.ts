@@ -227,7 +227,6 @@ export async function metadataToEs(offset: number, limit: number) {
             query = "select licensecode as key, license as value from educationalmaterial as m left join licensecode as l on m.licensecode = l.code WHERE m.id = $1;";
             const responseObj = await t.oneOrNone(query, [q.id]);
             q.license = responseObj;
-            console.log(getPopularityQuery, [q.id]);
             response = await t.oneOrNone(getPopularityQuery, [q.id]);
             if (response) {
                 q.popularity = response.popularity;
