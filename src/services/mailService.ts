@@ -142,25 +142,25 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
 }
 
 async function verificationEmailText(url) {
-    const verificationEmailText =
-    `Hei,
-    olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle. Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä:
-    ${url}
-    Ystävällisin terveisin,
-    AOE-tiimi
+const verificationEmailText =
+`Hei,
+olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle. Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä:
+${url}
+Ystävällisin terveisin,
+AOE-tiimi
 
-    Hi,
-    you have submitted your email at the My Account page at the Library of Open Educational Resources. To receive notifications please verify your email by clicking here:
-    ${url}
-    Best regards,
-    AOE Team
+Hi,
+you have submitted your email at the My Account page at the Library of Open Educational Resources. To receive notifications please verify your email by clicking here:
+${url}
+Best regards,
+AOE Team
 
-    Hej,
-    du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken:
-    ${url}
-    Med vänlig hälsning,
-    AOE-team`;
-    return verificationEmailText;
+Hej,
+du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken:
+${url}
+Med vänlig hälsning,
+AOE-team`;
+return verificationEmailText;
 }
 
 const expirationEmailText =
