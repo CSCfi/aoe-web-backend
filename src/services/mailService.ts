@@ -107,12 +107,12 @@ export async function sendVerificationEmail(user: string, email: string) {
 
     const url = process.env.BASE_URL + "verify?id=" + token_mail_verification;
     console.log(url);
-    console.log(verificationEmailText);
+    console.log(await verificationEmailText(url));
     const mailOptions = {
         from: process.env.EMAIL_FROM,
         to: email,
         subject: "Sähköpostin vahvistus - Avointen oppimateriaalien kirjasto (aoe.fi)",
-        text: verificationEmailText
+        text: await verificationEmailText(url)
     };
     if (process.env.SEND_EMAIL) {
     const info = await transporter.sendMail(mailOptions);
@@ -141,36 +141,43 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
     }
 }
 
-const verificationEmailText =
-"Hei,\n" +
-"olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle. Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä: \n" +
-"${url}\n" +
-"Ystävällisin terveisin,\n" +
-"AOE-tiimi\n\n" +
-"Hi,\n" +
-"you have submitted your email at the My Account page at the Library of Open Educational Resources. To receive notifications please verify your email by clicking here:\n" +
-"${url}\n" +
-"Best regards,\n" +
-"AOE Team\n\n" +
-"Hej,\n" +
-"du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken: \n" +
-"${url}\n" +
-"Med vänlig hälsning,\n" +
-"AOE-team\n";
+async function verificationEmailText(url) {
+    const verificationEmailText =
+    `Hei,
+    olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle. Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä:
+    ${url}
+    Ystävällisin terveisin,
+    AOE-tiimi
+
+    Hi,
+    you have submitted your email at the My Account page at the Library of Open Educational Resources. To receive notifications please verify your email by clicking here:
+    ${url}
+    Best regards,
+    AOE Team
+
+    Hej,
+    du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken:
+    ${url}
+    Med vänlig hälsning,
+    AOE-team`;
+    return verificationEmailText;
+}
 
 const expirationEmailText =
-"Hei,\n" +
-"Oppimateriaalille asettamasi vanhenee-päivämäärä lähestyy. Voit halutessasi muokata vanhenee-päivämäärää ja tarvittaessa päivittää materiaalisi Omat oppimateriaalit –näkymässä.\n" +
-"Ystävällisin terveisin,\n" +
-"AOE-tiimi\n" +
-"Tämä on automaattinen viesti. Mikäli et halua enää saada näitä viestejä, voit muuttaa viestiasetuksia Avointen oppimateriaalien kirjaston Omat tiedot –näkymässä.\n\n" +
-"Hi,\n" +
-"The expires date you have given to your educational resource is near. You can change the date and update your resource from My open educational resources view.\n" +
-"Best Regards,\n" +
-"AOE Team\n" +
-"This is an automated message. If you do not wish to receive these messages anymore you can change your settings in the My Account view at the Library of Open Educational Resources.\n\n" +
-"Hej,\n" +
-"Det föråldras-datum som du har gett till din lärresurs är nära. Du kan redigera det föråldras-datum och uppdatera din lärresurs från Mina lärresurser-sidan.\n" +
-"Med vänliga hälsningar,\n" +
-"AOE-team\n" +
-"Detta är ett automatiskt meddelande. Om du vill inte få dessa meddelandena, kan du förändra dina inställningar I vyn Mitt konto på Biblioteket för öppna lärresurser.";
+`Hei,
+Oppimateriaalille asettamasi vanhenee-päivämäärä lähestyy. Voit halutessasi muokata vanhenee-päivämäärää ja tarvittaessa päivittää materiaalisi Omat oppimateriaalit –näkymässä.
+Ystävällisin terveisin,
+AOE-tiimi
+Tämä on automaattinen viesti. Mikäli et halua enää saada näitä viestejä, voit muuttaa viestiasetuksia Avointen oppimateriaalien kirjaston Omat tiedot –näkymässä.
+
+Hi,
+The expires date you have given to your educational resource is near. You can change the date and update your resource from My open educational resources view.
+Best Regards,
+AOE Team
+This is an automated message. If you do not wish to receive these messages anymore you can change your settings in the My Account view at the Library of Open Educational Resources.
+
+Hej,
+Det föråldras-datum som du har gett till din lärresurs är nära. Du kan redigera det föråldras-datum och uppdatera din lärresurs från Mina lärresurser-sidan.
+Med vänliga hälsningar,
+AOE-team
+Detta är ett automatiskt meddelande. Om du vill inte få dessa meddelandena, kan du förändra dina inställningar I vyn Mitt konto på Biblioteket för öppna lärresurser.`;
