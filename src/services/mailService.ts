@@ -143,23 +143,20 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
 
 async function verificationEmailText(url) {
 const verificationEmailText =
-`<p>Hei,
-olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle.
-<a href=${url}>Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä</a>
-Ystävällisin terveisin,
-AOE-tiimi
-
-Hi,
-you have submitted your email at the My Account page at the Library of Open Educational Resources. To receive notifications please verify your email by clicking here:
+`<p>Hei, Hi, Hei,</p>
+<p>olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle.</p>
+<p><a href=${url}>Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä</a></p>
+<p></p>
+<p>you have submitted your email at the My Account page at the Library of Open Educational Resources.</p>
+<p><a href=${url}>To receive notifications please verify your email by clicking here</a></p>
+<p></p>
+<p>du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser.</p>
+<p><a href=${url}>Bekräfta din e-postadress för att få meddelanden genom att klicka på länken</a></p>
+<p></p>
 ${url}
-Best regards,
-AOE Team
-
-Hej,
-du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken:
-${url}
-Med vänlig hälsning,
-AOE-team<p>`;
+<p></p>
+<p>Ystävällisin terveisin, Best regards, Med vänlig hälsning,</p>
+<p>AOE-tiimi, AOE Team, AOE-team</p>`;
 return verificationEmailText;
 }
 
