@@ -49,7 +49,7 @@ export async function sendExpirationMail() {
 }
 
 export async function getExpiredMaterials() {
-    const query = "select distinct email from educationalmaterial join users on educationalmaterial.usersusername = username where expires < NOW() + INTERVAL '3 days' and expires >= NOW() + INTERVAL '1 days';";
+    const query = "select distinct email from educationalmaterial join users on educationalmaterial.usersusername = username where expires < NOW() + INTERVAL '2 days' and expires >= NOW() + INTERVAL '1 days';";
     const data = await db.any(query);
     return data;
 }
@@ -112,7 +112,7 @@ export async function sendVerificationEmail(user: string, email: string) {
         from: process.env.EMAIL_FROM,
         to: email,
         subject: "Sähköpostin vahvistus - Avointen oppimateriaalien kirjasto (aoe.fi)",
-        text: await verificationEmailText(url)
+        html: await verificationEmailText(url)
     };
     if (process.env.SEND_EMAIL) {
     const info = await transporter.sendMail(mailOptions);
@@ -143,9 +143,9 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
 
 async function verificationEmailText(url) {
 const verificationEmailText =
-`Hei,
-olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle. Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä:
-${url}
+`<p>Hei,
+olet syöttänyt sähköpostisi Avointen oppimateriaalien kirjaston Omat tiedot -sivulle.
+<a href=${url}>Vahvista sähköpostiosoitteesi ilmoitusten vastaanottamiseksi klikkaamalla linkkiä</a>
 Ystävällisin terveisin,
 AOE-tiimi
 
@@ -159,7 +159,7 @@ Hej,
 du har angett din e-postadress på sidan Mitt konto i Biblioteket för öppna lärresurser. Bekräfta din e-postadress för att få meddelanden genom att klicka på länken:
 ${url}
 Med vänlig hälsning,
-AOE-team`;
+AOE-team<p>`;
 return verificationEmailText;
 }
 
