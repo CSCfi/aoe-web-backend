@@ -2,7 +2,7 @@ const fh = require("./queries/fileHandling");
 import { scheduleJob } from "node-schedule";
 import { rmDir } from "./helpers/fileRemover";
 import { updateEsDocument } from "./elasticSearch/es";
-import { sendExpirationMail } from "./services/mailService";
+import { sendExpirationMail, sendRatingNotificationMail } from "./services/mailService";
 
 // schedule job to start 4.00 server time
 scheduleJob("0 0 4 * * *", function() {
@@ -15,6 +15,8 @@ scheduleJob("0 0 4 * * *", function() {
     console.log("update ES");
     updateEsDocument(true);
     try {
+        console.log("sendRatingNotificationMail");
+        sendRatingNotificationMail();
         console.log("sendExpirationMail");
         sendExpirationMail();
     }

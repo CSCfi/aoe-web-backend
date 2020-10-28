@@ -48,8 +48,41 @@ export async function sendExpirationMail() {
     }
 }
 
+export async function sendRatingNotificationMail() {
+    const mailOptions = {
+        from: process.env.EMAIL_FROM,
+        to: undefined,
+        subject: "Uusi arvostelu - Avointen oppimateriaalien kirjasto (aoe.fi)",
+        text: ratingNotificationText
+      };
+    try {
+        const emails = await getNewRatings();
+        const emailArray = emails.filter(m => m.email != undefined).map(m => m.email);
+        if (!(process.env.SEND_EMAIL === "1")) {
+            console.log("Email sending disabled");
+        }
+        else {
+            for (const element of emailArray) {
+                console.log("sending rating mail to: " + element);
+                mailOptions.to = element;
+                const info = await transporter.sendMail(mailOptions);
+                console.log("Message sent: %s", info.messageId);
+                console.log("Message sent: %s", info.response);
+            }
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
 export async function getExpiredMaterials() {
     const query = "select distinct email from educationalmaterial join users on educationalmaterial.usersusername = username where expires < NOW() + INTERVAL '2 days' and expires >= NOW() + INTERVAL '1 days';";
+    const data = await db.any(query);
+    return data;
+}
+
+export async function getNewRatings() {
+    const query = "select distinct email from rating join educationalmaterial as em on em.id = rating.educationalmaterialid join users on em.usersusername = users.username where rating.updatedat > (now() -  INTERVAL '1 days');";
     const data = await db.any(query);
     return data;
 }
@@ -64,26 +97,6 @@ export async function updateVerifiedEmail(user: string) {
     }
   }
 
-// export async function addEmail(req: Request, res: Response, next: NextFunction) {
-//     try {
-//         if (!req.isAuthenticated()) {
-//             return res.sendStatus(403);
-//         }
-//         else if (!req.body.email) {
-//             next(new ErrorHandler(400, "email missing"));
-//         }
-//         else {
-//             await updateEmail(req.session.passport.user.uid, req.body.email);
-//             await sendVerificationEmail(req.session.passport.user.uid, req.body.email);
-//             res.sendStatus(200);
-//         }
-//     }
-//     catch (error) {
-//         console.log(error);
-//     }
-// }
-
-// const jwt = require("jsonwebtoken");
 import { sign, verify } from "jsonwebtoken";
 
 export async function sendVerificationEmail(user: string, email: string) {
@@ -168,3 +181,22 @@ Det föråldras-datum som du har gett till din lärresurs är nära. Du kan redi
 Med vänliga hälsningar,
 AOE-team
 Detta är ett automatiskt meddelande. Om du vill inte få dessa meddelandena, kan du förändra dina inställningar I vyn Mitt konto på Biblioteket för öppna lärresurser.`;
+
+const ratingNotificationText =
+`Hei,
+Oppimateriaalisi on saanut uuden arvion. Voit lukea sen valitsemalla oppimateriaalin Omat oppimateriaalit -näkymästä.
+Ystävällisin terveisin,
+AOE-tiimi
+Tämä on automaattinen viesti. Mikäli et halua enää saada näitä viestejä, voit muuttaa viestiasetuksia Avointen oppimateriaalien kirjaston Omat tiedot –näkymässä.
+
+Hi,
+Your educational resource has received a new review. You can view it by choosing the resource in My open educational resources.
+Best Regards,
+AOE Team
+This is an automated message. If you do not wish to receive these messages anymore you can change your settings in the My Account view at the Library of Open Educational Resources.
+
+Hej,
+Din lärresurs har fått en ny recension. Du kan läsa den från Mina lärresurser -sidan.
+Med vänliga hälsningar,
+AOE-team
+Detta är ett automatiskt meddelande. Om du vill inte få dessa meddelandena, kan di förändra dina inställningar i vyn Mitt konto på Biblioteket för öppna lärresurser.`;
