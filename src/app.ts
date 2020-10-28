@@ -127,7 +127,7 @@ Issuer.discover(process.env.PROXY_URI)
                 ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                 .then(() => {
                     const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                    return done(undefined, {uid: userinfo.sub, name: nameparsed, email: userinfo.email});
+                    return done(undefined, {uid: userinfo.sub, name: nameparsed});
                 })
                 .catch((err: Error) => {
                         console.log(err);
@@ -140,7 +140,7 @@ Issuer.discover(process.env.PROXY_URI)
             ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                 .then(() => {
                     const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                    return done(undefined, {uid: userinfo.eppn, name: nameparsed, email: userinfo.email});
+                    return done(undefined, {uid: userinfo.eppn, name: nameparsed});
                 })
                 .catch((err: Error) => {
                         console.log(err);
@@ -152,7 +152,7 @@ Issuer.discover(process.env.PROXY_URI)
                 ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                     .then(() => {
                         const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                        return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed, email: userinfo.email});
+                        return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
                     })
                     .catch((err: Error) => {
                             console.log(err);

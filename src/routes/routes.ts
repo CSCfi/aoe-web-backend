@@ -1,7 +1,8 @@
 import { Router, Request, Response } from "express";
 import { getH5PContent } from "./../h5p/h5p";
 import { convertOfficeToPdf } from "./../helpers/officeToPdfConverter";
-import { sendExpirationMail, verifyEmailToken, addEmail } from "./../services/mailService";
+import { sendExpirationMail, verifyEmailToken } from "./../services/mailService";
+import { updateUserSettings } from "./../users/userSettings";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -88,6 +89,7 @@ router.get("/pdf/content/:key", convertOfficeToPdf);
 
 // router.get("/sendMail", sendExpirationMail);
 router.get("/verify", verifyEmailToken);
-router.put("/updateEmail", ah.checkAuthenticated, addEmail);
+// router.put("/updateEmail", ah.checkAuthenticated, addEmail);
+router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
 
 export = router;

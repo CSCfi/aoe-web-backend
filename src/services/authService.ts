@@ -12,10 +12,16 @@ export function checkAuthenticated (req: Request, res: Response, next: NextFunct
 }
 
 export async function getUserData(req: Request, res: Response) {
-    const query = "SELECT termsofusage FROM users WHERE username = $1;";
-    const termsofusage = await db.oneOrNone(query, [req.session.passport.user.uid]);
+    const query = "SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;";
+    const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
     res.status(200).json({"userdata" : req.session.passport.user,
-                            "termsofusage" : termsofusage.termsofusage});
+                            "email" : data.email,
+                            "termsofusage" : data.termsofusage,
+                            "verifiedEmail" : data.verifiedemail,
+                            "newRatings" : data.newratings,
+                            "almostExpired": data.almostexpired,
+                            "termsUpdated": data.termsupdated,
+                            "allowTransfer": data.allowtransfer});
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 

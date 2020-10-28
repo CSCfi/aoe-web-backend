@@ -29,7 +29,7 @@ export async function sendExpirationMail() {
         const emailArray = materials.filter(m => m.email != undefined).map(m => m.email);
         mailOptions.to = emailArray;
         console.log(emailArray);
-        if (!process.env.SEND_EMAIL) {
+        if (!(process.env.SEND_EMAIL === "1")) {
             console.log("Email sending disabled");
         }
         else {
@@ -54,16 +54,6 @@ export async function getExpiredMaterials() {
     return data;
 }
 
-export async function updateEmail(user: string, email: string) {
-    try {
-        const query = "update users set email = $1, verifiedemail = false where username = $2;";
-        await db.none(query, [email, user]);
-    }
-    catch (error) {
-        throw new Error(error);
-    }
-}
-
 export async function updateVerifiedEmail(user: string) {
     try {
         const query = "update users set verifiedemail = true where username = $1;";
@@ -72,26 +62,26 @@ export async function updateVerifiedEmail(user: string) {
     catch (error) {
         throw new Error(error);
     }
-}
+  }
 
-export async function addEmail(req: Request, res: Response, next: NextFunction) {
-    try {
-        if (!req.isAuthenticated()) {
-            return res.sendStatus(403);
-        }
-        else if (!req.body.email) {
-            next(new ErrorHandler(400, "email missing"));
-        }
-        else {
-            await updateEmail(req.session.passport.user.uid, req.body.email);
-            await sendVerificationEmail(req.session.passport.user.uid, req.body.email);
-            res.sendStatus(200);
-        }
-    }
-    catch (error) {
-        console.log(error);
-    }
-}
+// export async function addEmail(req: Request, res: Response, next: NextFunction) {
+//     try {
+//         if (!req.isAuthenticated()) {
+//             return res.sendStatus(403);
+//         }
+//         else if (!req.body.email) {
+//             next(new ErrorHandler(400, "email missing"));
+//         }
+//         else {
+//             await updateEmail(req.session.passport.user.uid, req.body.email);
+//             await sendVerificationEmail(req.session.passport.user.uid, req.body.email);
+//             res.sendStatus(200);
+//         }
+//     }
+//     catch (error) {
+//         console.log(error);
+//     }
+// }
 
 // const jwt = require("jsonwebtoken");
 import { sign, verify } from "jsonwebtoken";
@@ -114,7 +104,7 @@ export async function sendVerificationEmail(user: string, email: string) {
         subject: "Sähköpostin vahvistus - Avointen oppimateriaalien kirjasto (aoe.fi)",
         html: await verificationEmailText(url)
     };
-    if (process.env.SEND_EMAIL) {
+    if (process.env.SEND_EMAIL === "1") {
     const info = await transporter.sendMail(mailOptions);
     console.log("Message sent: %s", info.messageId);
     console.log("Message sent: %s", info.response);

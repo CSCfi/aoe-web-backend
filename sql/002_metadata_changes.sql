@@ -251,3 +251,7 @@ ALTER TABLE educationalmaterial ADD COLUMN counterupdatedat timestamp with time 
 
 ALTER TABLE users ADD COLUMN email text;
 ALTER TABLE users ADD COLUMN verifiedemail bool DEFAULT false;
+ALTER TABLE users ADD COLUMN newratings bool DEFAULT false;
+ALTER TABLE users ADD COLUMN almostexpired bool DEFAULT false;
+ALTER TABLE users ADD COLUMN termsupdated bool DEFAULT false;
+ALTER TABLE users ADD COLUMN allowtransfer bool DEFAULT false;
