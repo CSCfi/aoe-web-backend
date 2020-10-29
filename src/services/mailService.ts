@@ -134,7 +134,7 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
             const id = decoded.id;
             console.log(id);
             updateVerifiedEmail(id);
-            return res.redirect("/");
+            return res.redirect(process.env.VERIFY_EMAIL_REDIRECT_URL || "/");
         } catch (err) {
             console.log(err);
             return res.sendStatus(403);
