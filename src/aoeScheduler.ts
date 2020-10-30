@@ -14,6 +14,8 @@ scheduleJob("0 0 4 * * *", function() {
     rmDir(process.env.H5PFOLDER + "/temporary-storage", false);
     console.log("update ES");
     updateEsDocument(true);
+});
+scheduleJob("0 0 10 * * *", function() {
     try {
         console.log("sendRatingNotificationMail");
         sendRatingNotificationMail();
