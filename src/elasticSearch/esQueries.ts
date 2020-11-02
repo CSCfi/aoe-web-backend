@@ -145,6 +145,16 @@ async function elasticSearchQuery(req: Request, res: Response, next: NextFunctio
           "popularity": "asc"
         });
       }
+      else if (req.body.sort.updatedAt === "asc") {
+        sort.push({
+          "updatedat": {"order" : "asc"}
+        });
+      }
+      else if (req.body.sort.updatedAt === "desc") {
+        sort.push({
+          "updatedat": {"order" : "desc"}
+        });
+      }
       else {
         sort.push({
             "popularity": "desc"
