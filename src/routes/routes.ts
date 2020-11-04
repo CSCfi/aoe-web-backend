@@ -94,18 +94,19 @@ router.get("/verify", verifyEmailToken);
 router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
 
 function setRouteTimeout(req, res, next) {
-    req.setTimeout(1000 * 60 * 60, function() {
+    req.setTimeout(0, function() {
         // call back function is called when request timed out.
         console.log("req timeout");
         next();
         // next(new ErrorHandler(400, "Issue getting material data"));
     });
-    res.setTimeout(1000 * 60 * 60, function() {
-        // call back function is called when request timed out.
-        console.log("res timeout");
-        next();
-        // next(new ErrorHandler(400, "Issue getting material data"));
-    });
+    // res.setTimeout(1, function() {
+    //     // call back function is called when request timed out.
+    //     console.log("res timeout");
+    //     next();
+    //     // next(new ErrorHandler(400, "Issue getting material data"));
+    // });
+    // console.log(req);
     next();
 }
 
