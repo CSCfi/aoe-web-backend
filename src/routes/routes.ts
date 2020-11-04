@@ -3,6 +3,7 @@ import { getH5PContent } from "./../h5p/h5p";
 import { convertOfficeToPdf } from "./../helpers/officeToPdfConverter";
 import { sendExpirationMail, verifyEmailToken } from "./../services/mailService";
 import { updateUserSettings } from "./../users/userSettings";
+import { encodeXText } from "nodemailer/lib/shared";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -22,8 +23,8 @@ const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
 const esCollection = require("./../elasticSearch/es");
 
-router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
-router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post("/material/file", setRouteTimeout, ah.checkAuthenticated, fh.uploadMaterial);
+router.post("/material/file/:materialId", setRouteTimeout, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
@@ -91,5 +92,21 @@ router.get("/pdf/content/:key", convertOfficeToPdf);
 router.get("/verify", verifyEmailToken);
 // router.put("/updateEmail", ah.checkAuthenticated, addEmail);
 router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
+
+function setRouteTimeout(req, res, next) {
+    req.setTimeout(1000 * 60 * 60, function() {
+        // call back function is called when request timed out.
+        console.log("req timeout");
+        next();
+        // next(new ErrorHandler(400, "Issue getting material data"));
+    });
+    res.setTimeout(1000 * 60 * 60, function() {
+        // call back function is called when request timed out.
+        console.log("res timeout");
+        next();
+        // next(new ErrorHandler(400, "Issue getting material data"));
+    });
+    next();
+}
 
 export = router;

@@ -230,6 +230,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
+            console.log("uploadFileToMaterial starting");
             upload.single("file")(req , res, async function(err: any) {
                 try {
                     if (err) {
@@ -248,6 +249,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                         next(new ErrorHandler(400, "No file sent"));
                     }
                     else {
+                        console.log("uploadFileToMaterial details to database for: " + file.originalname);
                         let materialid: String;
                         const fileDetails = JSON.parse(req.body.fileDetails);
                         const material: any = [];
@@ -265,6 +267,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                         })
                         .then( async (data: any) => {
                             // return 200 if success and continue sending files to pouta
+                            console.log("uploadFileToMaterial sending to Pouta: " + file.filename);
                             resp.id = req.params.materialId;
                             resp.material = material;
                             res.status(200).json(resp);
