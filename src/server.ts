@@ -21,6 +21,7 @@ const server = app.listen(process.env.PORT || 3000, () => {
 });
 
 server.on("connection", function (socket) {
+  socket.setTimeout(600 * 60 * 1000);
   console.log("SOCKET OPENED" + JSON.stringify(socket.address()));
 socket.on("end", function () {
   console.log("SOCKET END: other end of the socket sends a FIN packet");

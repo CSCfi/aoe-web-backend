@@ -23,8 +23,8 @@ const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
 const esCollection = require("./../elasticSearch/es");
 
-router.post("/material/file", setRouteTimeout, ah.checkAuthenticated, fh.uploadMaterial);
-router.post("/material/file/:materialId", setRouteTimeout, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
+router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
@@ -94,18 +94,19 @@ router.get("/verify", verifyEmailToken);
 router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
 
 function setRouteTimeout(req, res, next) {
-    req.setTimeout(0, function() {
+    req.socket.setTimeout(1000);
+    req.setTimeout(1000, function() {
         // call back function is called when request timed out.
         console.log("req timeout");
         next();
         // next(new ErrorHandler(400, "Issue getting material data"));
     });
-    // res.setTimeout(1, function() {
-    //     // call back function is called when request timed out.
-    //     console.log("res timeout");
-    //     next();
-    //     // next(new ErrorHandler(400, "Issue getting material data"));
-    // });
+    res.setTimeout(1000, function() {
+        // call back function is called when request timed out.
+        console.log("res timeout");
+        next();
+        // next(new ErrorHandler(400, "Issue getting material data"));
+    });
     // console.log(req);
     next();
 }
