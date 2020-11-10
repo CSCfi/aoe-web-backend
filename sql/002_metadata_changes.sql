@@ -255,3 +255,47 @@ ALTER TABLE users ADD COLUMN newratings bool DEFAULT false;
 ALTER TABLE users ADD COLUMN almostexpired bool DEFAULT false;
 ALTER TABLE users ADD COLUMN termsupdated bool DEFAULT false;
 ALTER TABLE users ADD COLUMN allowtransfer bool DEFAULT false;
+
+-- 7.0.0
+
+CREATE TABLE AccessibilityFeatureExtension (
+  Id                      BIGSERIAL NOT NULL, 
+  Value                   text NOT NULL, 
+  AccessibilityFeatureKey text NOT NULL, 
+  EducationalMaterialId   int8 NOT NULL, 
+  UsersUserName           text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE AccessibilityHazardExtension (
+  Id                     BIGSERIAL NOT NULL, 
+  Value                  text NOT NULL, 
+  AccessibilityHazardKey text NOT NULL, 
+  EducationalMaterialId  int8 NOT NULL, 
+  UsersUserName          text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE EducationalLevelExtension (
+  Id                    BIGSERIAL NOT NULL, 
+  Value                 text NOT NULL, 
+  EducationalLevelKey   text NOT NULL, 
+  EducationalMaterialId int8 NOT NULL, 
+  UsersUserName         text NOT NULL, 
+  PRIMARY KEY (Id));
+CREATE TABLE KeyWordExtension (
+  Id                    BIGSERIAL NOT NULL, 
+  Value                 text NOT NULL, 
+  EducationalMaterialId int8 NOT NULL, 
+  KeywordKey            text NOT NULL, 
+  UsersUserName         text NOT NULL, 
+  PRIMARY KEY (Id));
+ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT fkAccessibilityFeatureExtension FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT fkAccessibilityHazardExtension FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+ALTER TABLE EducationalLevelExtension ADD CONSTRAINT fkEducationalLevelExtension FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+ALTER TABLE KeyWordExtension ADD CONSTRAINT fkKeyWordExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
+ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT fkUserAccessibilityFeatureExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
+ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT fkUsersAccessibiltyHazardExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
+ALTER TABLE EducationalLevelExtension ADD CONSTRAINT fkUsersEducationalLevelExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
+ALTER TABLE KeyWordExtension ADD CONSTRAINT fkUsersKeyWordExtension FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+
+ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT constraint_AccessibilityFeatureExtension UNIQUE (accessibilityfeaturekey,educationalmaterialid);
+ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT constraint_AccessibilityHazardExtension UNIQUE (accessibilityhazardkey,educationalmaterialid);
+ALTER TABLE EducationalLevelExtension ADD CONSTRAINT constraint_EducationalLevelExtension UNIQUE (educationallevelkey,educationalmaterialid);
+ALTER TABLE KeyWordExtension ADD CONSTRAINT constraint_KeyWordExtension UNIQUE (keywordkey,educationalmaterialid);

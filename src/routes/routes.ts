@@ -4,6 +4,8 @@ import { convertOfficeToPdf } from "./../helpers/officeToPdfConverter";
 import { sendExpirationMail, verifyEmailToken } from "./../services/mailService";
 import { updateUserSettings } from "./../users/userSettings";
 import { encodeXText } from "nodemailer/lib/shared";
+import { metadataExtensionValidationRules, rulesValidate } from "./../validators/validator";
+import { addMetadataExtension, getMetadataExtension } from "./../metadataExtension/metadataExtension";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -110,5 +112,7 @@ function setRouteTimeout(req, res, next) {
     // console.log(req);
     next();
 }
+router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
+router.get("/metadata/:id", getMetadataExtension);
 
 export = router;
