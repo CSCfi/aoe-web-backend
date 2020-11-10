@@ -294,3 +294,8 @@ ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT fkUserAccessibilityFeat
 ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT fkUsersAccessibiltyHazardExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
 ALTER TABLE EducationalLevelExtension ADD CONSTRAINT fkUsersEducationalLevelExtension FOREIGN KEY (UsersUserName) REFERENCES Users (UserName);
 ALTER TABLE KeyWordExtension ADD CONSTRAINT fkUsersKeyWordExtension FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);
+
+ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT constraint_AccessibilityFeatureExtension UNIQUE (accessibilityfeaturekey,educationalmaterialid);
+ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT constraint_AccessibilityHazardExtension UNIQUE (accessibilityhazardkey,educationalmaterialid);
+ALTER TABLE EducationalLevelExtension ADD CONSTRAINT constraint_EducationalLevelExtension UNIQUE (educationallevelkey,educationalmaterialid);
+ALTER TABLE KeyWordExtension ADD CONSTRAINT constraint_KeyWordExtension UNIQUE (keywordkey,educationalmaterialid);

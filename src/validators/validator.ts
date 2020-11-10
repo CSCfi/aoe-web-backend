@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 
 import { body, validationResult } from "express-validator";
 
-function ratingValidationRules() {
+export function ratingValidationRules() {
     return [
         // materialId mandatory
         body("materialId").exists(),
@@ -15,13 +15,13 @@ function ratingValidationRules() {
       ];
 }
 
-function createCollectionValidationRules() {
+export function createCollectionValidationRules() {
     return [
         body("name", "String name must exist max length 255 characters").exists().bail().isString().isLength({ max: 255 }),
     ];
 }
 
-function addCollectionValidationRules() {
+export function addCollectionValidationRules() {
     return [
         body("collectionId", "Integer collectionId must exist").exists().bail().isInt(),
         body("emId", "emId expected").exists(),
@@ -31,7 +31,7 @@ function addCollectionValidationRules() {
     ];
 }
 
-function removeCollectionValidationRules() {
+export function removeCollectionValidationRules() {
     return [
         body("collectionId", "Integer collectionId must exist").exists().bail().isInt(),
         body("emId", "emId expected").exists(),
@@ -39,8 +39,31 @@ function removeCollectionValidationRules() {
         body("emId.*").isInt(),
     ];
 }
+export function metadataExtensionValidationRules() {
+    return [
+        body("keywords.*.key", "string key expected ").if(body("keywords").exists())
+        .isString(),
+        body("keywords.*.value", "string value expected ").if(body("keywords").exists())
+        .isString(),
 
-function updateCollectionValidationRules() {
+        body("accessibilityFeatures.*.key", "string key expected ").if(body("accessibilityFeatures").exists())
+        .isString(),
+        body("accessibilityFeatures.*.value", "string value expected ").if(body("accessibilityFeatures").exists())
+        .isString(),
+
+        body("educationalLevels.*.key", "string key expected ").if(body("educationalLevels").exists())
+        .isString(),
+        body("educationalLevels.*.value", "string value expected ").if(body("educationalLevels").exists())
+        .isString(),
+
+        body("accessibilityHazards.*.key", "string key expected ").if(body("accessibilityHazards").exists())
+        .isString(),
+        body("accessibilityHazards.*.value", "string value expected ").if(body("accessibilityHazards").exists())
+        .isString()
+    ];
+    }
+
+export function updateCollectionValidationRules() {
     return [
         body("collectionId", "Integer collectionId must exist").exists().bail().isInt(),
         body("name", "String name must exist max length 255 characters").exists().bail().isString().isLength({ max: 255 }),
@@ -91,7 +114,7 @@ function updateCollectionValidationRules() {
     ];
 }
 
-async function rulesValidate(req: Request, res: Response, next: NextFunction) {
+export async function rulesValidate(req: Request, res: Response, next: NextFunction) {
     const errors = validationResult(req);
     if (errors.isEmpty()) {
         return next();
@@ -104,11 +127,11 @@ async function rulesValidate(req: Request, res: Response, next: NextFunction) {
     });
 }
 
-module.exports = {
-    ratingValidationRules,
-    rulesValidate,
-    createCollectionValidationRules,
-    addCollectionValidationRules,
-    removeCollectionValidationRules,
-    updateCollectionValidationRules
-};
+// module.exports = {
+//     ratingValidationRules,
+//     rulesValidate,
+//     createCollectionValidationRules,
+//     addCollectionValidationRules,
+//     removeCollectionValidationRules,
+//     updateCollectionValidationRules
+// };

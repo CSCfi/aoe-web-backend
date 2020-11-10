@@ -3,6 +3,8 @@ import { getH5PContent } from "./../h5p/h5p";
 import { convertOfficeToPdf } from "./../helpers/officeToPdfConverter";
 import { sendExpirationMail, verifyEmailToken } from "./../services/mailService";
 import { updateUserSettings } from "./../users/userSettings";
+import { metadataExtensionValidationRules, rulesValidate } from "./../validators/validator";
+import { addMetadataExtension, getMetadataExtension } from "./../metadataExtension/metadataExtension";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -91,5 +93,8 @@ router.get("/pdf/content/:key", convertOfficeToPdf);
 router.get("/verify", verifyEmailToken);
 // router.put("/updateEmail", ah.checkAuthenticated, addEmail);
 router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
+
+router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
+router.get("/metadata/:id", getMetadataExtension);
 
 export = router;
