@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { insertMetadataExtension, metadataExtension } from "./../queries/metadataExtensionQueries";
+import { insertMetadataExtension, metadataExtension, usersMetadataExtension } from "./../queries/metadataExtensionQueries";
 export class MetadataExtension {
     "keywords": Array<{"key": string; "value": string}>;
     "accessibilityFeatures": Array<{"value": string; "key": string}>;
@@ -36,6 +36,20 @@ export async function getMetadataExtension(req: Request , res: Response, next: N
           return res.status(404);
       }
       const data = await metadataExtension(req.params.id);
+      res.status(200).json(data);
+    }
+    catch (error) {
+      console.error(error);
+      next(new ErrorHandler(500, "Issue getting metadata extension"));
+    }
+}
+
+export async function getUsersMetadataExtension(req: Request , res: Response, next: NextFunction) {
+    try {
+      if (!req.params.id) {
+          return res.status(404);
+      }
+      const data = await usersMetadataExtension(req.params.id, req.session.passport.user.uid);
       res.status(200).json(data);
     }
     catch (error) {

@@ -81,3 +81,23 @@ export async function metadataExtension(id: string) {
         throw new Error(error);
     }
 }
+
+export async function usersMetadataExtension(id: string, user: string) {
+    try {
+        const data = await db.task(async (t: any) => {
+            let query = "SELECT value, keywordkey as key FROM keywordextension WHERE educationalmaterialid = $1 and usersusername = $2;";
+            const keywords = await db.any(query, [ id, user ]);
+            query = "SELECT value, accessibilityhazardkey as key FROM accessibilityhazardextension WHERE educationalmaterialid = $1 and usersusername = $2;";
+            const accessibilityHazards = await db.any(query, [ id, user ]);
+            query = "SELECT value, accessibilityfeaturekey as key FROM accessibilityfeatureextension WHERE educationalmaterialid = $1 and usersusername = $2;";
+            const accessibilityFeatures = await db.any(query, [ id, user ]);
+            query = "SELECT value, educationallevelkey as key FROM educationallevelextension WHERE educationalmaterialid = $1 and usersusername = $2;";
+            const educationalLevels = await db.any(query, [ id, user ]);
+            return {keywords, accessibilityHazards, accessibilityFeatures, educationalLevels};
+        });
+        return data;
+    }
+    catch (error) {
+        throw new Error(error);
+    }
+}

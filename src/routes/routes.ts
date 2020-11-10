@@ -5,7 +5,7 @@ import { sendExpirationMail, verifyEmailToken } from "./../services/mailService"
 import { updateUserSettings } from "./../users/userSettings";
 import { encodeXText } from "nodemailer/lib/shared";
 import { metadataExtensionValidationRules, rulesValidate } from "./../validators/validator";
-import { addMetadataExtension, getMetadataExtension } from "./../metadataExtension/metadataExtension";
+import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -114,5 +114,5 @@ function setRouteTimeout(req, res, next) {
 }
 router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
 router.get("/metadata/:id", getMetadataExtension);
-
+router.get("/usersMetadata/:id", ah.checkAuthenticated, getUsersMetadataExtension);
 export = router;
