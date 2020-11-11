@@ -48,8 +48,9 @@ COPY ./src/elasticSearch/aoecollectionmapping.json /app
 COPY ./h5p/core /app/webdata/h5p/core
 
 # comment because typescript error in "@types/express-session": "^1.17.1"
-#RUN (cd /app && npm install --only=production) && \
-#    npm uninstall -g npm
+RUN (cd /app && npm install --only=production) && \
+    npm install @types/express-session@1.17.0 && \
+    npm uninstall -g npm
 
 COPY ./docker/supervisord.ini /etc/
 COPY ./docker/process.yml /app/
