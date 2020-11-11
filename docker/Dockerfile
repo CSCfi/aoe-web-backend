@@ -4,6 +4,8 @@ COPY package.json /app/
 RUN npm install
 COPY ./ /app
 ARG env=prod
+# fix build issue
+RUN npm install @types/express-session@1.17.0
 RUN npm run build -- --prod
 
 ########################################################################################################################
@@ -49,7 +51,7 @@ COPY ./h5p/core /app/webdata/h5p/core
 
 # comment because typescript error in "@types/express-session": "^1.17.1"
 RUN (cd /app && npm install --only=production) && \
-    npm install @types/express-session@1.17.0 && \
+    (cd /app && npm install @types/express-session@1.17.0 --only=production) && \
     npm uninstall -g npm
 
 COPY ./docker/supervisord.ini /etc/
