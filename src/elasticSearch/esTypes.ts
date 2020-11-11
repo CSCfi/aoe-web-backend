@@ -244,6 +244,10 @@ export interface AoeRequestFilter {
   languages: Array<string>;
   organizations: Array<string>;
   teaches: Array<string>;
+  educationalUses: Array<string>;
+  accessibilityFeatures: Array<string>;
+  accessibilityHazards: Array<string>;
+  licenses: Array<string>;
 }
 export interface AoeBody<T> {
     hits: number;
@@ -351,4 +355,16 @@ export interface AoeCollectionResult {
         thumbnail?: string;
         hasDownloadableFiles?: boolean;
         popularity?: number;
+        educationalUses?: Array<{
+          value: string;
+          educationalusekey: string;
+        }>;
+        accessibilityFeatures?: Array<{
+          value: string;
+          accessibilityfeaturekey: string;
+        }>;
+        accessibilityHazards?: Array<{
+          value: string;
+          accessibilityhazardkey: string;
+        }>;
       }

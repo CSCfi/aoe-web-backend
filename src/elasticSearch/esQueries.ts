@@ -47,6 +47,9 @@ async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> 
           rObj.hasDownloadableFiles = (obj.materials) ? hasDownloadableFiles(obj.materials) : false,
           rObj.thumbnail =  obj.thumbnail;
           rObj.popularity = obj.popularity;
+          rObj.educationalUses = (obj.educationaluse) ? obj.educationaluse.map(element => ({value : element.value, educationalusekey : element.educationalusekey})) : undefined;
+          rObj.accessibilityFeatures = (obj.accessibilityfeature) ? obj.accessibilityfeature.map(element => ({value : element.value, accessibilityfeaturekey : element.accessibilityfeaturekey})) : undefined;
+          rObj.accessibilityHazards = (obj.accessibilityhazard) ? obj.accessibilityhazard.map(element => ({value : element.value, accessibilityhazardkey : element.accessibilityhazardkey})) : undefined;
           return rObj;
           }
         );
@@ -212,7 +215,18 @@ function filterMapper(filters: AoeRequestFilter) {
       if (filters.teaches) {
         createShouldObject(filter, "alignmentobject.objectkey.keyword", filters.teaches, "teaches");
       }
-
+      if (filters.educationalUses) {
+        createShouldObject(filter, "educationaluse.educationalusekey.keyword", filters.educationalUses);
+      }
+      if (filters.accessibilityFeatures) {
+        createShouldObject(filter, "accessibilityfeature.accessibilityfeaturekey.keyword", filters.accessibilityFeatures);
+      }
+      if (filters.accessibilityHazards) {
+        createShouldObject(filter, "accessibilityhazard.accessibilityhazardkey.keyword", filters.accessibilityHazards);
+      }
+      if (filters.licenses) {
+        createShouldObject(filter, "license.key.keyword", filters.licenses);
+      }
       return filter;
     }
     catch (err) {
