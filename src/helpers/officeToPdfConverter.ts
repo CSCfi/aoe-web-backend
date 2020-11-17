@@ -1,7 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
-import { readStreamFromStorage } from "./../queries/fileHandling";
+import { readStreamFromStorage, uploadFileToStorage } from "./../queries/fileHandling";
 const contentDisposition = require("content-disposition");
+const connection = require("./../db");
+const pgp = connection.pgp;
+const db = connection.db;
 
 const libre = require("libreoffice-convert");
 const path = require("path");
@@ -115,10 +118,10 @@ export async function convertOfficeToPdf(req: Request, res: Response, next: Next
         stream.pipe(fs.createWriteStream(folderpath));
         stream.on("end", async function() {
             try {
-            console.log("officeToPdf");
+            console.log("starting officeToPdf");
             console.log(folderpath);
             console.log(filename);
-            const path = await officeToPdf(folderpath, filename, res);
+            const path = await officeToPdf(folderpath, filename);
             console.log("starting createReadStream: " + path);
             const readstream = fs.createReadStream(path);
             readstream.on("error", function(e) {
@@ -141,15 +144,17 @@ export async function convertOfficeToPdf(req: Request, res: Response, next: Next
         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
     }
 }
-export async function officeToPdf(filepath: string, filename: string, res: Response) {
+export async function officeToPdf(filepath: string, filename: string) {
     try {
         console.log("in officeToPdf");
         const extend = "pdf";
         const file = fs.readFileSync(filepath);
         console.log(filepath);
-        const outputPath = path.join(process.env.HTMLFOLDER + filename);
+        console.log(filename);
+        // const outputPath = path.join(process.env.HTMLFOLDER + filename);
+        const outputPath = process.env.HTMLFOLDER + "/" + filename;
         console.log("Strating officeToPdf");
-        const promise = new Promise((resolve, reject) => {
+        const promise = new Promise<string>((resolve, reject) => {
             libre.convert(file, extend, undefined, (err, done) => {
                 if (err) {
                     console.error("Error converting file:" + err);
@@ -168,3 +173,109 @@ export async function officeToPdf(filepath: string, filename: string, res: Respo
         throw new Error(error);
     }
 }
+
+export async function officeFilesToAllasAsPdf() {
+    try {
+        const files = await getOfficeFiles();
+        // for (const element of files) {
+        for (let index = 0; index < files.length; index++) {
+            const element = files[index];
+            if (await isOfficeMimeType(element.mimetype) && !element.pdfkey) {
+                console.log("Sending pdf to allas: " + element.id);
+                try {
+                    await updatePdfKey("test", "3");
+                    const path = await allasFileToPdf(element.filekey);
+                    console.log("pdf file in path: " + path);
+                    console.log("officeFilesToAllasAsPdf START SENDING PDF TO ALLAS");
+                    const pdfkey = element.filekey.substring(0, element.filekey.lastIndexOf(".")) + ".pdf";
+                    const obj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+                    await updatePdfKey(obj.Key, element.id);
+                }
+                catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
+
+export async function getOfficeFiles() {
+    try {
+        return await db.task(async (t: any) => {
+            const query = "select id, filepath, mimetype, filekey, filebucket from record order by id;";
+            console.log(query, [ ]);
+            return await t.any(query);
+        });
+
+    }
+    catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
+}
+
+export async function allasFileToPdf(key: string) {
+    try {
+            return new Promise<string>(async (resolve, reject) => {
+            console.log("readstreamfrompouta");
+            const params = {
+                "Bucket" : process.env.BUCKET_NAME,
+                "Key" : key
+            };
+            const folderpath = process.env.HTMLFOLDER + "/" + key;
+            const filename = key.substring(0, key.lastIndexOf(".")) + ".pdf";
+            console.log("filename: " + filename);
+            const stream = await readStreamFromStorage(params);
+            stream.on("error", function(e) {
+                console.log("Error in allasFileToPdf readstream");
+                reject(e);
+            });
+
+            const ws = fs.createWriteStream(folderpath);
+            stream.pipe(ws);
+            ws.on("error", function(e) {
+                console.log("Error in allasFileToPdf writestream");
+                reject(e);
+            });
+            ws.on("finish", async function() {
+                try {
+                    console.log("officeToPdf");
+                    console.log(folderpath);
+                    console.log(filename);
+                    const path = await officeToPdf(folderpath, filename);
+                    console.log("PATH IS: " + path);
+                    resolve(path);
+                }
+                catch (error) {
+                    console.log("allasFileToPdf error");
+                    console.log(error);
+                    reject(error);
+                }
+            });
+        });
+    }
+    catch (error) {
+        console.log("allasFileToPdf error");
+        console.log(error);
+        throw new Error(error);
+    }
+}
+
+export async function updatePdfKey(key: string, id: string) {
+    try {
+        return await db.tx(async (t: any) => {
+            const query = "UPDATE record SET pdfkey = $1 where id = $2;";
+            console.log(query, [key, id]);
+            return await t.any(query, [key, id]);
+        });
+
+    }
+    catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
+}
+

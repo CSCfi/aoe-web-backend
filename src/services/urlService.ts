@@ -9,3 +9,7 @@ export async function aoeThumbnailDownloadUrl(id: string) {
 export async function aoeCollectionThumbnailDownloadUrl(id: string) {
     return (!id) ? undefined : process.env.COLLECTION_THUMBNAIL_DOWNLOAD_URL + id;
 }
+
+export async function aoePdfDownloadUrl(key: string) {
+    return (!key) ? undefined : process.env.OFFICE_TO_PDF_URL + key;
+}

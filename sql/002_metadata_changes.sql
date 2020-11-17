@@ -299,3 +299,6 @@ ALTER TABLE AccessibilityFeatureExtension ADD CONSTRAINT constraint_Accessibilit
 ALTER TABLE AccessibilityHazardExtension ADD CONSTRAINT constraint_AccessibilityHazardExtension UNIQUE (accessibilityhazardkey,educationalmaterialid);
 ALTER TABLE EducationalLevelExtension ADD CONSTRAINT constraint_EducationalLevelExtension UNIQUE (educationallevelkey,educationalmaterialid);
 ALTER TABLE KeyWordExtension ADD CONSTRAINT constraint_KeyWordExtension UNIQUE (keywordkey,educationalmaterialid);
+
+-- feat-789
+ALTER TABLE record ADD COLUMN pdfkey text;

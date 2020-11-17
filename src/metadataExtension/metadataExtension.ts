@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+// import { IUserRequest} from "./../definitions"
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertMetadataExtension, metadataExtension, usersMetadataExtension } from "./../queries/metadataExtensionQueries";
 export class MetadataExtension {

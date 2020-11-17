@@ -29,3 +29,11 @@ scheduleJob("0 0 10 * * *", function() {
 
 setInterval(() => fh.checkTemporaryRecordQueue(), 3600000);
 setInterval(() => fh.checkTemporaryAttachmentQueue(), 3600000);
+
+import { officeFilesToAllasAsPdf } from "./helpers/officeToPdfConverter";
+const sleep = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  };
+sleep(10000).then(() =>
+officeFilesToAllasAsPdf()
+);
