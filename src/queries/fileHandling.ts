@@ -3,6 +3,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertEducationalMaterialName } from "./apiQueries";
 import { updateDownloadCounter } from "./analyticsQueries";
 import { hasAccesstoPublication } from "./../services/authService";
+import { ReadStream } from "fs";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -763,6 +764,21 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             const folderpath = process.env.HTMLFOLDER + "/" + filename;
             const zipStream = fileStream.on("error", function(e) {
                 console.error(e);
+                console.log("TRY BACK UP DATA HERE FOR ZIP");
+                const path = process.env.BACK_UP_PATH + key;
+                const backupfs = fs.createReadStream(path);
+                backupfs.on("error", function(e) {
+                    console.error(e);
+                    next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                }).pipe(fs.createWriteStream(folderpath)).on("error", function(e) {
+                    console.error(e);
+                    next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                });
+                backupfs.on("finish", async function() {
+                    console.log("We finished the backupfs!");
+                    resolve(await unZipAndExtract(folderpath));
+                });
+
                 next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
             }).pipe(fs.createWriteStream(folderpath));
             zipStream.on("finish", async function() {
@@ -776,7 +792,17 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
             console.log("The response.originalfilename is: " + filename);
             fileStream.on("error", function(e) {
                 console.error(e);
-                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                console.log("TRY BACK UP DATA HERE");
+                // const backupfs = await readStreamFromBackup(key);
+                const path = process.env.BACK_UP_PATH + key;
+                const backupfs = fs.createReadStream(path);
+                backupfs.on("error", function(e) {
+                    console.error(e);
+                    next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                }).pipe(res).on("error", function(e) {
+                    console.error(e);
+                    next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                });
 
             })
             .pipe(res).on("error", function(e) {
@@ -956,7 +982,7 @@ catch (err) {
     console.log("The error in unzipAndExtract function for HTML zip: " + err);
     return false;
 }
- }
+}
 
 
 module.exports = {

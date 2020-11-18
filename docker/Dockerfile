@@ -5,17 +5,16 @@ RUN npm install
 COPY ./ /app
 ARG env=prod
 # fix build issue
-RUN npm install @types/express-session@1.17.0
-RUN npm run build -- --prod
+RUN npm install @types/express-session@1.17.0 && \
+    npm run build -- --prod
 
 ########################################################################################################################
 
 FROM centos:7
 
 # Initialize system
-RUN groupadd --gid 5606 webapp
-
-RUN useradd -ms /bin/false -d /app node && \
+RUN groupadd --gid 5606 webapp && \
+    useradd -ms /bin/false -d /app node && \
     yum install -y epel-release && \
     yum install -y wget nano redis supervisor && \
     mkdir -p /app/data && \
@@ -33,11 +32,10 @@ RUN useradd -ms /bin/false -d /app node && \
     npm install -g pm2@2.5.0 && \
     sed --in-place -r 's/^save /# save /g' /etc/redis.conf && \
     sed --in-place -r 's/^logfile [^\n]+/logfile ""/g' /etc/redis.conf && \
-    yum install -y libreoffice
-
-RUN usermod -aG 5606 node
+    yum install -y libreoffice && \
+    usermod -aG 5606 node && \
 # symbolic link
-RUN ln -s /webdata /app/webdata
+    ln -s /webdata /app/webdata
 
 # Copy sources and other files
 COPY --from=node_builder /app/dist/ /app/dist/
