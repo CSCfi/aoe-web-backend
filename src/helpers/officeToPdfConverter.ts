@@ -199,7 +199,6 @@ export async function officeFilesToAllasAsPdf() {
             if (await isOfficeMimeType(element.mimetype) && !element.pdfkey) {
                 console.log("Sending pdf to allas: " + element.id);
                 try {
-                    await updatePdfKey("test", "3");
                     const path = await allasFileToPdf(element.filekey);
                     console.log("pdf file in path: " + path);
                     console.log("officeFilesToAllasAsPdf START SENDING PDF TO ALLAS");
