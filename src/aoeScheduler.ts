@@ -3,6 +3,7 @@ import { scheduleJob } from "node-schedule";
 import { rmDir } from "./helpers/fileRemover";
 import { updateEsDocument } from "./elasticSearch/es";
 import { sendExpirationMail, sendRatingNotificationMail } from "./services/mailService";
+import { officeFilesToAllasAsPdf } from "./helpers/officeToPdfConverter";
 
 // schedule job to start 4.00 server time
 scheduleJob("0 0 4 * * *", function() {
@@ -29,11 +30,15 @@ scheduleJob("0 0 10 * * *", function() {
 
 setInterval(() => fh.checkTemporaryRecordQueue(), 3600000);
 setInterval(() => fh.checkTemporaryAttachmentQueue(), 3600000);
-
-import { officeFilesToAllasAsPdf } from "./helpers/officeToPdfConverter";
-const sleep = ms => {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  };
-sleep(10000).then(() =>
-officeFilesToAllasAsPdf()
-);
+const officeToPdf = Number(process.env.RUN_OFFICE_TO_PDF);
+if (officeToPdf === 1) {
+    // wait 10 seconds before start
+    const sleep = ms => {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      };
+    sleep(10000).then(() => {
+    console.log("Start officeFilesToAllasAsPdf");
+    officeFilesToAllasAsPdf();
+    }
+    );
+}

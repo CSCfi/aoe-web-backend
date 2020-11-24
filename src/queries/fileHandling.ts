@@ -3,6 +3,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertEducationalMaterialName } from "./apiQueries";
 import { updateDownloadCounter } from "./analyticsQueries";
 import { hasAccesstoPublication } from "./../services/authService";
+import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from "./../helpers/officeToPdfConverter";
 import { ReadStream } from "fs";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
@@ -176,7 +177,21 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                 if (typeof file !== "undefined") {
                                     console.log(materialid);
                                     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
-                                    await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    // convert file to pdf if office document
+                                    try {
+                                        if (isOfficeMimeType(file.mimetype)) {
+                                            console.log("Convert file and send to allas");
+                                            const path = await allasFileToPdf(obj.Key);
+                                            const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
+                                            const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+                                            await updatePdfKey(pdfobj.Key, recordid);
+                                        }
+                                    }
+                                    catch (e) {
+                                        console.log("ERROR converting office file to pdf");
+                                        console.error(e);
+                                    }
                                     await deleteDataFromTempRecordTable(file.filename, materialid);
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
@@ -276,7 +291,20 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                 if (typeof file !== "undefined") {
                                     console.log(materialid);
                                     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
-                                    await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+                                    try {
+                                        if (isOfficeMimeType(file.mimetype)) {
+                                            console.log("Convert file and send to allas");
+                                            const path = await allasFileToPdf(obj.Key);
+                                            const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
+                                            const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+                                            await updatePdfKey(pdfobj.Key, recordid);
+                                        }
+                                    }
+                                    catch (e) {
+                                        console.log("ERROR converting office file to pdf");
+                                        console.error(e);
+                                    }
                                     await deleteDataFromTempRecordTable(file.filename, materialid);
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
@@ -326,15 +354,16 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
     }
 }
 
-export async function fileToStorage(file: any, materialid: String) {
+export async function fileToStorage(file: any, materialid: String): Promise<{key: string, recordid: string}> {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
-    await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
+    const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
     await deleteDataFromTempRecordTable(file.filename, materialid);
     fs.unlink("./" + file.path, (err: any) => {
         if (err) {
         console.error(err);
         }
     });
+    return { key : obj.Key, recordid: recordid };
 }
 
 export async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
@@ -366,7 +395,11 @@ export async function checkTemporaryRecordQueue() {
                 "filename" : element.filename
             };
             try {
-                await fileToStorage(file, element.materialid);
+                const obj = await fileToStorage(file, element.materialid);
+                const path = await allasFileToPdf(obj.key);
+                const pdfkey = obj.key.substring(0, obj.key.lastIndexOf(".")) + ".pdf";
+                const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+                await updatePdfKey(pdfobj.Key, obj.recordid);
             }
             catch (error) {
                 console.log(error);
@@ -531,19 +564,22 @@ export async function insertDataToTempAttachmentTable(files: any, metadata: any,
 }
 
 export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String) {
-    const queries = [];
     let query;
-    await db.tx(async (t: any) => {
+    try {
+    const data = await db.tx(async (t: any) => {
         query = "update educationalmaterial set updatedat = now() where id = (select educationalmaterialid from material where id = $1);";
-        queries.push(await db.none(query, [materialID]));
+        // queries.push(await db.none(query, [materialID]));
+        await t.none(query, [materialID]);
         query = "insert into record (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, materialid) values ($1,$2,$3,$4,$5,$6,$7,$8) returning id;";
         console.log(query);
-        queries.push(await db.any(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID]));
-        return t.batch(queries);
-    }
-    ).catch((err: Error) => {
-        throw err;
+        const record = await t.oneOrNone(query, [location, files.originalname, files.size, files.mimetype, files.encoding, fileKey, fileBucket, materialID]);
+        return {record};
     });
+    return data.record.id;
+    }
+    catch (err) {
+        throw new Error(err);
+    }
 }
 
 export async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {

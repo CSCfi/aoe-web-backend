@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
-import { readStreamFromStorage, uploadFileToStorage } from "./../queries/fileHandling";
+import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
 const contentDisposition = require("content-disposition");
 const connection = require("./../db");
 const pgp = connection.pgp;
@@ -97,53 +97,69 @@ export async function isOfficeMimeType(s: string) {
 
 }
 
-export async function convertOfficeToPdf(req: Request, res: Response, next: NextFunction) {
+export async function downloadPdfFromAllas (req: Request, res: Response, next: NextFunction) {
     try {
         if (!req.params.key) {
             next(new ErrorHandler("400", "key missing"));
         }
-        console.log("readstreamfrompouta");
         const params = {
-            "Bucket" : process.env.BUCKET_NAME,
+            "Bucket" : process.env.PDF_BUCKET_NAME,
             "Key" : req.params.key
         };
-        const folderpath = process.env.HTMLFOLDER + "/" + req.params.key;
-        const filename = req.params.key.substring(0, req.params.key.lastIndexOf(".")) + ".pdf";
-        console.log("filename: " + filename);
-        const stream = await readStreamFromStorage(params);
-        stream.on("error", function(e) {
-            console.error(e);
-            next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
-        });
-        stream.pipe(fs.createWriteStream(folderpath));
-        stream.on("end", async function() {
-            try {
-            console.log("starting officeToPdf");
-            console.log(folderpath);
-            console.log(filename);
-            const path = await officeToPdf(folderpath, filename);
-            console.log("starting createReadStream: " + path);
-            const readstream = fs.createReadStream(path);
-            readstream.on("error", function(e) {
-                console.error(e);
-                next(new ErrorHandler(e.statusCode, "Error in sending pdf"));
-            });
-            res.header("Content-Disposition", contentDisposition(filename));
-            readstream.pipe(res);
-            // res.status(200).json(d);
-            // outstream.pipe(res);
-            }
-            catch (error) {
-                console.error(error);
-                next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
-            }
-        });
+        await downloadFromStorage(req, res, next, params, req.params.key);
     }
     catch (error) {
         console.error(error);
         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
     }
 }
+// export async function convertOfficeToPdf(req: Request, res: Response, next: NextFunction) {
+//     try {
+//         if (!req.params.key) {
+//             next(new ErrorHandler("400", "key missing"));
+//         }
+//         console.log("readstreamfrompouta");
+//         const params = {
+//             "Bucket" : process.env.BUCKET_NAME,
+//             "Key" : req.params.key
+//         };
+//         const folderpath = process.env.HTMLFOLDER + "/" + req.params.key;
+//         const filename = req.params.key.substring(0, req.params.key.lastIndexOf(".")) + ".pdf";
+//         console.log("filename: " + filename);
+//         const stream = await readStreamFromStorage(params);
+//         stream.on("error", function(e) {
+//             console.error(e);
+//             next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+//         });
+//         stream.pipe(fs.createWriteStream(folderpath));
+//         stream.on("end", async function() {
+//             try {
+//             console.log("starting officeToPdf");
+//             console.log(folderpath);
+//             console.log(filename);
+//             const path = await officeToPdf(folderpath, filename);
+//             console.log("starting createReadStream: " + path);
+//             const readstream = fs.createReadStream(path);
+//             readstream.on("error", function(e) {
+//                 console.error(e);
+//                 next(new ErrorHandler(e.statusCode, "Error in sending pdf"));
+//             });
+//             res.header("Content-Disposition", contentDisposition(filename));
+//             readstream.pipe(res);
+//             // res.status(200).json(d);
+//             // outstream.pipe(res);
+//             }
+//             catch (error) {
+//                 console.error(error);
+//                 next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
+//             }
+//         });
+//     }
+//     catch (error) {
+//         console.error(error);
+//         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
+//     }
+// }
 export async function officeToPdf(filepath: string, filename: string) {
     try {
         console.log("in officeToPdf");
@@ -205,7 +221,7 @@ export async function officeFilesToAllasAsPdf() {
 export async function getOfficeFiles() {
     try {
         return await db.task(async (t: any) => {
-            const query = "select id, filepath, mimetype, filekey, filebucket from record order by id;";
+            const query = "select id, filepath, mimetype, filekey, filebucket, pdfkey from record order by id;";
             console.log(query, [ ]);
             return await t.any(query);
         });

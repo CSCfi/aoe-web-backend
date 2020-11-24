@@ -157,20 +157,20 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         queries.push(response);
         // get all materials from material table if not published else get from version table
         if (!isPublished) {
-            query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+            query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, pdfkey from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
             response = await t.any(query, [req.params.id]);
             console.log(query, [req.params.id]);
         }
         else {
             if (req.params.publishedat) {
-                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
                 "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
                 "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
                 console.log(query, [req.params.id, req.params.publishedat]);
                 response = await t.any(query, [req.params.id, req.params.publishedat]);
             }
             else {
-                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat " +
+                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
                 "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
                 "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
                 response = await t.any(query, [req.params.id]);
@@ -255,7 +255,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         }
         jsonObj.id = data[0][0].id;
         jsonObj.materials = data[14];
-        console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
+        // console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
         for (const i in jsonObj.materials) {
             let ext = "";
             if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
@@ -272,8 +272,9 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
                 jsonObj.materials[i]["mimetype"] = "text/html";
                 jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
             }
-            else if (jsonObj.materials[i] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
-                jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["filekey"];
+            else if (jsonObj.materials[i] && jsonObj.materials[i]["pdfkey"] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
+                console.log("HAS PDFKEY");
+                jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["pdfkey"];
             }
             else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;

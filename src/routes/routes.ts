@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { getH5PContent } from "./../h5p/h5p";
-import { convertOfficeToPdf } from "./../helpers/officeToPdfConverter";
+import { downloadPdfFromAllas } from "./../helpers/officeToPdfConverter";
 import { sendExpirationMail, verifyEmailToken } from "./../services/mailService";
 import { updateUserSettings } from "./../users/userSettings";
 import { ratingValidationRules, createCollectionValidationRules, addCollectionValidationRules, removeCollectionValidationRules,  metadataExtensionValidationRules, updateCollectionValidationRules, rulesValidate } from "./../validators/validator";
@@ -87,30 +87,12 @@ router.get("/collection/recentCollection", collection.getRecentCollection);
 
 router.post("/elasticSearch/collection/search", esCollection.getCollectionEsData);
 
-router.get("/pdf/content/:key", convertOfficeToPdf);
+router.get("/pdf/content/:key", downloadPdfFromAllas);
 
 // router.get("/sendMail", sendExpirationMail);
 router.get("/verify", verifyEmailToken);
 // router.put("/updateEmail", ah.checkAuthenticated, addEmail);
 router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
-
-function setRouteTimeout(req, res, next) {
-    req.socket.setTimeout(1000);
-    req.setTimeout(1000, function() {
-        // call back function is called when request timed out.
-        console.log("req timeout");
-        next();
-        // next(new ErrorHandler(400, "Issue getting material data"));
-    });
-    res.setTimeout(1000, function() {
-        // call back function is called when request timed out.
-        console.log("res timeout");
-        next();
-        // next(new ErrorHandler(400, "Issue getting material data"));
-    });
-    // console.log(req);
-    next();
-}
 router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
 router.get("/metadata/:id", getMetadataExtension);
 router.get("/usersMetadata/:id", ah.checkAuthenticated, getUsersMetadataExtension);
