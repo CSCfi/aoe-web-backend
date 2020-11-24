@@ -107,10 +107,10 @@ export async function userCollections(username: string) {
  */
 export async function collectionQuery(collectionId: string, username?: string) {
     try {
-        const data = await db.tx(async (t: any) => {
+        const data = await db.task(async (t: any) => {
             let query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection where id = $1;";
             console.log(query, [ collectionId ]);
-            const collection = await db.oneOrNone(query, [ collectionId ]);
+            const collection = await t.oneOrNone(query, [ collectionId ]);
             let owner = false;
             if (!collection) {
                 return {};
@@ -120,7 +120,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 if (!username) {
                     return {};
                 }
-                const ownerResult = await db.oneOrNone(query, [ collectionId , username]);
+                const ownerResult = await t.oneOrNone(query, [ collectionId , username]);
                 if (!ownerResult) {
                     return {};
                 }
@@ -132,7 +132,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 if (!username) {
                     owner = false;
                 }
-                const ownerResult = await db.oneOrNone(query, [ collectionId , username]);
+                const ownerResult = await t.oneOrNone(query, [ collectionId , username]);
                 if (!ownerResult) {
                     owner = false;
                 }
@@ -141,23 +141,23 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 }
             }
             query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
-            const keywords = await db.any(query, [ collectionId ]);
+            const keywords = await t.any(query, [ collectionId ]);
             query = "SELECT language FROM collectionlanguage WHERE collectionid = $1;";
-            const languageObjects = await db.any(query, [ collectionId ]);
+            const languageObjects = await t.any(query, [ collectionId ]);
             const languages = languageObjects.map(o => o.language);
             query = "SELECT alignmenttype, targetname, source, educationalframework, objectkey, targeturl FROM collectionalignmentobject WHERE collectionid = $1;";
-            const alignmentObjects = await db.any(query, [ collectionId ]);
+            const alignmentObjects = await t.any(query, [ collectionId ]);
             query = "SELECT value, educationalusekey as key FROM collectioneducationaluse WHERE collectionid = $1;";
-            const educationalUses = await db.any(query, [ collectionId ]);
+            const educationalUses = await t.any(query, [ collectionId ]);
             query = "SELECT educationalrole as value, educationalrolekey as key FROM collectioneducationalaudience WHERE collectionid = $1;";
-            const educationalRoles = await db.any(query, [ collectionId ]);
+            const educationalRoles = await t.any(query, [ collectionId ]);
             query = "SELECT value, accessibilityhazardkey as key FROM collectionaccessibilityhazard WHERE collectionid = $1;";
-            const accessibilityHazards = await db.any(query, [ collectionId ]);
+            const accessibilityHazards = await t.any(query, [ collectionId ]);
             query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
-            const accessibilityFeatures = await db.any(query, [ collectionId ]);
+            const accessibilityFeatures = await t.any(query, [ collectionId ]);
             console.log(query, [collection.id]);
             query = "SELECT value, educationallevelkey as key FROM collectioneducationallevel WHERE collectionid = $1;";
-            const educationalLevels = await db.any(query, [ collectionId ]);
+            const educationalLevels = await t.any(query, [ collectionId ]);
 
             query = "select educationalmaterialid as id, priority, publishedat from collectioneducationalmaterial as cem left join educationalmaterial as em on cem.educationalmaterialid = em.id where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
@@ -182,7 +182,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                     return map;
                 }, {});
                 query = "Select filekey as thumbnail from thumbnail where educationalmaterialid = $1 and obsoleted = 0;";
-                const thumbnailresponse = await db.oneOrNone(query, [q.id]);
+                const thumbnailresponse = await t.oneOrNone(query, [q.id]);
                 if (thumbnailresponse) {
                     thumbnailresponse.thumbnail = await aoeThumbnailDownloadUrl(thumbnailresponse.thumbnail);
                 }
@@ -194,7 +194,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 return q;
             }));
             query = "SELECT id, heading, description, priority FROM collectionheading WHERE collectionid = $1;";
-            const headings = await db.any(query, [ collectionId ]);
+            const headings = await t.any(query, [ collectionId ]);
 
             query = "Select filepath, filekey as thumbnail from collectionthumbnail where collectionid = $1 and obsoleted = 0;";
             let response = await db.oneOrNone(query, [collectionId]);
@@ -203,7 +203,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
                 thumbnail = await aoeCollectionThumbnailDownloadUrl(response.thumbnail);
             }
             query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = $1;";
-            response = await db.any(query, [collectionId]);
+            response = await t.any(query, [collectionId]);
             const authors = [];
             response.map(o => authors.push(o.name));
             return {collection, keywords, languages, alignmentObjects, educationalUses, educationalRoles, educationalmaterials, accessibilityHazards, accessibilityFeatures, educationalLevels, headings, owner, thumbnail, authors};
@@ -380,37 +380,37 @@ export async function insertCollectionMetadata(collection: Collection) {
 }
 export async function recentCollectionQuery() {
     try {
-        const data = await db.tx(async (t: any) => {
+        const data = await db.task(async (t: any) => {
             console.log("recentCollectionQuery:");
             let query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description from collection WHERE publishedat IS NOT NULL ORDER BY updatedAt DESC LIMIT 6;";
             console.log(query);
             const collections = await Promise.all(
                 await t.map(query, [], async (q: any) => {
                     query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
-                    q.keywords = await db.any(query, [ q.id ]);
+                    q.keywords = await t.any(query, [ q.id ]);
                     query = "SELECT language FROM collectionlanguage WHERE collectionid = $1;";
-                    const languageObjects = await db.any(query, [ q.id ]);
+                    const languageObjects = await t.any(query, [ q.id ]);
                     q.languages = languageObjects.map(o => o.language);
                     query = "SELECT alignmenttype, targetname, source, educationalframework, objectkey, targeturl FROM collectionalignmentobject WHERE collectionid = $1;";
-                    q.alignmentObjects = await db.any(query, [ q.id ]);
+                    q.alignmentObjects = await t.any(query, [ q.id ]);
                     query = "SELECT value, educationalusekey as key FROM collectioneducationaluse WHERE collectionid = $1;";
-                    q.educationalUses = await db.any(query, [ q.id ]);
+                    q.educationalUses = await t.any(query, [ q.id ]);
                     query = "SELECT educationalrole as value, educationalrolekey as key FROM collectioneducationalaudience WHERE collectionid = $1;";
-                    q.educationalRoles = await db.any(query, [ q.id ]);
+                    q.educationalRoles = await t.any(query, [ q.id ]);
                     query = "SELECT value, accessibilityhazardkey as key FROM collectionaccessibilityhazard WHERE collectionid = $1;";
-                    q.accessibilityHazards = await db.any(query, [ q.id ]);
+                    q.accessibilityHazards = await t.any(query, [ q.id ]);
                     query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
-                    q.accessibilityFeatures = await db.any(query, [ q.id ]);
+                    q.accessibilityFeatures = await t.any(query, [ q.id ]);
                     query = "SELECT value, educationallevelkey as key FROM collectioneducationallevel WHERE collectionid = $1;";
-                    q.educationalLevels = await db.any(query, [ q.id ]);
+                    q.educationalLevels = await t.any(query, [ q.id ]);
                     query = "Select filepath, filekey as thumbnail from collectionthumbnail where collectionid = $1 and obsoleted = 0;";
-                    let response = await db.oneOrNone(query, [q.id]);
+                    let response = await t.oneOrNone(query, [q.id]);
                     q.thumbnail = undefined;
                     if (response) {
                         q.thumbnail = await aoeCollectionThumbnailDownloadUrl(response.thumbnail);
                     }
                     query = "select concat(firstname, ' ', lastname) as name from userscollection join users on usersusername = username where collectionid = $1;";
-                    response = await db.any(query, [q.id]);
+                    response = await t.any(query, [q.id]);
                     const authors = [];
                     response.map(o => authors.push(o.name));
                     q.authors = authors;
