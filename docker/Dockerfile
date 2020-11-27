@@ -5,8 +5,7 @@ RUN npm install
 COPY ./ /app
 ARG env=prod
 # fix build issue
-RUN npm install @types/express-session@1.17.0 && \
-    npm run build -- --prod
+RUN npm run build -- --prod
 
 ########################################################################################################################
 
@@ -47,9 +46,7 @@ COPY ./src/elasticSearch/aoemapping.json /app
 COPY ./src/elasticSearch/aoecollectionmapping.json /app
 COPY ./h5p/core /app/webdata/h5p/core
 
-# comment because typescript error in "@types/express-session": "^1.17.1"
 RUN (cd /app && npm install --only=production) && \
-    (cd /app && npm install @types/express-session@1.17.0 --only=production) && \
     npm uninstall -g npm
 
 COPY ./docker/supervisord.ini /etc/

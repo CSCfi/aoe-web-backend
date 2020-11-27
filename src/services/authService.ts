@@ -25,20 +25,6 @@ export async function getUserData(req: Request, res: Response) {
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
-export function isUser(req: Request) {
-    // Checking that the user actually exists, for this, the userdata has to be present
-    // in the session data
-        if (!req.session.userdata.id) {
-            return false;
-        }
-        else if (req.session.userdata.id === db.select("Here we look if ID exist in db, ie. user exists and matches. DO QUERY HERE")) {
-            return true;
-        }
-        else {
-            return false;
-        }
-}
-
 export async function hasAccesstoPublication(id: number, req: Request) {
     // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
     // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
