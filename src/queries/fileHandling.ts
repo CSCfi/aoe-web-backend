@@ -804,9 +804,11 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 const path = process.env.BACK_UP_PATH + key;
                 const backupfs = fs.createReadStream(path);
                 backupfs.on("error", function(e) {
+                    console.error("Error in createReadStream " + path);
                     console.error(e);
                     next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
                 }).pipe(fs.createWriteStream(folderpath)).on("error", function(e) {
+                    console.error("Error in createWriteStream " + folderpath);
                     console.error(e);
                     next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
                 });
