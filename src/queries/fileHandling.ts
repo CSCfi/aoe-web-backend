@@ -816,8 +816,6 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                     console.log("We finished the backupfs!");
                     resolve(await unZipAndExtract(folderpath));
                 });
-
-                next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
             }).pipe(fs.createWriteStream(folderpath));
             zipStream.on("finish", async function() {
                 console.log("We finished the zipstream!");
