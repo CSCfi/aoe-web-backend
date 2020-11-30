@@ -7,6 +7,7 @@ import { readStreamFromStorage } from "./../queries/fileHandling";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { resolve, reject } from "bluebird";
 // import { H5P } from "h5p-standalone";
+const fs = require("fs");
 
 console.log("This is H5P: " + H5P);
 const config = new H5P.H5PConfig();
@@ -80,7 +81,6 @@ export async function getH5PContent(req: Request, res: Response) {
 
 export async function startH5Pplayer(contentid: string) {
     return new Promise(async (resolve, reject) => {
-    const fs = require("fs");
     try {
     const user = {
         canCreateRestricted: true,
@@ -96,43 +96,57 @@ export async function startH5Pplayer(contentid: string) {
     };
     const stream = await readStreamFromStorage(params);
     const filepath = process.env.HTMLFOLDER + "/" + contentid;
-    stream.on("error", (e) => reject(e));
-    stream.pipe(fs.createWriteStream(filepath));
     let page;
+    stream.on("error", async (e) => {
+        console.log("Issue getting readstream from Allas. Try from backup data");
+        console.error(e);
+        try {
+            const path = process.env.BACK_UP_PATH + contentid;
+            page = await renderH5Ppage(contentid, path);
+            resolve(page);
+        }
+        catch (e) {
+            console.log("Issue reading file from backup");
+            console.error(e);
+            reject(e);
+        }
+    });
+    stream.pipe(fs.createWriteStream(filepath));
     stream.on("end", async function() {
         try {
-            console.log("We finished the zipstream!");
-            const data = await fs.readFileSync(filepath);
-            console.log("uploading h5p package #####################################");
-            const options = {
-                "onlyInstallLibraries": false
-            };
-            const result = await h5pEditor.uploadPackage(data, user, options);
-            console.log("saving h5p package");
-            let mainlib;
-            for (const lib of result.metadata.preloadedDependencies) {
-                if (lib.machineName == result.metadata.mainLibrary) {
-                    mainlib = lib;
-                }
-            }
+            // console.log("We finished the zipstream!");
+            // const data = await fs.readFileSync(filepath);
+            // console.log("uploading h5p package #####################################");
+            // const options = {
+            //     "onlyInstallLibraries": false
+            // };
+            // const result = await h5pEditor.uploadPackage(data, user, options);
+            // console.log("saving h5p package");
+            // let mainlib;
+            // for (const lib of result.metadata.preloadedDependencies) {
+            //     if (lib.machineName == result.metadata.mainLibrary) {
+            //         mainlib = lib;
+            //     }
+            // }
 
-            const saveresult = await h5pEditor.saveOrUpdateContent(
-                undefined,
-                result.parameters,
-                result.metadata,
-                H5P.LibraryName.toUberName(mainlib, {useWhitespace: true}),
-                user
-            );
-            contentid = saveresult;
-            const h5pPlayer = new H5P.H5PPlayer(
-                h5pEditor.libraryStorage,
-                h5pEditor.contentStorage,
-                config
-            );
-            // const content = result.parameters;
-            console.log("rendering h5p page: " + contentid);
-            // page = await h5pPlayer.render(contentid, content);
-            page = await h5pPlayer.render(contentid);
+            // const saveresult = await h5pEditor.saveOrUpdateContent(
+            //     undefined,
+            //     result.parameters,
+            //     result.metadata,
+            //     H5P.LibraryName.toUberName(mainlib, {useWhitespace: true}),
+            //     user
+            // );
+            // contentid = saveresult;
+            // const h5pPlayer = new H5P.H5PPlayer(
+            //     h5pEditor.libraryStorage,
+            //     h5pEditor.contentStorage,
+            //     config
+            // );
+            // // const content = result.parameters;
+            // console.log("rendering h5p page: " + contentid);
+            // // page = await h5pPlayer.render(contentid, content);
+            // page = await h5pPlayer.render(contentid);
+            page = await renderH5Ppage(contentid, filepath);
             resolve(page);
         }
         catch (error) {
@@ -145,4 +159,57 @@ export async function startH5Pplayer(contentid: string) {
     }
 
 });
+}
+/**
+ *
+ * @param contentid
+ * @param filepath
+ * renders H5P page from H5p file in filepath
+ */
+export async function renderH5Ppage(contentid: string, filepath: string) {
+    try {
+        const user = {
+            canCreateRestricted: true,
+            canInstallRecommended: true,
+            canUpdateAndInstallLibraries: true,
+            id: contentid,
+            name: "aoe robot",
+            type: "local"
+        };
+        console.log("We finished the zipstream!");
+        const data = await fs.readFileSync(filepath);
+        console.log("uploading h5p package #####################################");
+        const options = {
+            "onlyInstallLibraries": false
+        };
+        const result = await h5pEditor.uploadPackage(data, user, options);
+        console.log("saving h5p package");
+        let mainlib;
+        for (const lib of result.metadata.preloadedDependencies) {
+            if (lib.machineName == result.metadata.mainLibrary) {
+                mainlib = lib;
+            }
+        }
+        const saveresult = await h5pEditor.saveOrUpdateContent(
+            undefined,
+            result.parameters,
+            result.metadata,
+            H5P.LibraryName.toUberName(mainlib, {useWhitespace: true}),
+            user
+        );
+        contentid = saveresult;
+        const h5pPlayer = new H5P.H5PPlayer(
+            h5pEditor.libraryStorage,
+            h5pEditor.contentStorage,
+            config
+        );
+        // const content = result.parameters;
+        console.log("rendering h5p page: " + contentid);
+        // page = await h5pPlayer.render(contentid, content);
+        const page = await h5pPlayer.render(contentid);
+        return page;
+    }
+    catch (error) {
+        throw new Error(error);
+    }
 }
