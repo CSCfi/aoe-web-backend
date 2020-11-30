@@ -803,7 +803,7 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 console.log("TRY BACK UP DATA HERE FOR ZIP");
                 const path = process.env.BACK_UP_PATH + key;
                 const backupfs = fs.createReadStream(path);
-                backupfs.on("error", function(e) {
+                const backupws = backupfs.on("error", function(e) {
                     console.error("Error in createReadStream " + path);
                     console.error(e);
                     next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
@@ -812,7 +812,7 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                     console.error(e);
                     next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
                 });
-                backupfs.on("finish", async function() {
+                backupws.on("finish", async function() {
                     console.log("We finished the backupfs!");
                     resolve(await unZipAndExtract(folderpath));
                 });
