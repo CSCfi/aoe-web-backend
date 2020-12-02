@@ -3,6 +3,7 @@ import compression from "compression";  // compresses requests
 import lusca from "lusca";
 import dotenv from "dotenv";
 import path from "path";
+import { isLoginEnabled } from "./services/routeEnablerService";
 
 // Load environment variables from .env file, where API keys and passwords are configured
 dotenv.config({path: ".env"});
@@ -175,7 +176,7 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get("/login", passport.authenticate("oidc", {
+app.get("/login", isLoginEnabled, passport.authenticate("oidc", {
     successRedirect: "/",
     failureRedirect: "/login",
     failureFlash: true,

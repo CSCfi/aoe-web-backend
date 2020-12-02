@@ -5,6 +5,7 @@ import { sendExpirationMail, verifyEmailToken } from "./../services/mailService"
 import { updateUserSettings } from "./../users/userSettings";
 import { ratingValidationRules, createCollectionValidationRules, addCollectionValidationRules, removeCollectionValidationRules,  metadataExtensionValidationRules, updateCollectionValidationRules, rulesValidate } from "./../validators/validator";
 import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
+import { isAllasEnabled } from "./../services/routeEnablerService";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -24,12 +25,12 @@ const es = require("./../elasticSearch/esQueries");
 const collection = require("../collection/collection");
 const esCollection = require("./../elasticSearch/es");
 
-router.post("/material/file", ah.checkAuthenticated, fh.uploadMaterial);
-router.post("/material/file/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post("/material/file", isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
+router.post("/material/file/:materialId", isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.post("/material/link/:materialId", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
-router.post("/material/attachment/:materialId", ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
-router.post("/uploadImage/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
-router.post("/uploadBase64Image/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
+router.post("/material/attachment/:materialId", isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
+router.post("/uploadImage/:id", isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
+router.post("/uploadBase64Image/:id", isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
 router.get("/thumbnail/:id", thumbnail.downloadEmThumbnail);
 
 router.get("/download/:key", fh.downloadFile);
