@@ -7,10 +7,13 @@ export class ErrorHandler extends Error {
     }
   }
 
+export const genericErrorMessage = "Palvelussamme on tällä hetkellä vikatilanne. Selvitämme ongelmaa ja korjaamme sen mahdollisimman pian. Ajankohtaisimmat tiedot Twitter-kanavallamme @aoe_suomi.";
 export const handleError = (err, res) => {
     let { statusCode } = err;
-    const { message } = err;
+    let { message } = err;
     console.error(err);
+    // send generic error message
+    message = genericErrorMessage;
     if (!statusCode) {
         statusCode = "500";
     }
