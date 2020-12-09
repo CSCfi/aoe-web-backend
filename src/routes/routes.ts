@@ -6,6 +6,7 @@ import { updateUserSettings } from "./../users/userSettings";
 import { ratingValidationRules, createCollectionValidationRules, addCollectionValidationRules, removeCollectionValidationRules,  metadataExtensionValidationRules, updateCollectionValidationRules, rulesValidate } from "./../validators/validator";
 import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
 import { isAllasEnabled } from "./../services/routeEnablerService";
+import { hasAccessToAoe } from "./../services/authService";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -97,4 +98,11 @@ router.put("/updateSettings", ah.checkAuthenticated, updateUserSettings);
 router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
 router.get("/metadata/:id", getMetadataExtension);
 router.get("/usersMetadata/:id", ah.checkAuthenticated, getUsersMetadataExtension);
+
+import { removeEducationalMaterial, getAoeUsers, changeMaterialUser } from "./../controllers/material";
+router.get("/userinfo", ah.userInfo);
+router.delete("/removeMaterial/:id", hasAccessToAoe, removeEducationalMaterial);
+router.get("/aoeUsers", hasAccessToAoe, getAoeUsers);
+router.post("/changeUser", hasAccessToAoe, changeMaterialUser);
+
 export = router;

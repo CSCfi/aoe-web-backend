@@ -173,6 +173,49 @@ export async function hasAccessToCollectionId(id: string, username: string) {
     }
 }
 
+export async function hasAccessToAoe(req: Request, res: Response, next: NextFunction) {
+    const result = await hasAoeAccess(req.session.passport.user.uid);
+    if (!result) {
+        console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+        return res.sendStatus(401);
+    }
+    else {
+        return next();
+    }
+}
+
+export async function userInfo(req: Request, res: Response, next: NextFunction) {
+    try {
+        if (!req.isAuthenticated()) {
+            return res.sendStatus(404);
+        }
+        const result = await hasAoeAccess(req.session.passport.user.uid);
+        if (!result) {
+            console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+            return res.sendStatus(404);
+        }
+        else {
+            return res.sendStatus(200);
+        }
+    }
+    catch (e) {
+        console.error(e);
+        return res.sendStatus(404);
+    }
+}
+
+export async function hasAoeAccess(username: string) {
+    const query = "Select username from aoeuser where usersusername = $1;";
+    const result = await db.oneOrNone(query, [username]);
+    if (!result) {
+        console.log("No result found for " + [username]);
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
 export function logout(req: Request, res: Response) {
     req.logout();
     res.redirect("/");

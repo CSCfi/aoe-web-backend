@@ -302,3 +302,7 @@ ALTER TABLE KeyWordExtension ADD CONSTRAINT constraint_KeyWordExtension UNIQUE (
 
 -- feat-789
 ALTER TABLE record ADD COLUMN pdfkey text;
+
+CREATE TABLE admin (
+  username text NOT NULL, 
+  PRIMARY KEY (username));
