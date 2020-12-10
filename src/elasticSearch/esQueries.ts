@@ -11,7 +11,7 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { SearchResponse, Source, AoeBody, AoeResult, AoeRequestFilter, MultiMatchSeachBody, MatchObject, FilterTerm, expiresFilterObject } from "./esTypes";
 
-async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
+export async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
   try {
     const resp: AoeBody<AoeResult> = {
       hits : response.body.hits.total.value
@@ -84,7 +84,7 @@ export function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
   }
 }
 
-async function elasticSearchQuery(req: Request, res: Response, next: NextFunction) {
+export async function elasticSearchQuery(req: Request, res: Response, next: NextFunction) {
   try {
     let from = Number(process.env.ES_FROM_DEFAULT) || 0;
     let size = Number(process.env.ES_SIZE_DEFAULT) || 100;
@@ -182,7 +182,7 @@ async function elasticSearchQuery(req: Request, res: Response, next: NextFunctio
     }
 }
 
-function filterMapper(filters: AoeRequestFilter) {
+export function filterMapper(filters: AoeRequestFilter) {
     try {
       const filter = [];
       if (filters.educationalLevels) {
@@ -239,7 +239,7 @@ export function createMatchAllObject() {
   return {"match_all": {}};
 }
 
-function createMultiMatchObject(keywords: string, fields: string[]) {
+export function createMultiMatchObject(keywords: string, fields: string[]) {
   return {
     "multi_match": {
       "query": keywords,
@@ -259,7 +259,7 @@ function createMultiMatchObject(keywords: string, fields: string[]) {
  * uses elastic search term object as default or
  * must match list if alignmentObjectType is defined
  */
-function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>, alignmentObjectType?: string) {
+export function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>, alignmentObjectType?: string) {
   try {
     if (alignmentObjectType) {
       const mustMatchObjectList: MatchObject[] = [];
@@ -288,7 +288,7 @@ function createShouldObject(filter: Array<object>, key: string, valueList: Array
   }
 }
 
-function createMustMatchObject(key: string, type: string) {
+export function createMustMatchObject(key: string, type: string) {
   try {
     const mustObj = {"bool": {
                       "must": [ {
@@ -310,13 +310,28 @@ function createMustMatchObject(key: string, type: string) {
   }
 }
 
-module.exports = {
-    elasticSearchQuery : elasticSearchQuery,
-    createShouldObject,
-    createMultiMatchObject,
-    createMatchAllObject,
-    filterMapper,
-    aoeResponseMapper,
-    hasDownloadableFiles,
-    createMustMatchObject
-};
+export async function deleteDocument(index: string, id: string) {
+  try {
+      console.log("start delete");
+      const query = {"index": index, "id": id};
+      const resp = await client.delete(query);
+      console.log(resp);
+
+  }
+  catch (error) {
+      console.log("elasticSearchQuery error");
+      console.error(error);
+  }
+}
+
+// module.exports = {
+//     elasticSearchQuery : elasticSearchQuery,
+//     createShouldObject,
+//     createMultiMatchObject,
+//     createMatchAllObject,
+//     filterMapper,
+//     aoeResponseMapper,
+//     hasDownloadableFiles,
+//     createMustMatchObject,
+//     deleteDocument
+// };

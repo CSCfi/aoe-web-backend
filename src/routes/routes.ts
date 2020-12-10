@@ -7,6 +7,7 @@ import { ratingValidationRules, createCollectionValidationRules, addCollectionVa
 import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
 import { isAllasEnabled } from "./../services/routeEnablerService";
 import { hasAccessToAoe } from "./../services/authService";
+import { removeEducationalMaterial, getAoeUsers, changeMaterialUser } from "./../controllers/material";
 const router: Router = Router();
 // const passport = require("passport");
 
@@ -99,7 +100,6 @@ router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, a
 router.get("/metadata/:id", getMetadataExtension);
 router.get("/usersMetadata/:id", ah.checkAuthenticated, getUsersMetadataExtension);
 
-import { removeEducationalMaterial, getAoeUsers, changeMaterialUser } from "./../controllers/material";
 router.get("/userinfo", ah.userInfo);
 router.delete("/removeMaterial/:id", hasAccessToAoe, removeEducationalMaterial);
 router.get("/aoeUsers", hasAccessToAoe, getAoeUsers);
