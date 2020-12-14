@@ -174,13 +174,22 @@ export async function hasAccessToCollectionId(id: string, username: string) {
 }
 
 export async function hasAccessToAoe(req: Request, res: Response, next: NextFunction) {
-    const result = await hasAoeAccess(req.session.passport.user.uid);
-    if (!result) {
-        console.log("No Aoe result found for " + [req.session.passport.user.uid]);
-        return res.sendStatus(401);
+    try {
+        if (!req.isAuthenticated()) {
+            return res.sendStatus(401);
+        }
+        const result = await hasAoeAccess(req.session.passport.user.uid);
+        if (!result) {
+            console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+            return res.sendStatus(401);
+        }
+        else {
+            return next();
+        }
     }
-    else {
-        return next();
+    catch (e) {
+        console.error(e);
+        return res.sendStatus(500);
     }
 }
 
