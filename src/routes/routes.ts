@@ -5,7 +5,7 @@ import { sendExpirationMail, verifyEmailToken } from "./../services/mailService"
 import { updateUserSettings } from "./../users/userSettings";
 import { ratingValidationRules, createCollectionValidationRules, addCollectionValidationRules, removeCollectionValidationRules,  metadataExtensionValidationRules, updateCollectionValidationRules, rulesValidate } from "./../validators/validator";
 import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
-import { isAllasEnabled } from "./../services/routeEnablerService";
+import { isAllasEnabled, aoeRoutes } from "./../services/routeEnablerService";
 import { hasAccessToAoe } from "./../services/authService";
 import { removeEducationalMaterial, getAoeUsers, changeMaterialUser } from "./../controllers/material";
 const router: Router = Router();
@@ -104,5 +104,7 @@ router.get("/userinfo", ah.userInfo);
 router.delete("/removeMaterial/:id", hasAccessToAoe, removeEducationalMaterial);
 router.get("/aoeUsers", hasAccessToAoe, getAoeUsers);
 router.post("/changeUser", hasAccessToAoe, changeMaterialUser);
+
+router.get("/messages/info", aoeRoutes);
 
 export = router;

@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
+export interface AoeRouteMessage {
+    "enabled": string;
+    "message": string;
+    "alerttype": string;
+}
 
 export const allasErrorMessage = "Palvelussamme on tällä hetkellä vikatilanne. Uusien oppimateriaalien tallentaminen on estetty ongelman selvittämisen ajaksi. Korjaamme ongelman mahdollisimman pian. Ajankohtaisimmat tiedot Twitter-kanavallamme @aoe_suomi.";
 export const loginErrorMessage = "Palveluun kirjautumisessa on tällä hetkellä ongelmaa. Selvitämme asiaa ja korjaamme sen mahdollisimman pian. Ajankohtaisimmat tiedot Twitter-kanavallamme @aoe_suomi.";
@@ -48,5 +53,27 @@ export async function isLoginEnabled(req: Request, res: Response, next: NextFunc
     }
     catch (e) {
         next(new ErrorHandler(e, "Issue in login"));
+    }
+}
+
+export async function aoeRoutes(req: Request, res: Response, next: NextFunction) {
+    try {
+        const allas: AoeRouteMessage = {
+            "enabled" : process.env.ALLAS_ENABLED,
+            "message" : allasErrorMessage,
+            "alerttype" : "red"
+        };
+        const login: AoeRouteMessage = {
+            "enabled" : process.env.LOGIN_ENABLED,
+            "message" : loginErrorMessage,
+            "alerttype" : "red"
+        };
+        res.status(200).json({
+            allas,
+            login
+        });
+    }
+    catch (e) {
+        next(new ErrorHandler(e, "Issue in messages info"));
     }
 }
