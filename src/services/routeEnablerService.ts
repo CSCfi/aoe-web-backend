@@ -3,7 +3,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 export interface AoeRouteMessage {
     "enabled": string;
     "message": string;
-    "alerttype": string;
+    "alertType": string;
 }
 
 export const allasErrorMessage = "Palvelussamme on tällä hetkellä vikatilanne. Uusien oppimateriaalien tallentaminen on estetty ongelman selvittämisen ajaksi. Korjaamme ongelman mahdollisimman pian. Ajankohtaisimmat tiedot Twitter-kanavallamme @aoe_suomi.";
@@ -61,12 +61,12 @@ export async function aoeRoutes(req: Request, res: Response, next: NextFunction)
         const allas: AoeRouteMessage = {
             "enabled" : process.env.ALLAS_ENABLED,
             "message" : allasErrorMessage,
-            "alerttype" : "red"
+            "alertType" : "red"
         };
         const login: AoeRouteMessage = {
             "enabled" : process.env.LOGIN_ENABLED,
             "message" : loginErrorMessage,
-            "alerttype" : "red"
+            "alertType" : "red"
         };
         res.status(200).json({
             allas,
