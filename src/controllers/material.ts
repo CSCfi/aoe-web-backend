@@ -36,7 +36,7 @@ export async function removeEducationalMaterial(req: Request , res: Response, ne
 export async function getAoeUsers(req: Request , res: Response, next: NextFunction) {
     try {
         const users = await getUsers();
-        res.status(200).json(users);
+        res.status(200).json({"users": users});
     }
     catch (error) {
         console.error(error);
