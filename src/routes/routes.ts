@@ -100,7 +100,7 @@ router.put("/metadata/:id", metadataExtensionValidationRules(), rulesValidate, a
 router.get("/metadata/:id", getMetadataExtension);
 router.get("/usersMetadata/:id", ah.checkAuthenticated, getUsersMetadataExtension);
 
-router.get("/userinfo", ah.userInfo);
+router.post("/userinfo", ah.userInfo);
 router.delete("/removeMaterial/:id", hasAccessToAoe, removeEducationalMaterial);
 router.get("/aoeUsers", hasAccessToAoe, getAoeUsers);
 router.post("/changeUser", hasAccessToAoe, changeMaterialUser);
