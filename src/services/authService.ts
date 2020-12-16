@@ -214,7 +214,7 @@ export async function userInfo(req: Request, res: Response, next: NextFunction) 
 }
 
 export async function hasAoeAccess(username: string) {
-    const query = "Select username from aoeuser where usersusername = $1;";
+    const query = "Select username from aoeuser where username = $1;";
     const result = await db.oneOrNone(query, [username]);
     if (!result) {
         console.log("No result found for " + [username]);
