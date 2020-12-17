@@ -46,7 +46,7 @@ export async function changeEducationalMaterialUser(emid: string, id: string) {
 
 export async function getUsers() {
     try {
-      const query = "select id, firstname, lastname from users;";
+      const query = "select id, firstname, lastname, email from users;";
       return await db.any(query);
     }
     catch (error) {
