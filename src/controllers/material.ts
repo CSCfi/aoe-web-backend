@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { updateEducationalMaterial, getUsers, changeEducationalMaterialUser } from "./../queries/materialQueries";
+import { updateEducationalMaterial, getUsers, changeEducationalMaterialUser, getOwnerName, getMaterialName } from "./../queries/materialQueries";
 import { deleteDocument } from "./../elasticSearch/esQueries";
 /**
  *
@@ -61,6 +61,26 @@ export async function changeMaterialUser(req: Request , res: Response, next: Nex
         }
         else {
             return res.status(200).json({"status" : "success"});
+        }
+    }
+    catch (error) {
+        console.error(error);
+        next(new ErrorHandler(500, "Issue changing users"));
+    }
+}
+
+export async function getMaterialNames(req: Request , res: Response, next: NextFunction) {
+    try {
+        if (!req.params.id) {
+            return res.sendStatus(404);
+        }
+        const name = await getMaterialName(req.params.id);
+        const owner = await getOwnerName(req.params.id);
+        if (!owner) {
+            return res.sendStatus(404);
+        }
+        else {
+            return res.status(200).json({name, owner});
         }
     }
     catch (error) {

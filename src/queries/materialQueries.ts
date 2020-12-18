@@ -53,3 +53,23 @@ export async function getUsers() {
         throw new Error(error);
     }
   }
+
+  export async function getOwnerName(materialid: string) {
+    try {
+        const query = "select firstname, lastname from educationalmaterial as em join users on em.usersusername = users.username where em.id = $1;";
+        return await db.oneOrNone(query, [materialid]);
+      }
+      catch (error) {
+          throw new Error(error);
+      }
+  }
+
+  export async function getMaterialName(materialid: string) {
+    try {
+        const query = "select materialname, language from materialname where educationalmaterialid = $1";
+        return await db.any(query, [materialid]);
+      }
+      catch (error) {
+          throw new Error(error);
+      }
+  }
