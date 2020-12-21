@@ -303,6 +303,18 @@ ALTER TABLE KeyWordExtension ADD CONSTRAINT constraint_KeyWordExtension UNIQUE (
 -- feat-789
 ALTER TABLE record ADD COLUMN pdfkey text;
 
-CREATE TABLE admin (
+CREATE TABLE aoeuser (
   username text NOT NULL, 
   PRIMARY KEY (username));
+
+CREATE TABLE educationalMaterialVersion (
+  educationalMaterialId int8 NOT NULL, 
+  publishedAt           timestamp NOT NULL, 
+  urn                   text, 
+  PRIMARY KEY (educationalMaterialId, 
+  publishedAt));
+
+INSERT INTO educationalmaterialversion(educationalmaterialid, publishedat) SELECT distinct educationalmaterialid, publishedat from versioncomposition;
+
+ALTER TABLE VersionComposition ADD CONSTRAINT fkversioncomposition FOREIGN KEY (EducationalMaterialId, PublishedAt) REFERENCES EducationalMaterialVersion (EducationalMaterialId, PublishedAt);
+ALTER TABLE EducationalMaterialVersion ADD CONSTRAINT FKemversion FOREIGN KEY (EducationalMaterialId) REFERENCES EducationalMaterial (Id);

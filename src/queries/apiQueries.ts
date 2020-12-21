@@ -1138,6 +1138,9 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 if (req.body.materials) {
                     query = "UPDATE educationalmaterial SET publishedat = now() WHERE id = $1 AND publishedat IS NULL;";
                     queries.push(await t.none(query, [req.params.id]));
+                    // insert new version
+                    query = "INSERT INTO educationalmaterialversion (educationalmaterialid, publishedat) values ($1, now()::timestamp(3));";
+                    queries.push(await t.none(query, [req.params.id]));
                     for (const element of arr) {
                         // query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) VALUES ($1,$2,now(),$3);";
                         query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) select $1,$2,now()::timestamp(3),$3 where exists (select * from material where id = $2 and educationalmaterialid = $1);";
