@@ -15,6 +15,7 @@ export async function removeEducationalMaterial(req: Request , res: Response, ne
             return res.sendStatus(404);
         }
         console.log("Strarting removeEducationalMaterial");
+        console.log("removeEducationalMaterial: user " + req.session.passport.user.uid + " deleting educational material " + req.params.id);
         const id = req.params.id;
         await updateEducationalMaterial(id);
         res.status(200).json( {"status" : "success", "statusCode": 200});
@@ -55,6 +56,7 @@ export async function changeMaterialUser(req: Request , res: Response, next: Nex
         if (!req.body.materialid || !req.body.userid) {
             return res.sendStatus(404);
         }
+        console.log("changeMaterialUser user: " + req.session.passport.user.uid + " changing educational material " + req.body.materialid + " user to " + req.body.materialid);
         const users = await changeEducationalMaterialUser(req.body.materialid, req.body.userid);
         if (!users) {
             return res.sendStatus(404);

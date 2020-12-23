@@ -12,6 +12,13 @@ export async function updateEducationalMaterial(emid: string) {
             query = "UPDATE material SET obsoleted = 1 WHERE educationalmaterialid = $1 returning id;";
             console.log("materialQueries removeEducationalMaterial: " + query, [emid]);
             const id = await t.any(query, [emid]);
+            console.log("Materials set obsoleted: " + JSON.stringify(id));
+            query = "UPDATE attachment set obsoleted = 1 WHERE materialid = $1 returning id;";
+            for (const element of id) {
+                console.log("materialQueries removeEducationalMaterial: " + query, [element.id]);
+                const attachmentid = await t.any(query, [element.id]);
+                console.log("set obsoleted attachments: " + JSON.stringify(attachmentid));
+            }
             return {id};
         });
         return id;
