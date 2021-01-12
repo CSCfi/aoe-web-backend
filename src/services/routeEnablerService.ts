@@ -75,13 +75,21 @@ export async function aoeRoutes(req: Request, res: Response, next: NextFunction)
             "en": loginErrorMessageEn,
             "sv": loginErrorMessageSv
         };
+        let allasMessageEnabled = "1";
+        if (process.env.ALLAS_ENABLED === "1") {
+            allasMessageEnabled = "0";
+        }
+        let loginMessageEnabled = "1";
+        if (process.env.LOGIN_ENABLED === "1") {
+            loginMessageEnabled = "0";
+        }
         const allas: AoeRouteMessage = {
-            "enabled" : process.env.ALLAS_ENABLED,
+            "enabled" : allasMessageEnabled,
             "message" : allasMessageObject,
             "alertType" : alertTypeDanger
         };
         const login: AoeRouteMessage = {
-            "enabled" : process.env.LOGIN_ENABLED,
+            "enabled" : loginMessageEnabled,
             "message" : loginMessageObject,
             "alertType" : alertTypeDanger
         };
