@@ -7,6 +7,7 @@ import { ratingValidationRules, createCollectionValidationRules, addCollectionVa
 import { addMetadataExtension, getMetadataExtension, getUsersMetadataExtension } from "./../metadataExtension/metadataExtension";
 import { isAllasEnabled, aoeRoutes } from "./../services/routeEnablerService";
 import { hasAccessToAoe } from "./../services/authService";
+import { updateEducationalMaterialMetadata } from "./../controllers/educationalMaterial";
 import { removeEducationalMaterial, getAoeUsers, changeMaterialUser, getMaterialNames } from "./../controllers/material";
 const router: Router = Router();
 // const passport = require("passport");
@@ -43,7 +44,7 @@ router.get("/material", db.getMaterial);
 router.get("/material/:id/:publishedat?", db.getMaterialData);
 router.get("/usermaterial", ah.checkAuthenticated, db.getUserMaterial);
 router.get("/recentmaterial", db.getRecentMaterial);
-router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.updateMaterial);
+router.put("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, updateEducationalMaterialMetadata);
 // delete educational material
 router.delete("/material/:id", ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 // delete link or record from educationalmaterial

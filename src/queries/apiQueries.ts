@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { aoeThumbnailDownloadUrl } from "./../services/urlService";
+import { aoeThumbnailDownloadUrl, aoeMaterialVersionUrl } from "./../services/urlService";
 import { hasDownloadableFiles } from "./../elasticSearch/esQueries";
 import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter";
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
+import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
 const fh = require("./fileHandling");
 const connection = require("./../db");
 const pgp = connection.pgp;
@@ -220,6 +221,16 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
         // const popularity = await t.one(getPopularityQuery, [req.params.id]);
         // queries.push(popularity);
+        if (req.params.publishedat) {
+            query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = $2;";
+            response = await t.oneOrNone(query, [req.params.id, req.params.publishedat]);
+            queries.push(response);
+        }
+        else {
+            query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = (select max(publishedat) from educationalmaterialversion where educationalmaterialid = $1);";
+            response = await t.oneOrNone(query, [req.params.id]);
+            queries.push(response);
+        }
         return t.batch(queries);
     })
     .then(async (data: any) => {
@@ -351,6 +362,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
+        jsonObj.urn = data[20].urn;
         res.status(200).json(jsonObj);
         if (!req.isAuthenticated() || !hasAccesstoPublication(jsonObj.id, req)) {
             updateViewCounter(jsonObj.id)
@@ -706,17 +718,17 @@ export async function insertEducationalMaterialName(materialname: NameObject, id
     return queries;
 }
 
-export async function updateMaterial(req: Request , res: Response , next: NextFunction) {
-    db.tx(async (t: any) => {
+export async function updateMaterial(metadata: EducationalMaterialMetadata, emid: string) {
+    return await db.tx(async (t: any) => {
         let query;
         const queries: any = [];
         // let params = req.params;
-        const materialname = req.body.name;
+        const materialname = metadata.name;
         const nameparams = [];
         let response;
         console.log("updateMaterial request body:");
-        console.log(JSON.stringify(req.body));
-        let arr = req.body.name;
+        console.log(JSON.stringify(metadata));
+        // let arr = metadata.name;
         console.log("inserting material name");
         if (materialname == undefined) {
             // query = "DELETE FROM materialname where educationalmaterialid = $1;";
@@ -724,31 +736,31 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             // queries.push(response);
         }
         else {
-            queries.push(await insertEducationalMaterialName(materialname, req.params.id, t));
+            queries.push(await insertEducationalMaterialName(materialname, emid, t));
         }
 
         // material
         console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
         query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
-        console.log(query, [req.body.expires, dnow, req.body.timeRequired, ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license]);
-        queries.push(await t.any(query, [req.body.expires, dnow, ((req.body.timeRequired == undefined) ? "" : req.body.timeRequired), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMin), ((!req.body.typicalAgeRange) ? undefined : req.body.typicalAgeRange.typicalAgeRangeMax), req.params.id, req.body.license, req.body.suitsAllEarlyChildhoodSubjects, req.body.suitsAllPrePrimarySubjects, req.body.suitsAllBasicStudySubjects, req.body.suitsAllUpperSecondarySubjects, req.body.suitsAllVocationalDegrees, req.body.suitsAllSelfMotivatedSubjects, req.body.suitsAllBranches, req.body.suitsAllUpperSecondarySubjectsNew]));
+        console.log(query, [metadata.expires, dnow, metadata.timeRequired, ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license]);
+        queries.push(await t.any(query, [metadata.expires, dnow, ((metadata.timeRequired == undefined) ? "" : metadata.timeRequired), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license, metadata.suitsAllEarlyChildhoodSubjects, metadata.suitsAllPrePrimarySubjects, metadata.suitsAllBasicStudySubjects, metadata.suitsAllUpperSecondarySubjects, metadata.suitsAllVocationalDegrees, metadata.suitsAllSelfMotivatedSubjects, metadata.suitsAllBranches, metadata.suitsAllUpperSecondarySubjectsNew]));
 // description
         console.log("inserting description");
-        const description = req.body.description;
+        const description = metadata.description;
         if (description == undefined) {
         // if not found do nothing
         }
         else {
-            queries.push(await insertDataToDescription(t, req.params.id, description));
+            queries.push(await insertDataToDescription(t, emid, description));
         }
 // educationalRoles
         console.log("inserting educationalRoles");
         const audienceparams = [];
-        const audienceArr = req.body.educationalRoles;
+        const audienceArr = metadata.educationalRoles;
         if (audienceArr == undefined || audienceArr.length < 1) {
             query = "DELETE FROM educationalaudience where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
@@ -757,7 +769,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             }
             query = "select id from (select * from educationalaudience where educationalmaterialid = $1) as i left join" +
             "(select t.role from ( values " + audienceparams.join(",") + " ) as t(role)) as a on i.educationalrole = a.role where a.role is null;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM educationalaudience where id = " + element.id + ";";
@@ -768,16 +780,16 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 query = "INSERT INTO educationalaudience (educationalrole, educationalmaterialid, educationalrolekey) VALUES ($1,$2,$3) ON CONFLICT (educationalrolekey,educationalmaterialid) DO " +
                         "UPDATE SET educationalrole = $1;";
                 console.log(query);
-                queries.push(await t.any(query, [element.value, req.params.id, element.key]));
+                queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // educationalUse
         console.log("inserting educationalUse");
         const educationalUseParams = [];
-        const educationalUseArr = req.body.educationalUses;
+        const educationalUseArr = metadata.educationalUses;
         if (educationalUseArr == undefined || educationalUseArr.length < 1) {
             query = "DELETE FROM educationaluse where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
@@ -786,7 +798,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             }
             query = "select id from (select * from educationaluse where educationalmaterialid = $1) as i left join" +
             "(select t.educationalusekey from ( values " + educationalUseParams.join(",") + " ) as t(educationalusekey)) as a on i.educationalusekey = a.educationalusekey where a.educationalusekey is null;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             console.log(response);
             for (const element of response) {
@@ -797,16 +809,16 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             for (const element of educationalUseArr) {
                 query = "INSERT INTO educationaluse (value, educationalmaterialid, educationalusekey) VALUES ($1,$2,$3) ON CONFLICT (educationalusekey,educationalmaterialid) DO UPDATE SET value = $1;";
                 console.log(query);
-                queries.push(await t.any(query, [element.value, req.params.id, element.key]));
+                queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // learningResourceType
         console.log("inserting learningResourceType");
         const learningResourceTypeParams = [];
-        const learningResourceTypeArr = req.body.learningResourceTypes;
+        const learningResourceTypeArr = metadata.learningResourceTypes;
         if (learningResourceTypeArr == undefined || learningResourceTypeArr.length < 1) {
             query = "DELETE FROM learningresourcetype where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
@@ -815,7 +827,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             }
             query = "select id from (select * from learningresourcetype where educationalmaterialid = $1) as i left join" +
             "(select t.learningresourcetypekey from ( values " + learningResourceTypeParams.join(",") + " ) as t(learningresourcetypekey)) as a on i.learningresourcetypekey = a.learningresourcetypekey where a.learningresourcetypekey is null;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             console.log(response);
             for (const element of response) {
@@ -826,17 +838,17 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             for (const element of learningResourceTypeArr) {
                 query = "INSERT INTO learningresourcetype (value, educationalmaterialid, learningresourcetypekey) VALUES ($1,$2,$3) ON CONFLICT (learningresourcetypekey,educationalmaterialid) DO UPDATE SET value = $1;";
                 console.log(query);
-                queries.push(await t.any(query, [element.value, req.params.id, element.key]));
+                queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
 
         // keywords
         console.log("inserting keywords");
         let params = [];
-        arr = req.body.keywords;
+        let arr = metadata.keywords;
         if (arr == undefined || arr.length < 1) {
             query = "DELETE FROM keyword where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
@@ -845,7 +857,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
         }
             query = "select id from (select * from keyword where educationalmaterialid = $1) as i left join" +
             "(select t.keywordkey from ( values " + params.join(",") + " ) as t(keywordkey)) as a on i.keywordkey = a.keywordkey where a.keywordkey is null;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM keyword where id = " + element.id + ";";
@@ -854,19 +866,19 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             }
             for (const element of arr) {
                 query = "INSERT INTO keyword (value, educationalmaterialid, keywordkey) VALUES ($1,$2,$3) ON CONFLICT (keywordkey, educationalmaterialid) DO UPDATE SET value = $1;";
-                console.log(query, [element.value, req.params.id, element.key]);
-                queries.push(await t.any(query, [element.value, req.params.id, element.key]));
+                console.log(query, [element.value, emid, element.key]);
+                queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // publisher
         console.log("inserting publisher");
         params = [];
-        arr = req.body.publisher;
+        arr = metadata.publisher;
         console.log(arr);
         if (arr == undefined || arr.length < 1) {
             query = "DELETE FROM publisher where educationalmaterialid = $1;";
-            console.log(query, [req.params.id]);
-            response  = await t.any(query, [req.params.id]);
+            console.log(query, [emid]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
@@ -876,7 +888,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             query = "select id from (select * from publisher where educationalmaterialid = $1) as i left join" +
             "(select t.publisherkey from ( values " + params.join(",") + " ) as t(publisherkey)) as a on i.publisherkey = a.publisherkey where a.publisherkey is null;";
             console.log(query);
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM publisher where id = " + element.id + ";";
@@ -886,33 +898,33 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
             for (const element of arr) {
                 query = "INSERT INTO publisher (name, educationalmaterialid, publisherkey) VALUES ($1,$2,$3) ON CONFLICT (publisherkey, educationalmaterialid) DO UPDATE SET name = $1";
                 console.log(query);
-                queries.push(await t.any(query, [element.value, req.params.id, element.key]));
+                queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // isBasedOn
         console.log("inserting isBasedOn");
         params = [];
-        arr = [];
-        if (req.body.isBasedOn) {
-            arr = req.body.isBasedOn.externals;
+        let isBasedonArr = [];
+        if (metadata.isBasedOn) {
+            isBasedonArr = metadata.isBasedOn.externals;
         }
-        if (arr == undefined || arr.length < 1) {
+        if (isBasedonArr == undefined || isBasedonArr.length < 1) {
             query = "DELETE FROM isbasedonauthor where isbasedonid IN (SELECT id from isbasedon where educationalmaterialid = $1);";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             query = "DELETE FROM isbasedon where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
         }
         else {
             query = "DELETE FROM isbasedonauthor where isbasedonid IN (SELECT id from isbasedon where educationalmaterialid = $1);";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             query = "SELECT * from isbasedon where educationalmaterialid = $1;";
-            response  = await t.any(query, [req.params.id]);
+            response  = await t.any(query, [emid]);
             queries.push(response);
             for (const element of response) {
                 let toBeDeleted = true;
-                for (let i = 0; arr.length > i; i += 1 ) {
-                    if (element.name === arr[i].materialname) {
+                for (let i = 0; isBasedonArr.length > i; i += 1 ) {
+                    if (element.name === isBasedonArr[i].materialname) {
                         toBeDeleted = false;
                     }
                 }
@@ -922,10 +934,10 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                     queries.push(await t.any(query));
                 }
             }
-            for (const element of arr) {
+            for (const element of isBasedonArr) {
                 query = "INSERT INTO isbasedon (materialname, url, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (materialname, educationalmaterialid) DO UPDATE SET url = $2 returning id;";
-                console.log(query, [element.name, element.url, req.params.id]);
-                const resp = await t.one(query, [element.name, element.url, req.params.id]);
+                console.log(query, [element.name, element.url, emid]);
+                const resp = await t.one(query, [element.name, element.url, emid]);
                 queries.push(resp);
                 for (const author of element.author) {
                     query = "INSERT INTO isbasedonauthor (authorname, isbasedonid) VALUES ($1,$2);";
@@ -936,26 +948,26 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
         }
 // alignmentObjects
         console.log("inserting alignmentObjects");
-            arr = req.body.alignmentObjects;
+            const alignmentObjectArr = metadata.alignmentObjects;
 
-            if (arr == undefined) {
+            if (alignmentObjectArr == undefined) {
                 query = "DELETE FROM alignmentobject where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
             }
-            else if (arr.length === 0) {
+            else if (alignmentObjectArr.length === 0) {
                 query = "DELETE FROM alignmentobject where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
             }
             else {
                 query = "SELECT * from alignmentobject where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
                 for (const element of response) {
                     let toBeDeleted = true;
-                    for (let i = 0; arr.length > i; i += 1 ) {
-                        if ( element.alignmenttype === arr[i].alignmentType && element.objectkey === arr[i].key && element.source === arr[i].source) {
+                    for (let i = 0; alignmentObjectArr.length > i; i += 1 ) {
+                        if ( element.alignmenttype === alignmentObjectArr[i].alignmentType && element.objectkey === alignmentObjectArr[i].key && element.source === alignmentObjectArr[i].source) {
                             toBeDeleted = false;
                         }
                     }
@@ -970,12 +982,12 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 // console.log(arr);
                 const values: any = [];
                 // const updateValues: Array<object> = [];
-                for ( let i = 0; i < arr.length; i += 1) {
-                    arr[i].educationalmaterialid = req.params.id;
-                }
-                arr.forEach(async (element: any) =>  {
+                // for ( let i = 0; i < arr.length; i += 1) {
+                //     alignmentObjectArr[i].educationalmaterialid = emid;
+                // }
+                alignmentObjectArr.forEach(async (element: any) =>  {
                     console.log(element.educationalFramework);
-                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : req.params.id, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework), targeturl : element.targetUrl };
+                    const obj = {alignmenttype : element.alignmentType, targetname : element.targetName , source : element.source , educationalmaterialid : emid, objectkey : element.key, educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework), targeturl : element.targetUrl };
                     values.push(obj);
                     // updateValues.push({educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework)});
                 });
@@ -987,48 +999,48 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
 // author
         console.log("inserting author");
         params = [];
-        arr = req.body.authors;
+        const authorArr = metadata.authors;
         query = "DELETE FROM author where educationalmaterialid = $1;";
-        response  = await t.any(query, [req.params.id]);
+        response  = await t.any(query, [emid]);
         queries.push(response);
 
-        for (const element of arr) {
+        for (const element of authorArr) {
             query = "INSERT INTO author (authorname, organization, educationalmaterialid, organizationkey) VALUES ($1,$2,$3,$4);";
-            console.log(query, [element.author, element.organization, req.params.id]);
-            queries.push(await t.any(query, [((element.author == undefined) ? "" : element.author), ((element.organization == undefined) ? "" : element.organization.value), req.params.id, ((element.organization == undefined) ? "" : element.organization.key)]));
+            console.log(query, [element.author, element.organization, emid]);
+            queries.push(await t.any(query, [((element.author == undefined) ? "" : element.author), ((element.organization == undefined) ? "" : element.organization.value), emid, ((element.organization == undefined) ? "" : element.organization.key)]));
         }
 
     // filedetails
     console.log("inserting filedetails");
         params = [];
-        arr = req.body.fileDetails;
+        const fileDetailArr = metadata.fileDetails;
         if (arr == undefined) {
             // query = "DELETE FROM materialdisplayname where materialid = $1;";
-            // console.log(query, [req.params.id]);
-            // response  = await t.any(query, [req.params.id]);
+            // console.log(query, [emid]);
+            // response  = await t.any(query, [emid]);
             // queries.push(response);
         }
         else {
-            for (const element of arr) {
-                const dnresult = await fh.insertDataToDisplayName(t, req.params.id, element.id, element);
+            for (const element of fileDetailArr) {
+                const dnresult = await fh.insertDataToDisplayName(t, emid, element.id, element);
                 queries.push(dnresult);
                 query = "UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3";
-                console.log("update material name: " + query, [element.language, element.id, req.params.id]);
-                queries.push(await t.any(query, [element.language, element.id, req.params.id]));
+                console.log("update material name: " + query, [element.language, element.id, emid]);
+                queries.push(await t.any(query, [element.language, element.id, emid]));
                 if (element.link) {
                     query = "UPDATE material SET link = $1 WHERE id = $2 AND educationalmaterialid = $3";
-                    console.log("update link: " + query, [element.link, element.id, req.params.id]);
-                    queries.push(await t.any(query, [element.link, element.id, req.params.id]));
+                    console.log("update link: " + query, [element.link, element.id, emid]);
+                    queries.push(await t.any(query, [element.link, element.id, emid]));
                 }
             }
         }
 // accessibilityFeatures
             console.log("inserting accessibilityFeatures");
             params = [];
-            arr = req.body.accessibilityFeatures;
+            arr = metadata.accessibilityFeatures;
             if (arr == undefined || arr.length < 1) {
                 query = "DELETE FROM accessibilityfeature where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
             }
             else {
@@ -1038,7 +1050,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 query = "select id from (select * from accessibilityfeature where educationalmaterialid = $1) as i left join" +
                 "(select t.accessibilityfeaturekey from ( values " + params.join(",") + " ) as t(accessibilityfeaturekey)) as a on i.accessibilityfeaturekey = a.accessibilityfeaturekey where a.accessibilityfeaturekey is null;";
                 console.log(query);
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 console.log(response);
                 queries.push(response);
                 for (const element of response) {
@@ -1051,17 +1063,17 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 for (const element of arr) {
                     query = "INSERT INTO accessibilityfeature (accessibilityfeaturekey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (accessibilityfeaturekey, educationalmaterialid) DO NOTHING;";
                     // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                    console.log(query, [element.key, element.value, req.params.id]);
-                    queries.push(await t.any(query, [element.key, element.value, req.params.id]));
+                    console.log(query, [element.key, element.value, emid]);
+                    queries.push(await t.any(query, [element.key, element.value, emid]));
                 }
             }
 // accessibilityHazards
         console.log("inserting accessibilityHazards");
             params = [];
-            arr = req.body.accessibilityHazards;
+            arr = metadata.accessibilityHazards;
             if (arr == undefined || arr.length < 1) {
                 query = "DELETE FROM accessibilityhazard where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
             }
             else {
@@ -1071,7 +1083,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 query = "select id from (select * from accessibilityhazard where educationalmaterialid = $1) as i left join" +
                 "(select t.accessibilityhazardkey from ( values " + params.join(",") + " ) as t(accessibilityhazardkey)) as a on i.accessibilityhazardkey = a.accessibilityhazardkey where a.accessibilityhazardkey is null;";
                 console.log(query);
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 console.log(response);
                 queries.push(response);
                 for (const element of response) {
@@ -1084,17 +1096,17 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 for (const element of arr) {
                     query = "INSERT INTO accessibilityhazard (accessibilityhazardkey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (accessibilityhazardkey, educationalmaterialid) DO NOTHING;";
                     // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                    console.log(query, [element.key, element.value, req.params.id]);
-                    queries.push(await t.any(query, [element.key, element.value, req.params.id]));
+                    console.log(query, [element.key, element.value, emid]);
+                    queries.push(await t.any(query, [element.key, element.value, emid]));
                 }
             }
 // educationalLevels
             console.log("inserting educationalLevels");
             params = [];
-            arr = req.body.educationalLevels;
+            arr = metadata.educationalLevels;
             if (arr == undefined || arr.length < 1) {
                 query = "DELETE FROM educationallevel where educationalmaterialid = $1;";
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 queries.push(response);
             }
             else {
@@ -1104,7 +1116,7 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 query = "select id from (select * from educationallevel where educationalmaterialid = $1) as i left join" +
                 "(select t.educationallevelkey from ( values " + params.join(",") + " ) as t(educationallevelkey)) as a on i.educationallevelkey = a.educationallevelkey where a.educationallevelkey is null;";
                 console.log(query);
-                response  = await t.any(query, [req.params.id]);
+                response  = await t.any(query, [emid]);
                 console.log(response);
                 queries.push(response);
                 for (const element of response) {
@@ -1117,69 +1129,80 @@ export async function updateMaterial(req: Request , res: Response , next: NextFu
                 for (const element of arr) {
                     query = "INSERT INTO educationallevel (educationallevelkey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (educationallevelkey, educationalmaterialid) DO NOTHING;";
                     // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                    console.log(query, [element.key, element.value, req.params.id]);
-                    queries.push(await t.any(query, [element.key, element.value, req.params.id]));
+                    console.log(query, [element.key, element.value, emid]);
+                    queries.push(await t.any(query, [element.key, element.value, emid]));
                 }
             }
 
             console.log("update attachmentDetails");
-            arr = req.body.attachmentDetails;
-            if (arr) {
-                for (const element of arr) {
+            const attachmentDetailArr = metadata.attachmentDetails;
+            if (attachmentDetailArr) {
+                for (const element of attachmentDetailArr) {
                     query = "update attachment set kind = $1, defaultfile = $2, label = $3, srclang = $4 where (id = $5 " +
                     "and (select educationalmaterialid from material where id = (select materialid from attachment where id = $5)) = $6);";
-                    console.log(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]);
-                    queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, req.params.id]));
+                    console.log(query, [element.kind, element.default, element.label, element.lang, element.id, emid]);
+                    queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, emid]));
                 }
             }
-            if (req.body.isVersioned) {
+            let publishedat;
+            if (metadata.isVersioned) {
                 console.log("versioned true");
-                arr = req.body.materials;
-                if (req.body.materials) {
+                const arr = metadata.materials;
+                if (metadata.materials) {
                     query = "UPDATE educationalmaterial SET publishedat = now() WHERE id = $1 AND publishedat IS NULL;";
-                    queries.push(await t.none(query, [req.params.id]));
+                    queries.push(await t.none(query, [emid]));
                     // insert new version
-                    query = "INSERT INTO educationalmaterialversion (educationalmaterialid, publishedat) values ($1, now()::timestamp(3));";
-                    queries.push(await t.none(query, [req.params.id]));
+                    query = "INSERT INTO educationalmaterialversion (educationalmaterialid, publishedat) values ($1, now()::timestamp(3)) returning publishedat;";
+                    // queries.push(await t.one(query, [emid]));
+                    publishedat = await t.one(query, [emid]);
+                    // queries.push(publishedat);
                     for (const element of arr) {
                         // query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) VALUES ($1,$2,now(),$3);";
                         query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) select $1,$2,now()::timestamp(3),$3 where exists (select * from material where id = $2 and educationalmaterialid = $1);";
-                        console.log(query, [req.params.id, element.materialId, element.priority]);
-                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                        console.log(query, [emid, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [emid, element.materialId, element.priority]));
                         // add attachments
                         if (element.attachments) {
                             for (const att of element.attachments) {
                                 query = "INSERT INTO attachmentversioncomposition (versioneducationalmaterialid, versionmaterialid, versionpublishedat, attachmentid) select $1,$2,now()::timestamp(3),$3 where exists (select * from attachment where id = $3 and materialid = $2);";
-                                console.log(query, [req.params.id, element.materialId, att]);
-                                queries.push(await t.none(query, [req.params.id, element.materialId, att]));
+                                console.log(query, [emid, element.materialId, att]);
+                                queries.push(await t.none(query, [emid, element.materialId, att]));
                             }
                         }
                     }
                 }
             }
             else {
-                if (arr = req.body.materials) {
-                    for (const element of arr) {
+                const materialArr = metadata.materials;
+                if (materialArr) {
+                    for (const element of materialArr) {
                         query = "UPDATE versioncomposition SET priority = $3 WHERE educationalmaterialid = $1 and materialid = $2 and publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
-                        console.log(query, [req.params.id, element.materialId, element.priority]);
-                        queries.push(await t.none(query, [req.params.id, element.materialId, element.priority]));
+                        console.log(query, [emid, element.materialId, element.priority]);
+                        queries.push(await t.none(query, [emid, element.materialId, element.priority]));
                     }
                 }
             }
-        return t.batch(queries);
+        return [t.batch(queries), publishedat];
     })
     .then (async (data: any) => {
-        res.status(200).json("data updated");
-        elasticSearch.updateEsDocument()
-        .catch ((err: Error) => {
-            console.log("Es update error do something");
-            console.log(err);
-        });
+        return data;
     })
     .catch ((err: Error) => {
         console.error(err);
-        next(new ErrorHandler(400, "Issue updating material"));
+        throw(err);
+        // next(new ErrorHandler(400, "Issue updating material"));
     });
+}
+
+export async function insertUrn(id: string, publishedat: string, urn: string) {
+    try {
+        const query = "update educationalmaterialversion set urn = $3 where educationalmaterialid = $1 and publishedat = $2;";
+        await db.none(query, [id, publishedat, urn]);
+    }
+    catch (error) {
+        console.error(error);
+        throw new Error(error);
+    }
 }
 
 export async function createUser(req: Request , res: Response , next: NextFunction) {
