@@ -362,7 +362,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         jsonObj.attachments = data[18];
         jsonObj.versions = data[19];
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
-        jsonObj.urn = data[20].urn;
+        jsonObj.urn = (data[20]) ? data[20].urn : data[20];
         res.status(200).json(jsonObj);
         if (!req.isAuthenticated() || !hasAccesstoPublication(jsonObj.id, req)) {
             updateViewCounter(jsonObj.id)
@@ -1180,7 +1180,7 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                         console.log(query, [emid, element.materialId, element.priority]);
                         queries.push(await t.none(query, [emid, element.materialId, element.priority]));
                     }
-                }
+                 }
             }
         return [t.batch(queries), publishedat];
     })
