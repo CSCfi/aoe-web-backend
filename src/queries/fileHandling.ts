@@ -830,7 +830,11 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 console.error(e);
                 console.log("TRY BACK UP DATA HERE");
                 // const backupfs = await readStreamFromBackup(key);
-                const path = process.env.BACK_UP_PATH + key;
+                let path = process.env.BACK_UP_PATH + key;
+                // if thumbnail bucket try thumbnail back up
+                if (params.Bucket == process.env.THUMBNAIL_BUCKET_NAME) {
+                    path = process.env.THUMBNAIL_BACK_UP_PATH + key;
+                }
                 const backupfs = fs.createReadStream(path);
                 backupfs.on("error", function(e) {
                     console.error(e);
