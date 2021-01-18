@@ -364,7 +364,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         jsonObj.urn = (data[20]) ? data[20].urn : data[20];
         res.status(200).json(jsonObj);
-        if (!req.isAuthenticated() || !hasAccesstoPublication(jsonObj.id, req)) {
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
             updateViewCounter(jsonObj.id)
             .catch((error: any) => {
                 console.error("update viewcounter failed: " + error);

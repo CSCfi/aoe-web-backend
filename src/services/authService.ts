@@ -28,14 +28,23 @@ export async function getUserData(req: Request, res: Response) {
 export async function hasAccesstoPublication(id: number, req: Request) {
     // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
     // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
-    const params = {"id": id};
-    const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
-    const result = await db.oneOrNone(query, params.id);
-    if (req.session.passport.user.uid === result) {
-        return true;
+    try {
+        if (!req.session.passport) {
+            return false;
+        }
+        const params = {"id": id};
+        const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
+        const result = await db.oneOrNone(query, params.id);
+        if (req.session.passport.user.uid === result) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-    else {
-        return false;
+    catch (error) {
+        console.log(error);
+        throw new Error(error);
     }
 }
 
