@@ -59,7 +59,7 @@ router.put("/termsOfUsage", ah.checkAuthenticated, db.updateTermsOfUsage);
 
 // router.post("/upload", ah.checkAuthenticated, fh.uploadFileToStorage);
 
-router.get("/logout", ah.logout);
+router.post("/logout", ah.logout);
 
 // router.post("/uploadXlsx" , handler.uploadXlsx);
 

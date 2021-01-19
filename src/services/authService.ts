@@ -236,7 +236,7 @@ export async function hasAoeAccess(username: string) {
 
 export function logout(req: Request, res: Response) {
     req.logout();
-    res.redirect("/");
+    res.status(200).json({"status" : "ok"});
 }
 // module.exports = {
 //     isUser: isUser,
