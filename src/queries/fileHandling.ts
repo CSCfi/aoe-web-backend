@@ -899,7 +899,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             // update downloadcounter here
             const idnumber = parseInt(req.params.materialId);
             console.log("Starting update downloadcounter");
-            if (!req.isAuthenticated() || !hasAccesstoPublication(idnumber, req)) {
+            if (!req.isAuthenticated() || !(await hasAccesstoPublication(idnumber, req))) {
                 console.log("update downloadcounter");
                 try {
                     updateDownloadCounter(req.params.materialId);
