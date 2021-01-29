@@ -83,7 +83,7 @@ router.get("/collection/thumbnail/:id", thumbnail.downloadCollectionThumbnail);
 
 const h5p = require("./../h5p/h5p");
 // import { play } from "./";
-router.get("/play/:contentid", h5p.play);
+router.get("/h5p/play/:contentid", h5p.play);
 
 router.get("/h5p/content/:id/:file(*)", getH5PContent);
 
