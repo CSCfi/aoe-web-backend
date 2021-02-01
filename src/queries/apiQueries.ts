@@ -299,7 +299,7 @@ export async function getMaterialData(req: Request , res: Response , next: NextF
                      * mimetype = text/html + result
                      */
                     jsonObj.materials[i]["mimetype"] = "text/html";
-                    jsonObj.materials[i]["filepath"] = result;
+                    jsonObj.materials[i]["filepath"] = process.env.HTML_BASE_URL + result;
                     console.log("The jsonObj: " + JSON.stringify(jsonObj));
 
 
