@@ -1014,7 +1014,7 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
     console.log("inserting filedetails");
         params = [];
         const fileDetailArr = metadata.fileDetails;
-        if (arr == undefined) {
+        if (fileDetailArr == undefined) {
             // query = "DELETE FROM materialdisplayname where materialid = $1;";
             // console.log(query, [emid]);
             // response  = await t.any(query, [emid]);
