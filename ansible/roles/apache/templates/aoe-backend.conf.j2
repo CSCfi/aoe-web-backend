@@ -13,4 +13,14 @@ Listen 3000
     ProxyPass http://localhost:3001
     ProxyPassReverse http://localhost:3001
   </Location>
+#   <Location /api>
+#    ProxyPass http://localhost:3001
+#    ProxyPassReverse http://localhost:3001
+#  </Location>
+#  <Location />
+#    ProxyPass http://localhost:3001/
+#    ProxyPassReverse http://localhost:3001/
+#  </Location> 
+#SSLCertificateFile /opt/sources/aoe-local.com.crt
+#SSLCertificateKeyFile /opt/sources/aoe-local.com.key
 </VirtualHost>

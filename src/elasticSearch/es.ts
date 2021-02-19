@@ -10,6 +10,7 @@ const index = process.env.ES_INDEX;
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
 log: "trace",
 keepAlive: true});
+// values for index last update time
 export namespace Es {
     export let ESupdated = {value : new Date()};
     export let ESCounterUpdated = {value : new Date()};
@@ -28,7 +29,6 @@ const mode = new TransactionMode({
     deferrable: true
 });
 
-/** Check the ES connection status */
 export async function createEsIndex () {
     console.log("Create Elasticsearch index");
     client.ping({
@@ -68,7 +68,11 @@ export async function createEsIndex () {
         }
       });
     }
-
+/**
+ *
+ * @param index
+ * delete index if exists
+ */
 export async function deleteIndex (index: string) {
     const b = client.indices.delete({
         index: index
@@ -83,6 +87,11 @@ export async function deleteIndex (index: string) {
     return b;
 }
 
+/**
+ *
+ * @param index
+ * create a new index
+ */
 export async function createIndex (index: string) {
     const b = client.indices.create({
         index: index
@@ -97,6 +106,11 @@ export async function createIndex (index: string) {
     return b;
 }
 
+/**
+ *
+ * @param index
+ * check if index exists
+ */
 export function indexExists (index: string): boolean {
     const b = client.indices.exists({
         index: index
@@ -109,6 +123,12 @@ export function indexExists (index: string): boolean {
       });
       return b;
 }
+/**
+ *
+ * @param index
+ * @param fileLocation
+ * add mapping to index
+ */
 export async function addMapping(index: string, fileLocation) {
     return new Promise(async (resolve, reject) => {
         const rawdata = fs.readFileSync(fileLocation);
@@ -130,6 +150,12 @@ export async function addMapping(index: string, fileLocation) {
     });
 }
 
+/**
+ *
+ * @param offset
+ * @param limit
+ * insert metadata
+ */
 export async function metadataToEs(offset: number, limit: number) {
     return new Promise(async (resolve, reject) => {
     const countquery = "select count(*) from educationalmaterial";

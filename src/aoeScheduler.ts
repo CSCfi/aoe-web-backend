@@ -17,7 +17,7 @@ scheduleJob("0 0 4 * * *", function() {
     rmDir(process.env.H5PFOLDER + "/temporary-storage", false);
     console.log("update ES");
     updateEsDocument(true);
-
+// get pids for educational material where pid is null
     try {
         if (Number(process.env.PID_SERVICE_ENABLED) === 1 && Number(process.env.PID_SERVICE_RUN_SCHEDULED) === 1) {
             console.log("START GET EM URN");

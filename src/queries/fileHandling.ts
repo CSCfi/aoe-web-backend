@@ -18,7 +18,7 @@ const contentDisposition = require("content-disposition");
 // File upload dependencies
 const multer  = require("multer");
 
-
+// define multer storage
 const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
     destination: function(req: Request, file: any, cb: any) {
         cb(undefined, "uploads/");
@@ -38,6 +38,13 @@ const upload = multer({"storage": storage
 const connection = require("./../db");
 const db = connection.db;
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * attachment upload to educational material req.params.materialId
+ */
 export async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
@@ -112,7 +119,13 @@ catch (err) {
     next(new ErrorHandler(500, "Not found"));
 }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * upload single file and create educational material if empty only educational material is created
+ */
 export async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         console.log(req.body);
@@ -242,6 +255,13 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
     }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * upload single file to educational material req.params.materialId
+ */
 export async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         const contentType = req.headers["content-type"];
@@ -353,7 +373,12 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
         next(new ErrorHandler(500, "Error in upload"));
     }
 }
-
+/**
+ *
+ * @param file
+ * @param materialid
+ * load file to allas storage
+ */
 export async function fileToStorage(file: any, materialid: String): Promise<{key: string, recordid: string}> {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
@@ -365,7 +390,14 @@ export async function fileToStorage(file: any, materialid: String): Promise<{key
     });
     return { key : obj.Key, recordid: recordid };
 }
-
+/**
+ *
+ * @param file
+ * @param metadata
+ * @param materialid
+ * @param attachmentId
+ * load attachment to allas storage
+ */
 export async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     // await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
@@ -378,6 +410,9 @@ export async function attachmentFileToStorage(file: any, metadata: any, material
     });
 }
 
+/**
+ * check if files in temporaryrecord table and try to load to allas storage
+ */
 export async function checkTemporaryRecordQueue() {
     try {
         // take hour of
@@ -410,7 +445,9 @@ export async function checkTemporaryRecordQueue() {
         console.log(error);
     }
 }
-
+/**
+ * check if files in temporaryattachment table and try to load to allas storage
+ */
 export async function checkTemporaryAttachmentQueue() {
     try {
         // take hour of
@@ -606,7 +643,13 @@ export async function deleteDataToTempAttachmentTable(filename: any, materialId:
     return data;
 }
 
-
+/**
+ *
+ * @param filePath
+ * @param filename
+ * @param bucketName
+ * send file to allas storage bucket
+ */
 export async function uploadFileToStorage(filePath: String, filename: String, bucketName: String) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -660,7 +703,13 @@ export async function uploadFileToStorage(filePath: String, filename: String, bu
         }
     });
 }
-
+/**
+ *
+ * @param base64data
+ * @param filename
+ * @param bucketName
+ * base64 data to storage
+ */
 export async function uploadBase64FileToStorage(base64data: String, filename: String, bucketName: String) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -721,6 +770,15 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
     }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @param isZip
+ * download file from allas bucket
+ * optional parameter isZip to html files
+ */
 export async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any) {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
     console.log("The req.params in downloadFileFromStorage: " + req.params);
@@ -755,13 +813,8 @@ export async function downloadFileFromStorage(req: Request, res: Response, next:
 }
 /**
  *
- * @param req
- * @param res
- * @param next
  * @param params
- * @param filename
- * @param isZip
- * function to download file from Pouta
+ * readstream from allas. params object: bucket name and allas filekey
  */
 export async function readStreamFromStorage(params: {Bucket: string; Key: string; }) {
     try {
@@ -781,6 +834,16 @@ export async function readStreamFromStorage(params: {Bucket: string; Key: string
         throw new Error(error);
     }
 }
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @param params
+ * @param filename
+ * @param isZip
+ * function to download file from Pouta
+ */
 export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: {Bucket: string; Key: string; }, filename: string, isZip?: any) {
     return new Promise(async (resolve) => {
         try {
@@ -916,6 +979,15 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
     }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @param keys
+ * @param archiveFiles
+ * pipe zip stream from allas to res. keys list of allas keys. archiveFiles list of file names.
+ */
 export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
     return new Promise(async resolve => {
         try {
