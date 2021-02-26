@@ -120,6 +120,13 @@ interface AuthorsOrganization {
     key: string;
     value: string;
 }
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * update educational material metadata
+ */
 export async function updateEducationalMaterialMetadata(req: Request , res: Response , next: NextFunction) {
     try {
         const metadata: EducationalMaterialMetadata = req.body;

@@ -60,6 +60,13 @@ export class CollectionHeading {
   }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * Create collection
+ */
 export async function createCollection(req: Request , res: Response, next: NextFunction) {
     try {
       const collection = new Collection(req.body);
@@ -72,6 +79,13 @@ export async function createCollection(req: Request , res: Response, next: NextF
       next(new ErrorHandler(500, "Issue creating collection"));
     }
 }
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * add educational material to collection
+ */
 export async function addEducationalMaterialToCollection(req: Request , res: Response, next: NextFunction) {
     try {
       const collection = new Collection(req.body);
@@ -83,7 +97,13 @@ export async function addEducationalMaterialToCollection(req: Request , res: Res
       next(new ErrorHandler(500, "Issue adding material to collection"));
     }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * remove educational material from collection
+ */
 export async function removeEducationalMaterialFromCollection(req: Request , res: Response, next: NextFunction) {
   try {
     const collection = new Collection(req.body);
@@ -95,7 +115,13 @@ export async function removeEducationalMaterialFromCollection(req: Request , res
     next(new ErrorHandler(500, "Issue removing material from collection"));
   }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * get users collections
+ */
 export async function getUserCollections(req: Request , res: Response, next: NextFunction) {
   try {
     const data = await userCollections(req.session.passport.user.uid);
@@ -106,7 +132,13 @@ export async function getUserCollections(req: Request , res: Response, next: Nex
     next(new ErrorHandler(500, "Issue getting collection"));
   }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * get collection data for authenticated user
+ */
 export async function getCollection(req: Request , res: Response, next: NextFunction) {
   try {
     let data;
@@ -123,7 +155,13 @@ export async function getCollection(req: Request , res: Response, next: NextFunc
     next(new ErrorHandler(500, "Issue getting collection"));
   }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * insert metadata to collection
+ */
 export async function updateCollection(req: Request, res: Response, next: NextFunction) {
   try {
     const collection = new Collection(req.body);
@@ -143,6 +181,13 @@ export async function updateCollection(req: Request, res: Response, next: NextFu
   }
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * get recent collections
+ */
 export async function getRecentCollection(req: Request , res: Response, next: NextFunction) {
   try {
     let data;

@@ -14,6 +14,13 @@ interface RateRequestBody {
 export class Rating {
   constructor(public materialId: string, public ratingContent: number, public ratingVisual: number, public feedbackPositive: string, public feedbackSuggest: string, public feedbackPurpose: string) {}
 }
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * add rating to educational material
+ */
 export async function addRating(req: Request , res: Response, next: NextFunction) {
     try {
       const rating = new Rating(req.body.materialId, req.body.ratingContent, req.body.ratingVisual, req.body.feedbackPositive, req.body.feedbackSuggest, req.body.feedbackPurpose);
@@ -26,7 +33,13 @@ export async function addRating(req: Request , res: Response, next: NextFunction
       next(new ErrorHandler(500, "Issue adding rating"));
     }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * get educational material ratings
+ */
 export async function getRating(req: Request, res: Response, next: NextFunction) {
   try {
     const response = await getRatings(req.params.materialId);
@@ -42,7 +55,13 @@ export async function getRating(req: Request, res: Response, next: NextFunction)
     next(new ErrorHandler(500, "Issue getting rating"));
   }
 }
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * get educational material ratings for a user
+ */
 export async function getUserRating(req: Request, res: Response, next: NextFunction) {
   try {
     const response = await getUserRatings(req.session.passport.user.uid, req.params.materialId);

@@ -86,7 +86,11 @@ const officeMimeTypes = [
     "application/vnd.oasis.opendocument.image-template",
     "application/vnd.oasis.opendocument.text-web"
 ];
-
+/**
+ *
+ * @param s
+ * check if office mime type
+ */
 export async function isOfficeMimeType(s: string) {
     if (officeMimeTypes.indexOf(s) >= 0) {
         return true;
@@ -97,6 +101,13 @@ export async function isOfficeMimeType(s: string) {
 
 }
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * download pdf from allas
+ */
 export async function downloadPdfFromAllas (req: Request, res: Response, next: NextFunction) {
     try {
         if (!req.params.key) {
@@ -160,6 +171,12 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
 //         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
 //     }
 // }
+/**
+ *
+ * @param filepath
+ * @param filename
+ * try to convert file from filepath to pdf
+ */
 export async function officeToPdf(filepath: string, filename: string) {
     try {
         console.log("in officeToPdf");
@@ -189,7 +206,9 @@ export async function officeToPdf(filepath: string, filename: string) {
         throw new Error(error);
     }
 }
-
+/**
+ * send file to office bucket
+ */
 export async function officeFilesToAllasAsPdf() {
     try {
         const files = await getOfficeFiles();
@@ -216,7 +235,9 @@ export async function officeFilesToAllasAsPdf() {
         console.log(error);
     }
 }
-
+/**
+ * get to record table
+ */
 export async function getOfficeFiles() {
     try {
         return await db.task(async (t: any) => {
@@ -231,7 +252,11 @@ export async function getOfficeFiles() {
         throw new Error(error);
     }
 }
-
+/**
+ *
+ * @param key
+ * read allas file and convert to pdf
+ */
 export async function allasFileToPdf(key: string) {
     try {
             return new Promise<string>(async (resolve, reject) => {
@@ -279,6 +304,12 @@ export async function allasFileToPdf(key: string) {
     }
 }
 
+/**
+ *
+ * @param key
+ * @param id
+ * update pdf key column
+ */
 export async function updatePdfKey(key: string, id: string) {
     try {
         return await db.tx(async (t: any) => {

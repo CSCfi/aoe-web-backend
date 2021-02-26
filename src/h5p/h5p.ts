@@ -21,6 +21,13 @@ export const h5pEditor: H5P.H5PEditor = H5P.fs(
     process.env.H5P_TEMPORARY_STORAGE_PATH || path.resolve("h5p/temporary-storage"), // the path on the local disc where temporary files (uploads) should be stored
     process.env.H5P_CONTENT_PATH || path.resolve("h5p/content") // the path on the local disc where content is stored
 );
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * play req.params.contentid h5p material
+ */
 export async function play(req: Request, res: Response, next: NextFunction) {
     try {
         console.log("Starting startH5Pplayer");
@@ -35,7 +42,9 @@ export async function play(req: Request, res: Response, next: NextFunction) {
         next(new ErrorHandler(error.statusCode, "Issue playing h5p"));
     }
 }
-
+/**
+ *
+ */
 export async function getH5PContent(req: Request, res: Response) {
     try {
         console.log(req.params.id);
@@ -78,7 +87,11 @@ export async function getH5PContent(req: Request, res: Response) {
         res.status(404);
     }
 }
-
+/**
+ *
+ * @param contentid
+ * start h5p player return main page
+ */
 export async function startH5Pplayer(contentid: string) {
     return new Promise(async (resolve, reject) => {
     try {
