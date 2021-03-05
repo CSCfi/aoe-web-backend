@@ -7,12 +7,12 @@ const db = connection.db;
 async function getMaterialMetaData(req: Request , res: Response) {
     try {
         const min = req.body.min;
-        let query2 = "select count(*) from educationalmaterial where publishedat is not null"; // removed: "and obsoleted = 0"
+        let query2 = "select count(*) from educationalmaterial where publishedat is not null"; // removed: "where ... and obsoleted = 0"
         const params: any = [];
         if (req.body.dateMin !== undefined && req.body.dateMax !== undefined && req.body.materialPerPage !== undefined && req.body.pageNumber !== undefined) {
             params.push(req.body.dateMin);
             params.push(req.body.dateMax);
-            query2 = "select count(*) from educationalmaterial where updatedat >= timestamp $1 and updatedat < timestamp $2 and publishedat is not null"; // removed: "and obsoleted = 0"
+            query2 = "select count(*) from educationalmaterial where updatedat >= timestamp $1 and updatedat < timestamp $2 and publishedat is not null"; // removed: "where ... and obsoleted = 0"
         }
         const documentcount = await db.oneOrNone(query2, params);
         let pagecount = 0;
@@ -23,7 +23,7 @@ async function getMaterialMetaData(req: Request , res: Response) {
         db.task(async (t: any)  => {
             const params: any = [];
             let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-            " from educationalmaterial as em where em.publishedat is not null and em.obsoleted = 0 order by em.id asc;";
+            " from educationalmaterial as em where em.publishedat is not null order by em.id asc;"; // removed: "where ... and em.obsoleted = 0"
             if (req.body.dateMin !== undefined && req.body.dateMax !== undefined && req.body.materialPerPage !== undefined && req.body.pageNumber !== undefined) {
                 console.log(req.body.dateMin);
                 console.log(req.body.dateMax);
@@ -33,14 +33,14 @@ async function getMaterialMetaData(req: Request , res: Response) {
                 params.push(req.body.pageNumber * req.body.materialPerPage);
                 params.push(req.body.materialPerPage);
                 query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
-                " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 and em.publishedat is not null and em.obsoleted = 0 order by em.id asc OFFSET $3 LIMIT $4;";
+                " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 and em.publishedat is not null order by em.id asc OFFSET $3 LIMIT $4;"; // removed: "where ... and obsoleted = 0"
             }
             console.log(query, params);
             return t.map(query, params, async (q: any) => {
             const m: any = [];
             await Promise.all(await t.map("select m.id, m.materiallanguagekey as language, link, version.priority, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted, pdfkey " +
             "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-            "left join material as m on version.materialid = m.id left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;", [q.id], async (q2: any) => {
+            "left join material as m on version.materialid = m.id left join record r on m.id = r.materialid where m.educationalmaterialid = $1;", [q.id], async (q2: any) => { // removed: "where ... and obsoleted = 0;"
                 q2.filepath = await aoeFileDownloadUrl(q2.filekey);
                 q2.pdfpath = await aoePdfDownloadUrl(q2.pdfkey);
                 t.any("select * from materialdisplayname where materialid = $1;", q2.id)
