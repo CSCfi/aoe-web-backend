@@ -785,7 +785,7 @@ export async function downloadFileFromStorage(req: Request, res: Response, next:
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
     return new Promise(async (resolve) => {
         try {
-            const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
+            const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1 " +
                         "union " +
                         "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
             console.log("The query from downloadFileFromStorage: " + query, [req.params.key]);
