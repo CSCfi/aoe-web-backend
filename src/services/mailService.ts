@@ -1,7 +1,7 @@
 // const nodemailer = require("nodemailer");
 import { Request, Response, NextFunction } from "express";
 import { createTransport, createTestAccount } from "nodemailer";
-import { ErrorHandler } from "./../helpers/errorHandler";
+// import { ErrorHandler } from "./../helpers/errorHandler";
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -39,7 +39,7 @@ export async function sendExpirationMail() {
                 mailOptions.to = element;
                 const info = await transporter.sendMail(mailOptions);
                 console.log("Message sent: %s", info.messageId);
-                console.log("Message sent: %s", info.response);
+                // console.log("Message sent: %s", info.response);
             }
         }
     }
@@ -78,7 +78,7 @@ export async function sendRatingNotificationMail() {
                 try {
                     const info = await transporter.sendMail(mailOptions);
                     console.log("Message sent: %s", info.messageId);
-                    console.log("Message sent: %s", info.response);
+                    // console.log("Message sent: %s", info.response);
                 }
                 catch (error) {
                     console.error(error);
@@ -135,7 +135,7 @@ export async function sendVerificationEmail(user: string, email: string) {
     if (process.env.SEND_EMAIL === "1") {
     const info = await transporter.sendMail(mailOptions);
     console.log("Message sent: %s", info.messageId);
-    console.log("Message sent: %s", info.response);
+    // console.log("Message sent: %s", info.response);
     }
     return url;
 }
