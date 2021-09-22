@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  aoe-web-backend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: aoe-web-backend-demo:latest
+    container_name: aoe-web-backend-demo
+    restart: unless-stopped
+    ports:
+      - "3002:3000"
+    volumes:
+      - /data/thumbnail:/app/thumbnail
+      - /data/uploads:/app/uploads
+      - /webdata:/webdata
+      - /databackup/aoe/:/databackup/aoe/
+      - /databackup/aoethumbnail:/databackup/aoethumbnail
+    env_file:
+      - /environment/aoe-web-backend/.env
+    user: "root:5606"
+    networks:
+      - network-web-backend-demo
+
+networks:
+  network-web-backend-demo:
+    driver: bridge

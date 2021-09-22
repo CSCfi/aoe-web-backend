@@ -1,0 +1,39 @@
+variables:
+  DOCKER_HOST: unix:///var/run/docker.sock
+  DOCKER_DRIVER: overlay2
+
+image:
+  name: docker/compose:1.29.2
+
+services:
+  - name: docker:dind
+    alias: docker
+
+stages:
+  - build
+  - deploy
+
+before_script:
+  - docker version
+  - docker-compose version
+
+build_demo:
+  stage: build
+  script:
+    - echo "DEMO build"
+    - docker-compose -f docker-compose.demo.yml down
+    - docker-compose -f docker-compose.demo.yml build
+  only:
+    - dev
+  tags:
+    - demo
+
+deploy_demo:
+  stage: deploy
+  script:
+    - echo "DEMO deploy"
+    - docker-compose -f docker-compose.demo.yml up -d
+  only:
+    - dev
+  tags:
+    - demo
