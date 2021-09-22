@@ -41,7 +41,7 @@ COPY --from=node_builder /app/dist/ /app/dist/
 COPY ./views /app/views
 COPY ./package.json /app
 COPY ./package-lock.json /app
-COPY ./.env.example /app
+# COPY /environment/aoe-web-backend/.env /app
 COPY ./src/elasticSearch/aoemapping.json /app
 COPY ./src/elasticSearch/aoecollectionmapping.json /app
 COPY ./h5p/core /app/webdata/h5p/core
