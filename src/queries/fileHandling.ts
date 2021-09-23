@@ -4,7 +4,7 @@ import { insertEducationalMaterialName } from "./apiQueries";
 import { updateDownloadCounter } from "./analyticsQueries";
 import { hasAccesstoPublication } from "./../services/authService";
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from "./../helpers/officeToPdfConverter";
-import { ReadStream } from "fs";
+// import { ReadStream } from "fs";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
 const globalLog = require("global-request-logger");
@@ -785,9 +785,13 @@ export async function downloadFileFromStorage(req: Request, res: Response, next:
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
     return new Promise(async (resolve) => {
         try {
-            const query = "select originalfilename from record right join material as m on m.id = materialid where m.obsoleted = 0 and filekey = $1" +
-                        "union " +
-                        "select originalfilename from attachment where filekey = $1 and obsoleted = 0;";
+            const query =
+                "SELECT originalfilename FROM record " +
+                "RIGHT JOIN material AS m ON m.id = materialid " +
+                "WHERE m.obsoleted = 0 AND filekey = $1 " +
+                "UNION " +
+                "SELECT originalfilename FROM attachment " +
+                "WHERE filekey = $1 AND obsoleted = 0";
             console.log("The query from downloadFileFromStorage: " + query, [req.params.key]);
             const response = await db.oneOrNone(query, [req.params.key]);
             console.log("The response from query in downloadFileFromStorage function: " + response);
