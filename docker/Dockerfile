@@ -41,7 +41,6 @@ COPY --from=node_builder /app/dist/ /app/dist/
 COPY ./views /app/views
 COPY ./package.json /app
 COPY ./package-lock.json /app
-# COPY /environment/aoe-web-backend/.env /app
 COPY ./src/elasticSearch/aoemapping.json /app
 COPY ./src/elasticSearch/aoecollectionmapping.json /app
 COPY ./h5p/core /app/webdata/h5p/core
@@ -53,7 +52,6 @@ COPY ./docker/supervisord.ini /etc/
 COPY ./docker/process.yml /app/
 COPY ./docker/aoe.ini /etc/supervisord.d/
 COPY ./docker/redis.ini /etc/supervisord.d/
-
 
 EXPOSE 3000
 WORKDIR /app
