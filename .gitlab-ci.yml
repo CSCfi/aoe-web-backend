@@ -12,6 +12,7 @@ services:
 stages:
   - build
   - deploy
+  - cleanup
 
 before_script:
   - docker version
@@ -21,8 +22,8 @@ build_demo:
   stage: build
   script:
     - echo "DEMO build"
-    - docker-compose -f docker-compose.demo.yml down
-    - docker-compose -f docker-compose.demo.yml build
+    - docker-compose -f docker-compose.prod.yml down
+    - docker-compose -f docker-compose.prod.yml build
   only:
     - dev
   tags:
@@ -32,7 +33,17 @@ deploy_demo:
   stage: deploy
   script:
     - echo "DEMO deploy"
-    - docker-compose -f docker-compose.demo.yml up -d
+    - docker-compose -f docker-compose.prod.yml up -d
+  only:
+    - dev
+  tags:
+    - demo
+
+cleanup:
+  stage: cleanup
+  script:
+    - echo "DEMO system clean up"
+    - docker system prune -a --volumes -f
   only:
     - dev
   tags:
