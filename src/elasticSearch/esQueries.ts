@@ -1,4 +1,4 @@
-/// <reference path="es.ts" />
+// <reference path="es.ts" />
 import {
     Client,
     ApiResponse

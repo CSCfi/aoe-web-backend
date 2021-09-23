@@ -1507,7 +1507,7 @@ export async function insertIntoMaterial(obj: any, materialid: any) {
     await db.any(query);
 }
 
-function createSlug(str: String) {
+function createSlug(str: string) {
     str = str.replace(/[ä]/g, "a");
     str = str.replace(/[ö]/g, "o");
     str = str.replace(/[å]/g, "a");
