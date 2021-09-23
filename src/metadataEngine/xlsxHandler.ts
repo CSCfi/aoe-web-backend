@@ -34,7 +34,7 @@ const upload = multer( {
 
 const fs = require("fs");
 
-async function createPropertyNameList(obj: any, str: String) {
+async function createPropertyNameList(obj: any, str: string) {
     const list: any = [];
     Object.getOwnPropertyNames(obj).forEach(
         function (val: any, idx, array) {
@@ -182,7 +182,7 @@ async function hasDuplicates(array: any, obj: any) {
     return false;
 }
 
-function createMessage(row: Number, column: String, reason: String) {
+function createMessage(row: number, column: string, reason: string) {
     const data = {
         row: row,
         column: column,

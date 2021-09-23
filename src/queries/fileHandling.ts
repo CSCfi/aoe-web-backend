@@ -164,7 +164,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                         });
                     }
                     else {
-                        let materialid: String;
+                        let materialid: string;
                         const fileDetails = JSON.parse(req.body.fileDetails);
                         const material: any = [];
                         db.tx(async (t: any) => {
@@ -286,7 +286,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                     }
                     else {
                         console.log("uploadFileToMaterial details to database for: " + file.originalname);
-                        let materialid: String;
+                        let materialid: string;
                         const fileDetails = JSON.parse(req.body.fileDetails);
                         const material: any = [];
                         db.tx(async (t: any) => {
@@ -379,7 +379,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
  * @param materialid
  * load file to allas storage
  */
-export async function fileToStorage(file: any, materialid: String): Promise<{key: string, recordid: string}> {
+export async function fileToStorage(file: any, materialid: string): Promise<{key: string, recordid: string}> {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
     await deleteDataFromTempRecordTable(file.filename, materialid);
@@ -493,7 +493,7 @@ export async function insertDataToEducationalMaterialTable(req: Request, t: any)
 
 
 
-export async function insertDataToDisplayName(t: any, educationalmaterialid: String, materialid: String, fileDetails: any) {
+export async function insertDataToDisplayName(t: any, educationalmaterialid: string, materialid: string, fileDetails: any) {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     if (fileDetails.displayName && materialid) {
@@ -551,7 +551,7 @@ export async function insertDataToDisplayName(t: any, educationalmaterialid: Str
     return queries;
 }
 
-export async function insertDataToMaterialTable(t: any, materialID: String, location: any, language: String, priority: number) {
+export async function insertDataToMaterialTable(t: any, materialID: string, location: any, language: string, priority: number) {
     let query;
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
@@ -561,7 +561,7 @@ export async function insertDataToMaterialTable(t: any, materialID: String, loca
     return data;
 }
 
-export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String, metadata: any) {
+export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string, metadata: any) {
     const queries = [];
     let query;
     const data = await db.tx(async (t: any) => {
@@ -600,7 +600,7 @@ export async function insertDataToTempAttachmentTable(files: any, metadata: any,
     return data;
 }
 
-export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: String) {
+export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string) {
     let query;
     try {
     const data = await db.tx(async (t: any) => {
@@ -650,7 +650,7 @@ export async function deleteDataToTempAttachmentTable(filename: any, materialId:
  * @param bucketName
  * send file to allas storage bucket
  */
-export async function uploadFileToStorage(filePath: String, filename: String, bucketName: String) {
+export async function uploadFileToStorage(filePath: string, filename: string, bucketName: string) {
     return new Promise(async (resolve, reject) => {
         try {
             const util = require("util");
@@ -710,7 +710,7 @@ export async function uploadFileToStorage(filePath: String, filename: String, bu
  * @param bucketName
  * base64 data to storage
  */
-export async function uploadBase64FileToStorage(base64data: String, filename: String, bucketName: String) {
+export async function uploadBase64FileToStorage(base64data: string, filename: string, bucketName: string) {
     return new Promise(async (resolve, reject) => {
         try {
             const config = {

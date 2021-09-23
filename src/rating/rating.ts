@@ -76,6 +76,6 @@ export async function getUserRating(req: Request, res: Response, next: NextFunct
     next(new ErrorHandler(500, "Issue getting user rating"));
   }
 }
-export async function addRatingToDatabase(rating: Rating) {
-
-}
+// export async function addRatingToDatabase(rating: Rating) {
+//
+// }
