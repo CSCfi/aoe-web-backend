@@ -259,7 +259,7 @@ export function createMultiMatchObject(keywords: string, fields: string[]) {
  * uses elastic search term object as default or
  * must match list if alignmentObjectType is defined
  */
-export function createShouldObject(filter: Array<object>, key: string, valueList: Array<string>, alignmentObjectType?: string) {
+export function createShouldObject(filter: Array<any>, key: string, valueList: Array<string>, alignmentObjectType?: string) {
   try {
     if (alignmentObjectType) {
       const mustMatchObjectList: MatchObject[] = [];

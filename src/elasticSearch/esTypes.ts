@@ -1,11 +1,11 @@
 export interface MultiMatchSeachBody {
     query: {
       bool: {
-        must: Array<object>,
-        filter?: object
+        must: Array<any>,
+        filter?: any
       }
     };
-    sort?: Array<object>;
+    sort?: Array<any>;
   }
 
   export const expiresFilterObject = {

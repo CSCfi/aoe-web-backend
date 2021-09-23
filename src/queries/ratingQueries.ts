@@ -1,4 +1,5 @@
 import { Rating } from "./../rating/rating";
+
 const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
@@ -13,30 +14,33 @@ const mode = new TransactionMode({
 });
 
 interface RatingResponse {
-        "materialId": string;
-        "ratingContent": number;
-        "ratingVisual": number;
-        "feedbackPositive": string;
-        "feedbackSuggest": string;
-        "feedbackPurpose": string;
-        "updatedAt": string;
-        "firstName": string;
-        "lastName": string;
+    "materialId": string;
+    "ratingContent": number;
+    "ratingVisual": number;
+    "feedbackPositive": string;
+    "feedbackSuggest": string;
+    "feedbackPurpose": string;
+    "updatedAt": string;
+    "firstName": string;
+    "lastName": string;
 }
+
 export async function insertRating(rating: Rating, username: string) {
     try {
         await db.tx(async (t: any) => {
             const queries: any = [];
-            let query;
-            query = "INSERT INTO rating (ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, educationalmaterialid, usersusername, updatedat) VALUES ($1,$2,$3,$4,$5,$6,$7,now()) ON CONFLICT (educationalmaterialid, usersusername) DO " +
-            "UPDATE SET ratingcontent = $1, ratingvisual = $2, feedbackpositive = $3, feedbacksuggest = $4, feedbackpurpose = $5, updatedat = now();";
+            const query = "INSERT INTO rating (ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, " +
+                "feedbackpurpose, educationalmaterialid, usersusername, updatedat) " +
+                "VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) " +
+                "ON CONFLICT (educationalmaterialid, usersusername) DO " +
+                "UPDATE SET ratingcontent = $1, ratingvisual = $2, feedbackpositive = $3, feedbacksuggest = $4, " +
+                "feedbackpurpose = $5, updatedat = now()";
             const response = await t.none(query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
             console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
             queries.push(response);
             return t.batch(queries);
         });
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         throw new Error(err);
     }
@@ -46,15 +50,15 @@ export async function insertRatingAverage(id: string) {
     try {
         await db.tx(async (t: any) => {
             const queries: any = [];
-            let query;
-            query = "update educationalmaterial set ratingcontentaverage = (select avg(ratingcontent) from rating where educationalmaterialid = $1), ratingvisualaverage = (select avg(ratingvisual) from rating where educationalmaterialid = $1) where id = $1;";
+            const query = "UPDATE educationalmaterial SET ratingcontentaverage = " +
+                "(SELECT AVG(ratingcontent) FROM rating WHERE educationalmaterialid = $1), ratingvisualaverage = " +
+                "(SELECT AVG(ratingvisual) FROM rating WHERE educationalmaterialid = $1) WHERE id = $1";
             console.log("RatingQueries insertRatingAverage: " + query, [id]);
             const response = await t.none(query, [id]);
             queries.push(response);
             return t.batch(queries);
         });
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         throw new Error(err);
     }
@@ -83,26 +87,32 @@ export async function getRatings(materialId: string) {
             return {};
         }
         for (const element of data.ratings) {
-            ratings.push({"materialId" : element.educationalmaterialid,
-            "ratingContent": element.ratingcontent,
-            "ratingVisual": element.ratingvisual,
-            "feedbackPositive": element.feedbackpositive,
-            "feedbackSuggest": element.feedbacksuggest,
-            "feedbackPurpose": element.feedbackpurpose,
-            "updatedAt": element.updatedat,
-            "firstName": element.firstname,
-            "lastName": element.lastname});
+            ratings.push({
+                "materialId": element.educationalmaterialid,
+                "ratingContent": element.ratingcontent,
+                "ratingVisual": element.ratingvisual,
+                "feedbackPositive": element.feedbackpositive,
+                "feedbackSuggest": element.feedbacksuggest,
+                "feedbackPurpose": element.feedbackpurpose,
+                "updatedAt": element.updatedat,
+                "firstName": element.firstname,
+                "lastName": element.lastname
+            });
         }
-        const name = data.name.reduce(function(map, obj) {
+        const name = data.name.reduce(function (map, obj) {
             map[obj.language] = obj.materialname;
             return map;
         }, {});
-        return {"ratingsCount" : data.ratingsCount.count,
-        "averages": (!data.averages) ? undefined : {"content": data.averages.ratingcontentaverage, "visual": data.averages.ratingvisualaverage},
-        "name": name,
-        ratings};
-    }
-    catch (err) {
+        return {
+            "ratingsCount": data.ratingsCount.count,
+            "averages": (!data.averages) ? undefined : {
+                "content": data.averages.ratingcontentaverage,
+                "visual": data.averages.ratingvisualaverage
+            },
+            "name": name,
+            ratings
+        };
+    } catch (err) {
         console.log(err);
         throw new Error(err);
     }
@@ -118,8 +128,7 @@ export async function getUserRatings(username: string, materialId: string) {
         });
         if (!data.ratings) {
             return {};
-        }
-        else {
+        } else {
             return {
                 "materialId": materialId,
                 "ratingContent": data.ratings.ratingcontent,
@@ -130,8 +139,7 @@ export async function getUserRatings(username: string, materialId: string) {
                 "updatedAt": data.ratings.updatedat
             };
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.error(err);
         throw new Error(err);
     }
