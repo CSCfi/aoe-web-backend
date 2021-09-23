@@ -5,8 +5,7 @@ const db = connection.db;
 export async function updateViewCounter(id: string) {
     try {
         await db.tx(async (t: any) => {
-            let query;
-            query = "update educationalmaterial set viewcounter = viewcounter + 1, counterupdatedat = now() where id = $1;";
+            const query = "update educationalmaterial set viewcounter = viewcounter + 1, counterupdatedat = now() where id = $1;";
             await t.none(query, [id]);
         });
     }
@@ -18,8 +17,7 @@ export async function updateViewCounter(id: string) {
 export async function updateDownloadCounter(id: string) {
     try {
         await db.tx(async (t: any) => {
-            let query;
-            query = "update educationalmaterial set downloadcounter = downloadcounter + 1, counterupdatedat = now() where id = $1;";
+            const query = "update educationalmaterial set downloadcounter = downloadcounter + 1, counterupdatedat = now() where id = $1;";
             await t.none(query, [id]);
         });
     }

@@ -48,7 +48,7 @@ export async function hasAccesstoPublication(id: number, req: Request) {
     }
 }
 
-export async function InsertUserToDatabase(userinfo: object, acr: string) {
+export async function InsertUserToDatabase(userinfo: any, acr: string) {
     try {
         console.log("The userinfo in function at authservice: " + userinfo);
         let uid: string;

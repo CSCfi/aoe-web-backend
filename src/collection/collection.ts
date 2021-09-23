@@ -190,8 +190,7 @@ export async function updateCollection(req: Request, res: Response, next: NextFu
  */
 export async function getRecentCollection(req: Request , res: Response, next: NextFunction) {
   try {
-    let data;
-    data = await recentCollectionQuery();
+    const data = await recentCollectionQuery();
     res.status(200).json(data);
   }
   catch (error) {

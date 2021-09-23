@@ -12,9 +12,9 @@ log: "trace",
 keepAlive: true});
 // values for index last update time
 export namespace Es {
-    export let ESupdated = {value : new Date()};
-    export let ESCounterUpdated = {value : new Date()};
-    export let CollectionEsUpdated = {value : new Date()};
+    export const ESupdated = {value : new Date()};
+    export const ESCounterUpdated = {value : new Date()};
+    export const CollectionEsUpdated = {value : new Date()};
 }
 const connection = require("./../db");
 const pgp = connection.pgp;
