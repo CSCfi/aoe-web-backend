@@ -1,7 +1,7 @@
 import promise from 'bluebird';
 import moment from 'moment';
-import pgPromise, {IConnected, IDatabase, IEventContext, IInitOptions, IMain} from 'pg-promise';
-import {IClient} from 'pg-promise/typescript/pg-subset';
+import pgPromise, { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
+import { IClient } from 'pg-promise/typescript/pg-subset';
 
 const PG_HOST: string = process.env.PG_HOST || '';
 const PG_PORT: string = process.env.PG_PORT || '';
