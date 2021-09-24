@@ -8,7 +8,7 @@ export async function getEmptyUrns(limit: number) {
             const query = "SELECT educationalmaterialid, publishedat FROM educationalmaterialversion " +
                 "WHERE urn IS NULL " +
                 "ORDER BY educationalmaterialid " +
-                "LIMIT $1;";
+                "LIMIT $1";
             console.log("getEmptyUrns");
             console.log(query);
             return await t.any(query, [limit]);
