@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-const connection = require("./../db");
+import connection from '../resources/pg-config.module';
+
 const db = connection.db;
 
 export function checkAuthenticated (req: Request, res: Response, next: NextFunction) {

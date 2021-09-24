@@ -1,8 +1,9 @@
 // const nodemailer = require("nodemailer");
 import { Request, Response, NextFunction } from "express";
 import { createTransport, createTestAccount } from "nodemailer";
+import connection from '../resources/pg-config.module';
+
 // import { ErrorHandler } from "./../helpers/errorHandler";
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 const transporter = createTransport({

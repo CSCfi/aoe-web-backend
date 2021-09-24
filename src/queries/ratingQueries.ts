@@ -1,6 +1,6 @@
 import { Rating } from "./../rating/rating";
+import connection from '../resources/pg-config.module';
 
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 const TransactionMode = pgp.txMode.TransactionMode;

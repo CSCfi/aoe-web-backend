@@ -6,9 +6,9 @@ import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
+import connection from '../resources/pg-config.module';
 
 const fh = require("./fileHandling");
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 const elasticSearch = require("./../elasticSearch/es");

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from "./../services/urlService";
+import connection from '../resources/pg-config.module';
 
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 

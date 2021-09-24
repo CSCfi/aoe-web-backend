@@ -5,12 +5,12 @@ const elasticsearch = require("@elastic/elasticsearch");
 import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResult } from "./esTypes";
 import { createMatchAllObject } from "./esQueries";
 import { ApiResponse } from "@elastic/elasticsearch";
+import connection from '../resources/pg-config.module';
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true});
 // const client = new Client({ node: process.env.ES_NODE});
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 
