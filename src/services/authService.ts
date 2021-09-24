@@ -3,11 +3,10 @@ import connection from '../resources/pg-config.module';
 
 const db = connection.db;
 
-export function checkAuthenticated (req: Request, res: Response, next: NextFunction) {
+export function checkAuthenticated(req: Request, res: Response, next: NextFunction) {
     if (req.isAuthenticated()) {
         return next();
-    }
-    else {
+    } else {
         res.sendStatus(401);
     }
 }
@@ -15,14 +14,16 @@ export function checkAuthenticated (req: Request, res: Response, next: NextFunct
 export async function getUserData(req: Request, res: Response) {
     const query = "SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;";
     const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
-    res.status(200).json({"userdata" : req.session.passport.user,
-                            "email" : data.email,
-                            "termsofusage" : data.termsofusage,
-                            "verifiedEmail" : data.verifiedemail,
-                            "newRatings" : data.newratings,
-                            "almostExpired": data.almostexpired,
-                            "termsUpdated": data.termsupdated,
-                            "allowTransfer": data.allowtransfer});
+    res.status(200).json({
+        "userdata": req.session.passport.user,
+        "email": data.email,
+        "termsofusage": data.termsofusage,
+        "verifiedEmail": data.verifiedemail,
+        "newRatings": data.newratings,
+        "almostExpired": data.almostexpired,
+        "termsUpdated": data.termsupdated,
+        "allowTransfer": data.allowtransfer
+    });
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
@@ -38,12 +39,10 @@ export async function hasAccesstoPublication(id: number, req: Request) {
         const result = await db.oneOrNone(query, params.id);
         if (req.session.passport.user.uid === result) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.log(error);
         throw new Error(error);
     }
@@ -55,14 +54,11 @@ export async function InsertUserToDatabase(userinfo: any, acr: string) {
         let uid: string;
         if (acr == process.env.SUOMIACR) {
             uid = userinfo["sub"];
-        }
-        else if (acr == process.env.HAKAACR) {
+        } else if (acr == process.env.HAKAACR) {
             uid = userinfo["eppn"];
-        }
-        else if (acr == process.env.MPASSACR) {
+        } else if (acr == process.env.MPASSACR) {
             uid = userinfo["mpass_uid"];
-        }
-        else {
+        } else {
             throw new Error("Unknown authentication method");
         }
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
@@ -71,8 +67,7 @@ export async function InsertUserToDatabase(userinfo: any, acr: string) {
             const query = "insert into users (firstname , lastname, username, preferredlanguage,preferredtargetname,preferredalignmenttype )values ($1,$2,$3,'fi','','');";
             await db.none(query, [userinfo["given_name"], userinfo["family_name"], uid]);
         }
-    }
-    catch (e) {
+    } catch (e) {
         console.log(e);
         return Promise.reject(e);
     }
@@ -82,11 +77,9 @@ export async function hasAccessToPublicaticationMW(req: Request, res: Response, 
     let id = req.params.id;
     if (req.params.id) {
         id = req.params.id;
-    }
-    else if (req.params.materialId) {
+    } else if (req.params.materialId) {
         id = req.params.materialId;
-    }
-    else if (req.params.materialid) {
+    } else if (req.params.materialid) {
         id = req.params.materialid;
     }
     const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
@@ -99,8 +92,7 @@ export async function hasAccessToPublicaticationMW(req: Request, res: Response, 
     }
     if (req.session.passport.user.uid === result.usersusername) {
         return next();
-    }
-    else {
+    } else {
         res.sendStatus(401);
     }
 }
@@ -109,8 +101,7 @@ export async function hasAccessToMaterial(req: Request, res: Response, next: Nex
     let id = req.params.materialId;
     if (req.params.materialId) {
         id = req.params.materialId;
-    }
-    else if (req.params.fileid) {
+    } else if (req.params.fileid) {
         id = req.params.fileid;
     }
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = $1";
@@ -123,8 +114,7 @@ export async function hasAccessToMaterial(req: Request, res: Response, next: Nex
     }
     if (req.session.passport.user.uid === result.usersusername) {
         return next();
-    }
-    else {
+    } else {
         res.sendStatus(401);
     }
 }
@@ -132,7 +122,7 @@ export async function hasAccessToMaterial(req: Request, res: Response, next: Nex
 export async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction) {
     const id = req.params.attachmentid;
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = " +
-                    "(select materialid from attachment where attachment.id =$1);";
+        "(select materialid from attachment where attachment.id =$1);";
     const result = await db.oneOrNone(query, [id]);
     console.log(req.session.passport.user.uid);
     console.log(result);
@@ -142,8 +132,7 @@ export async function hasAccessToAttachmentFile(req: Request, res: Response, nex
     }
     if (req.session.passport.user.uid === result.usersusername) {
         return next();
-    }
-    else {
+    } else {
         res.sendStatus(401);
     }
 }
@@ -154,8 +143,7 @@ export async function hasAccessToCollection(req: Request, res: Response, next: N
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
         return res.sendStatus(401);
-    }
-    else {
+    } else {
         return next();
     }
 }
@@ -166,19 +154,18 @@ export async function hasAccessToCollectionParams(req: Request, res: Response, n
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
         return res.sendStatus(401);
-    }
-    else {
+    } else {
         return next();
     }
 }
+
 export async function hasAccessToCollectionId(id: string, username: string) {
     const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await db.oneOrNone(query, [id, username]);
     if (!result) {
         console.log("No result found for " + [id, username]);
         return false;
-    }
-    else {
+    } else {
         return true;
     }
 }
@@ -192,12 +179,10 @@ export async function hasAccessToAoe(req: Request, res: Response, next: NextFunc
         if (!result) {
             console.log("No Aoe result found for " + [req.session.passport.user.uid]);
             return res.sendStatus(401);
-        }
-        else {
+        } else {
             return next();
         }
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e);
         return res.sendStatus(500);
     }
@@ -212,12 +197,10 @@ export async function userInfo(req: Request, res: Response, next: NextFunction) 
         if (!result) {
             console.log("No Aoe result found for " + [req.session.passport.user.uid]);
             return res.sendStatus(404);
-        }
-        else {
+        } else {
             return res.sendStatus(200);
         }
-    }
-    catch (e) {
+    } catch (e) {
         console.error(e);
         return res.sendStatus(404);
     }
@@ -229,27 +212,26 @@ export async function hasAoeAccess(username: string) {
     if (!result) {
         console.log("No result found for " + [username]);
         return false;
-    }
-    else {
+    } else {
         return true;
     }
 }
 
 export function logout(req: Request, res: Response) {
     req.logout();
-    res.status(200).json({"status" : "ok"});
+    res.status(200).json({"status": "ok"});
 }
-// module.exports = {
-//     isUser: isUser,
-//     getUserData: getUserData,
-//     hasAccesstoPublication,
-//     checkAuthenticated: checkAuthenticated,
-//     InsertUserToDatabase: InsertUserToDatabase,
-//     hasAccessToPublicaticationMW: hasAccessToPublicaticationMW,
-//     logout: logout,
-//     hasAccessToMaterial : hasAccessToMaterial,
-//     hasAccessToAttachmentFile : hasAccessToAttachmentFile,
-//     hasAccessToCollection,
-//     hasAccessToCollectionParams
-//     // hasAccess: hasAccess,
-// };
+
+export default {
+    getUserData,
+    hasAccesstoPublication,
+    checkAuthenticated,
+    InsertUserToDatabase,
+    hasAccessToPublicaticationMW,
+    logout,
+    hasAccessToMaterial,
+    hasAccessToAttachmentFile,
+    hasAccessToCollection,
+    hasAccessToCollectionParams,
+    userInfo,
+};

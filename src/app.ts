@@ -1,245 +1,187 @@
-import express, { Response, Request, NextFunction } from "express";
-import compression from "compression";  // compresses requests
-import lusca from "lusca";
-import dotenv from "dotenv";
-import path from "path";
-import { isLoginEnabled } from "./services/routeEnablerService";
+import express, {Response, Request, NextFunction} from 'express';
+import compression from 'compression';
+import lusca from 'lusca';
+import path from 'path';
+import {isLoginEnabled} from './services/routeEnablerService';
+import session from 'express-session';
+import passport from 'passport';
+import uuid from 'uuid/v4';
+import cookieParser from 'cookie-parser';
+import flash from 'connect-flash';
+import {ErrorHandler, handleError} from './helpers/errorHandler';
+import cors from 'cors';
+import * as homeController from './controllers/home';
+import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
+import {h5pEditor} from './h5p/h5p';
+import apiRouter from './routes/routes';
+import ah from './services/authService';
+import bodyParser from 'body-parser';
+import redisClient from './resources/redis-client.module';
+import connectRedis from 'connect-redis';
+import openidClient, {custom, HttpOptions} from 'openid-client';
 
-// Load environment variables from .env file, where API keys and passwords are configured
-dotenv.config({path: ".env"});
-const util = require("util");
-const ah = require("./services/authService");
-
-const passport = require("passport");
-const flash = require("connect-flash");
-const session = require("express-session");
-import { ErrorHandler, handleError } from "./helpers/errorHandler";
-const cors = require("cors");
 const app = express();
-const morgan = require("morgan");
-const bodyParser = require("body-parser");
 
-import * as homeController from "./controllers/home";
-import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
-import { h5pEditor } from "./h5p/h5p";
-
-const apiRouter = require("./routes/routes");
-// Create Express server
-const redis = require("redis");
-const redisclient = redis.createClient({
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-    password: process.env.REDIS_PASS,
-}
+/**
+ * OpenID Connect Session Managament
+ */
+const RedisStore = connectRedis(session);
+const httpOptions: HttpOptions = {
+    timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
+    retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
+    // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
+};
+custom.setHttpOptionsDefaults(httpOptions);
+const Issuer = openidClient.Issuer;
+const Strategy = openidClient.Strategy;
+app.set('trust proxy', 1);
+app.use(
+    session({
+        genid: () => {
+            return uuid(); // use UUIDs for session IDs
+        },
+        store: new RedisStore({client: redisClient}),
+        resave: false,
+        saveUninitialized: true,
+        secret: process.env.SESSION_SECRET || 'xyz',
+        cookie: {
+            httpOnly: true,
+            maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
+        },
+    }),
 );
-const RedisStore = require("connect-redis")(session);
 
-// setInterval(() => ah.authIssuer(), 30000);
-const { custom } = require("openid-client");
-custom.setHttpOptionsDefaults({
-  timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
-  retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
-  clock_tolerance : Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
-//   hooks: {
-//     beforeRequest: [
-//       (options) => {
-//         console.log(options.url.href);
-//         console.log("--> %s %s", options.method.toUpperCase(), options.url.href);
-//         console.log("--> HEADERS %o", options.headers);
-//         if (options.body) {
-//           console.log("--> BODY %s", options.body);
-//         }
-//       },
-//     ],
-//     afterResponse: [
-//       (response) => {
-//         console.log("<-- %i FROM %s %s", response.statusCode, response.request.gotOptions.method.toUpperCase(), response.request.gotOptions.href);
-//         console.log("<-- HEADERS %o", response.headers);
-//         if (response.body) {
-//           console.log("<-- BODY %s", response.body);
-//         }
-//         return response;
-//       },
-//     ],
-// onError: [
-//     error => {
-//         console.log("this is error ####################");
-//         const {response} = error;
-//          if (response && response.body) {
-//             error.name = "GitHubError";
-//             error.message = `${response.body.message} (${error.statusCode})`;
-//         }
-
-//          return error;
-//     }
-// ]
-//   },
-});
-
-const Issuer = require("openid-client").Issuer;
-const Strategy = require("openid-client").Strategy;
-app.set("trust proxy", 1);
-app.use(session({
-    store: new RedisStore( {client: redisclient}),
-    resave: false,
-    saveUninitialized: true,
-    secret: process.env.SESSION_SECRET,
-    credentials: "include",
-    cookie: {
-        httpOnly: true,
-        maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000},
-        sameSite: "none",
-        secure: true
-}));
-
-passport.serializeUser(function (user, done) {
+/**
+ * OpenID Connect Authorization Management
+ */
+passport.serializeUser((user, done) => {
     done(undefined, user);
 });
-
-passport.deserializeUser((userinfo, done) => {
+passport.deserializeUser((userinfo: any, done) => {
     done(undefined, {user: userinfo.id});
 });
-
-Issuer.discover(process.env.PROXY_URI)
-    .then(function (testIssuer, req: Request) {
+Issuer.discover(process.env.PROXY_URI || '')
+    .then((testIssuer: InstanceType<typeof Issuer>) => {
         const client = new testIssuer.Client({
-            client_id: process.env.CLIENT_ID,
+            client_id: process.env.CLIENT_ID || '',
             client_secret: process.env.CLIENT_SECRET,
             redirect_uri: process.env.REDIRECT_URI,
-            response_type: "code",
+            response_type: 'code',
         });
-        console.log("Discovered issuer %s %O", testIssuer.issuer, testIssuer.metadata);
-        passport.use("oidc", new Strategy({client}, (tokenset: any, userinfo: any, done: any, next: NextFunction) => {
-            console.log("tokenset", tokenset);
-            console.log("access_token", tokenset.access_token);
-            console.log("id_token", tokenset.id_token);
-            console.log("claims", tokenset.claims());
-            console.log("userinfo", userinfo);
-            console.log("Typeof userinfo: " + typeof (userinfo));
-            console.log("expires_in", tokenset.expires_in);
-
-            // Here we launch the insert to the database
-            // First we check if the login occured via suomi.fi, if so then use another key, as not to save SoSign to database.
-            // Else check haka. Save the eppn to the database.
-            // Else check mpass. Save the uid to the database.
-
-            if (tokenset.claims().acr == process.env.SUOMIACR) {
-
-                ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                .then(() => {
-                    const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                    return done(undefined, {uid: userinfo.sub, name: nameparsed});
-                })
-                .catch((err: Error) => {
-                        console.log(err);
-                        return done("Login error when inserting suomi.fi information to database ", undefined);
-                    }
-                );
-            }
-            else if (tokenset.claims().acr == process.env.HAKAACR) {
-
-            ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                .then(() => {
-                    const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                    return done(undefined, {uid: userinfo.eppn, name: nameparsed});
-                })
-                .catch((err: Error) => {
-                        console.log(err);
-                        return done("Login error", undefined);
-                    }
-                );
-            }
-            else if (tokenset.claims().acr == process.env.MPASSACR) {
-                ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                    .then(() => {
-                        const nameparsed = userinfo.given_name + " " + userinfo.family_name;
-                        return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
-                    })
-                    .catch((err: Error) => {
-                            console.log(err);
-                            return done("Login error", undefined);
-                        }
-                    );
+        passport.use(
+            'oidc',
+            new Strategy({client}, (tokenset: any, userinfo: any, done: any) => {
+                if (tokenset.claims().acr == process.env.SUOMIACR) {
+                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
+                        .then(() => {
+                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
+                            return done(undefined, {uid: userinfo.sub, name: nameparsed});
+                        })
+                        .catch((err: Error) => {
+                            console.error(err);
+                            return done('Login error when inserting suomi.fi information to database ', undefined);
+                        });
+                } else if (tokenset.claims().acr == process.env.HAKAACR) {
+                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
+                        .then(() => {
+                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
+                            return done(undefined, {uid: userinfo.eppn, name: nameparsed});
+                        })
+                        .catch((err: Error) => {
+                            console.error(err);
+                            return done('Login error', undefined);
+                        });
+                } else if (tokenset.claims().acr == process.env.MPASSACR) {
+                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
+                        .then(() => {
+                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
+                            return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
+                        })
+                        .catch((err: Error) => {
+                            console.error(err);
+                            return done('Login error', undefined);
+                        });
+                } else {
+                    console.error('Unknown authentication method: ' + tokenset.claims().acr);
+                    throw new ErrorHandler(400, 'Unknown authentication method');
                 }
-            else {
-                console.error("Unknown authentication method: " + tokenset.claims().acr);
-                throw new ErrorHandler(400, "Unknown authentication method");
-            }
-        }));
+            }),
+        );
     })
     .catch((error: any) => {
         console.error(error);
-    })
-    ;
-app.use(flash());
+    });
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(cookieParser());
+app.use(compression());
+app.use(flash());
 
-app.get("/login", isLoginEnabled, passport.authenticate("oidc", {
-    successRedirect: "/",
-    failureRedirect: "/login",
-    failureFlash: true,
-    scope: "openid profile offline_access"
-}));
+app.get(
+    '/login',
+    isLoginEnabled,
+    passport.authenticate('oidc', {
+        successRedirect: '/',
+        failureRedirect: '/login',
+        failureFlash: true,
+        scope: 'openid profile offline_access',
+    }),
+);
 
-app.get("/secure/redirect", function (req: Request, res: Response, next: NextFunction) {
-        console.log("here");
+app.get(
+    '/secure/redirect',
+    (req: Request, res: Response, next: NextFunction) => {
+        // console.log("here");
         next();
-    }
-    , passport.authenticate("oidc", {
-        "callback": true,
+    },
+    passport.authenticate('oidc', {
+        // "callback": true,
         failureRedirect: process.env.FAILURE_REDIRECT_URI,
         failureFlash: true,
-        successRedirect: process.env.SUCCESS_REDIRECT_URI
-    })
+        successRedirect: process.env.SUCCESS_REDIRECT_URI,
+    }),
 );
-// handle h5p ajax request here
-const routeOptions = { "handleErrors": false,
-                        "routeGetContentFile": true };
+
+// Handle H5P ajax request
+const h5pRouteOptions = {
+    handleErrors: false,
+    routeGetContentFile: true,
+};
 app.use(
     // server is an object initialized with express()
-    "/h5p", // the route under which all the Ajax calls will be registered
+    '/h5p', // the route under which all the Ajax calls will be registered
     h5pAjaxExpressRouter(
         h5pEditor, // an H5P.H5PEditor object
-        process.env.H5P_CORE_PATH || path.resolve("h5p/core"), // the path to the h5p core files (of the player)
-        process.env.H5P_EDITOR_PATH || path.resolve("h5p/editor"), // the path to the h5p core files (of the editor)
-        routeOptions, // the options are optional and can be left out
+        process.env.H5P_CORE_PATH || path.resolve('h5p/core'), // the path to the h5p core files (of the player)
+        process.env.H5P_EDITOR_PATH || path.resolve('h5p/editor'), // the path to the h5p core files (of the editor)
+        h5pRouteOptions, // the options are optional and can be left out
         // languageOverride // (optional) can be used to override the language used by i18next http middleware
-    )
+    ),
 );
 
-const cookieParser = require("cookie-parser");
-app.use(cookieParser());
-app.use(morgan("dev"));
-app.use(compression());
-
 /**
- * CORS configuration
+ * CORS Configuration
  */
 const corsOptions = {
-    origin: ["https://demo.aoe.fi", "https://aoe.fi", "https://86.50.27.30:80"],
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    optionsSuccessStatus: 200
+    origin: ['https://demo.aoe.fi', 'https://aoe.fi', 'https://86.50.27.30:80', 'http://localhost'],
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-
-app.use(bodyParser.json({extended: true, limit: "1mb"}));
-app.use(bodyParser.urlencoded({extended: true, limit: "1mb"}));
-app.set("port", 3000);
-app.set("views", path.join(__dirname, "../views"));
-app.set("view engine", "pug");
-app.get("/", homeController.index);
-app.use("/", apiRouter);
-app.use(lusca.xframe("SAMEORIGIN"));
+app.use(bodyParser.json({limit: '1mb'}));
+app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
+app.get('/', homeController.index);
+app.use('/', apiRouter);
+app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
-
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
     handleError(err, res);
-  });
+});
 
-require("./aoeScheduler");
-const es = require("./elasticSearch/es");
+app.set('port', 3000);
+app.set('views', path.join(__dirname, '../views'));
+app.set('view engine', 'pug');
+require('./aoeScheduler');
 
-module.exports = app;
 export default app;
