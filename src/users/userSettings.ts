@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { sendVerificationEmail } from "./../services/mailService";
 import { ErrorHandler } from "./../helpers/errorHandler";
+import connection from '../resources/pg-config.module';
 
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 export interface UserSettings {

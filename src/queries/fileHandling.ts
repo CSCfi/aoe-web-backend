@@ -4,6 +4,8 @@ import { insertEducationalMaterialName } from "./apiQueries";
 import { updateDownloadCounter } from "./analyticsQueries";
 import { hasAccesstoPublication } from "./../services/authService";
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from "./../helpers/officeToPdfConverter";
+import connection from '../resources/pg-config.module';
+
 // import { ReadStream } from "fs";
 const AWS = require("aws-sdk");
 const s3Zip = require("s3-zip");
@@ -36,7 +38,6 @@ const upload = multer({
     , "preservePath": true
 }); // provide the return value from
 // Database connection
-const connection = require("./../db");
 const db = connection.db;
 
 /**

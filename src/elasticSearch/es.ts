@@ -4,6 +4,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
 import { getPopularityQuery } from "./../queries/analyticsQueries";
+import connection from '../resources/pg-config.module';
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const index = process.env.ES_INDEX;
@@ -16,7 +17,6 @@ export namespace Es {
     export const ESCounterUpdated = {value : new Date()};
     export const CollectionEsUpdated = {value : new Date()};
 }
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 const TransactionMode = pgp.txMode.TransactionMode;

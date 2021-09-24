@@ -1,4 +1,5 @@
-const connection = require("./../db");
+import connection from '../resources/pg-config.module';
+
 const pgp = connection.pgp;
 const db = connection.db;
 
