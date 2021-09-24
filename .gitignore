@@ -8,7 +8,6 @@ lib-cov
 *.gz
 *.swp
 
-
 pids
 logs
 results
@@ -28,8 +27,9 @@ node_modules
 bower_components
 
 # Editors
-.idea
 *.iml
+.idea
+.vscode
 
 # OS metadata
 .DS_Store
@@ -47,6 +47,5 @@ temp/*
 htmlfiles
 
 *~
-.vagrant/*
-.vscode/*
+.vagrant
 id_rsa.pub

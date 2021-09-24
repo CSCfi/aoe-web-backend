@@ -1,8 +1,8 @@
 #!/bin/bash
 DIR="$(dirname "$(readlink -f "$0")")" && cd "$DIR/../"
 
-INSTANCE="aoe-backend"
-IMAGE="aoe-backend"
+INSTANCE="aoe-web-backend"
+IMAGE="aoe-web-backend"
 
 docker stop $INSTANCE || echo 'Not running'
 docker rm $INSTANCE || echo 'Not existing'
