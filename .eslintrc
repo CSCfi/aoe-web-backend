@@ -1,15 +1,28 @@
 {
-    "parser": "@typescript-eslint/parser",
-    "extends": [
-        "plugin:@typescript-eslint/recommended"
+    "root": true,
+    "overrides": [
+        {
+            "files": [
+                "*.ts"
+            ],
+            "parserOptions": {
+                "createDefaultProgram": true,
+                "ecmaVersion": 2019,
+                "sourceType": "module",
+                "project": [
+                    "./tsconfig.json"
+                ]
+            },
+            "extends": [
+                "plugin:@typescript-eslint/recommended",
+                "plugin:@typescript-eslint/eslint-recommended"
+            ],
+            "rules": {
+                "@typescript-eslint/no-explicit-any": "off",
+                "@typescript-eslint/no-namespace": "off",
+                "@typescript-eslint/no-var-requires": "off"
+            }
+        }
     ],
-    "parserOptions": {
-        "ecmaVersion": 2020,
-        "sourceType": "module"
-    },
-    "rules": {
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-namespace": "off",
-        "@typescript-eslint/no-var-requires": "off"
-    }
+    "parser": "@typescript-eslint/parser"
 }
