@@ -1,24 +1,24 @@
-import express, {Response, Request, NextFunction} from 'express';
+import express, { Response, Request, NextFunction } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-import {isLoginEnabled} from './services/routeEnablerService';
+import { isLoginEnabled } from './services/routeEnablerService';
 import session from 'express-session';
 import passport from 'passport';
 import uuid from 'uuid/v4';
 import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
-import {ErrorHandler, handleError} from './helpers/errorHandler';
+import { ErrorHandler, handleError } from './helpers/errorHandler';
 import cors from 'cors';
 import * as homeController from './controllers/home';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
-import {h5pEditor} from './h5p/h5p';
+import { h5pEditor } from './h5p/h5p';
 import apiRouter from './routes/routes';
 import ah from './services/authService';
 import bodyParser from 'body-parser';
 import redisClient from './resources/redis-client.module';
 import connectRedis from 'connect-redis';
-import openidClient, {custom, HttpOptions} from 'openid-client';
+import openidClient, { custom, HttpOptions } from 'openid-client';
 
 const app = express();
 
