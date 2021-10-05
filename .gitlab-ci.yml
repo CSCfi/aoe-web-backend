@@ -57,7 +57,7 @@ build_prod:
     - docker-compose -f docker-compose.prod.yml down
     - docker-compose -f docker-compose.prod.yml build
   only:
-    - master
+    - main
   tags:
     - prod
 
@@ -67,7 +67,7 @@ deploy_prod:
     - echo "PROD deploy"
     - docker-compose -f docker-compose.prod.yml up -d
   only:
-    - master
+    - main
   tags:
     - prod
 
@@ -77,7 +77,7 @@ cleanup_prod:
     - echo "PROD system clean up"
     - docker system prune -a --volumes -f
   only:
-    - master
+    - main
   tags:
     - prod
   when: manual
