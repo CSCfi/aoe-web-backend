@@ -117,16 +117,16 @@ export function updateCollectionValidationRules() {
 }
 
 export async function validateRatingUser(req: Request, res: Response, next: NextFunction): Promise<any> {
-    const educationalMaterialOwner: string = await db.task(async (t: any) => {
+    const { usersusername } = await db.task(async (t: any) => {
         const query = 'SELECT usersusername FROM educationalmaterial WHERE id = $1';
         const educationalMateriaId: number = parseInt(req.body.materialId, 10);
         return await t.oneOrNone(query, [educationalMateriaId]);
     });
-    console.debug('RATING - ' +
+    console.debug('RATING | ' +
         'educationalMaterialId: ' + req.body.materialId + ', ' +
-        'educationalMaterialOwnerId: ' + JSON.stringify(educationalMaterialOwner) + ', ' +
+        'educationalMaterialOwnerId: ' + usersusername + ', ' +
         'authenticatedUser: ' + req.session.passport.user.uid);
-    if (educationalMaterialOwner === req.session.passport.user.uid) {
+    if (usersusername === req.session.passport.user.uid) {
         return res.status(400).send({error: {
                 status: 400,
                 message: 'Bad Request',
