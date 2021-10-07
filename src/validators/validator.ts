@@ -123,8 +123,8 @@ export async function validateRatingUser(req: Request, res: Response, next: Next
         return await t.oneOrNone(query, [educationalMateriaId]);
     });
     console.debug('RATING - ' +
-        'educationalMaterialId: ' + req.body.educationalMaterialId + ', ' +
-        'educationalMaterialOwnerId: ' + educationalMaterialOwner + ', ' +
+        'educationalMaterialId: ' + req.body.materialId + ', ' +
+        'educationalMaterialOwnerId: ' + JSON.stringify(educationalMaterialOwner) + ', ' +
         'authenticatedUser: ' + req.session.passport.user.uid);
     if (educationalMaterialOwner === req.session.passport.user.uid) {
         return res.status(400).send({error: {
