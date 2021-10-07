@@ -7,6 +7,7 @@ export function checkAuthenticated(req: Request, res: Response, next: NextFuncti
     if (req.isAuthenticated()) {
         return next();
     } else {
+        // return next();
         res.sendStatus(401);
     }
 }

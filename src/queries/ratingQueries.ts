@@ -1,5 +1,6 @@
-import { Rating } from "./../rating/rating";
+// import { Rating } from "./../rating/rating";
 import connection from '../resources/pg-config.module';
+import { RatingInformation } from "../rating/interface/rating-information.interface";
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -25,7 +26,7 @@ interface RatingResponse {
     "lastName": string;
 }
 
-export async function insertRating(rating: Rating, username: string) {
+export async function insertRating(rating: RatingInformation, username: string): Promise<any> {
     try {
         await db.tx(async (t: any) => {
             const queries: any = [];
@@ -34,9 +35,12 @@ export async function insertRating(rating: Rating, username: string) {
                 "VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()) " +
                 "ON CONFLICT (educationalmaterialid, usersusername) DO " +
                 "UPDATE SET ratingcontent = $1, ratingvisual = $2, feedbackpositive = $3, feedbacksuggest = $4, " +
-                "feedbackpurpose = $5, updatedat = now()";
-            const response = await t.none(query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
-            console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.materialId, username]);
+                "feedbackpurpose = $5, updatedat = NOW()";
+            const response = await t.none(query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive,
+                rating.feedbackSuggest, rating.feedbackPurpose, rating.educationalMaterialId, username]);
+            console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual,
+                rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.educationalMaterialId,
+                username]);
             queries.push(response);
             return t.batch(queries);
         });

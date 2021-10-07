@@ -324,14 +324,14 @@ export async function deleteDocument(index: string, id: string) {
   }
 }
 
-// module.exports = {
-//     elasticSearchQuery : elasticSearchQuery,
-//     createShouldObject,
-//     createMultiMatchObject,
-//     createMatchAllObject,
-//     filterMapper,
-//     aoeResponseMapper,
-//     hasDownloadableFiles,
-//     createMustMatchObject,
-//     deleteDocument
-// };
+export default {
+    elasticSearchQuery,
+    createShouldObject,
+    createMultiMatchObject,
+    createMatchAllObject,
+    filterMapper,
+    aoeResponseMapper,
+    hasDownloadableFiles,
+    createMustMatchObject,
+    deleteDocument
+};

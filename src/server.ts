@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import consoleStamp from 'console-stamp';
 import errorHandler from 'errorhandler';
 import app from './app';
