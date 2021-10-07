@@ -119,7 +119,7 @@ export function updateCollectionValidationRules() {
 export async function validateRatingUser(req: Request, res: Response, next: NextFunction): Promise<any> {
     const educationalMaterialOwner: string = await db.task(async (t: any) => {
         const query = 'SELECT usersusername FROM educationalmaterial WHERE id = $1';
-        const educationalMateriaId: RatingInformation = req.body.educationalMaterialId;
+        const educationalMateriaId: number = parseInt(req.body.materialId, 10);
         return await t.oneOrNone(query, [educationalMateriaId]);
     });
     console.debug('RATING - ' +
