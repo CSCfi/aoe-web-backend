@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import connection from '../resources/pg-config.module';
-import { RatingInformation } from "../rating/interface/rating-information.interface";
+import winstonLogger from '../util/winston-logger';
 
 const db = connection.db;
 
@@ -122,11 +122,11 @@ export async function validateRatingUser(req: Request, res: Response, next: Next
         const educationalMateriaId: number = parseInt(req.body.materialId, 10);
         return await t.oneOrNone(query, [educationalMateriaId]);
     });
-    console.debug('RATING | ' +
-        'educationalMaterialId: ' + req.body.materialId + ', ' +
-        'educationalMaterialOwnerId: ' + usersusername + ', ' +
-        'authenticatedUser: ' + req.session.passport.user.uid);
     if (usersusername === req.session.passport.user.uid) {
+        winstonLogger.error('RATING | Self-rating conflict: ' +
+            'educationalMaterialId: ' + req.body.materialId + ', ' +
+            'educationalMaterialOwnerId: ' + usersusername + ', ' +
+            'authenticatedUser: ' + req.session.passport.user.uid);
         return res.status(400).send({error: {
                 status: 400,
                 message: 'Bad Request',
