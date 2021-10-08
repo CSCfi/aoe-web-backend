@@ -19,6 +19,7 @@ import bodyParser from 'body-parser';
 import redisClient from './resources/redis-client.module';
 import connectRedis from 'connect-redis';
 import openidClient, { custom, HttpOptions } from 'openid-client';
+import { morganHttpLogger } from './util';
 
 const app = express();
 
@@ -117,6 +118,7 @@ app.use(passport.session());
 app.use(cookieParser());
 app.use(compression());
 app.use(flash());
+app.use(morganHttpLogger);
 
 app.get(
     '/login',
