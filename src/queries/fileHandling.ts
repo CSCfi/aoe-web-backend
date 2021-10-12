@@ -914,7 +914,6 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 console.error("The error in downloadFileFromStorage function (nested try) : " + err);
                 next(new ErrorHandler(500, "Error in download"));
             }
-            console.debug('[DEBUG] downloadFromStorage function completed');
         } catch (err) {
             console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
             next(new ErrorHandler(500, "Error in download"));
@@ -996,7 +995,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
  * @param archiveFiles
  * pipe zip stream from allas to res. keys list of allas keys. archiveFiles list of file names.
  */
-export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
+export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any): Promise<void> {
     return new Promise(async resolve => {
         try {
             const config = {
@@ -1008,26 +1007,23 @@ export async function downloadAndZipFromStorage(req: Request, res: Response, nex
             AWS.config.update(config);
             const s3 = new AWS.S3();
             const bucketName = process.env.BUCKET_NAME;
-            console.log("Starting s3Zip zipstream!");
+            winstonLogger.debug('Starting s3Zip stream');
             try {
                 s3Zip
-                    .archive({s3: s3, bucket: bucketName}, "", keys, archiveFiles)
-                    .pipe(res).on("finish", async function () {
-                        console.log("We finished the s3Zip zipstream!");
+                    .archive({s3: s3, bucket: bucketName}, '', keys, archiveFiles)
+                    .pipe(res)
+                    .on('finish', async function() {
+                        winstonLogger.debug('Completed the s3Zip stream');
                         resolve();
-                    }
-                )
-                    .on("error", function (e) {
-                        console.error(e);
-                        next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                    })
+                    .on('error', function(e) {
+                        next(new ErrorHandler(e.statusCode, e.message || 'Error in download'));
                     });
             } catch (err) {
-                console.error(err);
-                next(new ErrorHandler(500, "Failed to download file from storage"));
+                next(new ErrorHandler(500, 'Failed to download file from storage'));
             }
         } catch (err) {
-            console.error(err);
-            next(new ErrorHandler(500, "Failed to download file"));
+            next(new ErrorHandler(500, 'Failed to download file'));
         }
     });
 }
