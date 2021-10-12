@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
 import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
+import connection from '../resources/pg-config.module';
+
 const contentDisposition = require("content-disposition");
-const connection = require("./../db");
 const pgp = connection.pgp;
 const db = connection.db;
 

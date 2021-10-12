@@ -1,4 +1,5 @@
-const connection = require("./../db");
+import connection from '../resources/pg-config.module';
+
 const pgp = connection.pgp;
 const db = connection.db;
 import { Collection } from "./../collection/collection";
@@ -36,7 +37,7 @@ export async function insertCollection(username: string, collection: Collection)
  */
 export async function insertEducationalMaterialToCollection(collection: Collection) {
     try {
-        const values: object[] = [];
+        const values: any[] = [];
         collection.emId.map(id => values.push({collectionid : collection.collectionId, educationalmaterialid: id}));
         const cs = new pgp.helpers.ColumnSet(["collectionid", "educationalmaterialid"], {table: "collectioneducationalmaterial"});
         const query = pgp.helpers.insert(values, cs) + " ON CONFLICT (collectionid, educationalmaterialid) DO NOTHING;";
@@ -55,7 +56,7 @@ export async function insertEducationalMaterialToCollection(collection: Collecti
  */
 export async function deleteEducationalMaterialFromCollection(collection: Collection) {
     try {
-        const values: object[] = [];
+        const values: any[] = [];
         // collection.emId.map(id => values.push({collectionid : collection.collectionId, educationalmaterialid: id}));
         const query = "DELETE FROM collectioneducationalmaterial WHERE collectionid = $1 AND educationalmaterialid IN ($2:list);";
         console.log(pgp.as.format(query), [ collection.collectionId, collection.emId]);

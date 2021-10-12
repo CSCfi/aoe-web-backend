@@ -33,7 +33,7 @@ async function createMaterialObject(indata: any) {
     return obj;
 }
 
-async function createPropertyNameList(obj: any, str: String) {
+async function createPropertyNameList(obj: any, str: string) {
     const list: any = [];
     Object.getOwnPropertyNames(obj).forEach(
         function (val: any, idx, array) {
@@ -46,7 +46,7 @@ async function createPropertyNameList(obj: any, str: String) {
     return list;
 }
 
-function parseDate(dateString: String) {
+function parseDate(dateString: string) {
     const parts = dateString.split(".");
     const date  = new Date(Number(parts[2]), (Number(parts[1]) - 1), Number(parts[0]));
     return date;

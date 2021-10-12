@@ -11,14 +11,14 @@ export class Collection {
 
       public publish?: boolean;
       public description?: string;
-      public keywords?: object[];
+      public keywords?: any[];
       public languages?: string[];
-      public educationalRoles?: object[];
-      public alignmentObjects?: object[];
-      public educationalUses?: object[];
-      public accessibilityFeatures?: object[];
-      public accessibilityHazards?: object[];
-      public educationalLevels: object[];
+      public educationalRoles?: any[];
+      public alignmentObjects?: any[];
+      public educationalUses?: any[];
+      public accessibilityFeatures?: any[];
+      public accessibilityHazards?: any[];
+      public educationalLevels: any[];
     constructor(data?: Collection) {
       this.collectionId = data.collectionId;
       this.name = data.name;
@@ -190,8 +190,7 @@ export async function updateCollection(req: Request, res: Response, next: NextFu
  */
 export async function getRecentCollection(req: Request , res: Response, next: NextFunction) {
   try {
-    let data;
-    data = await recentCollectionQuery();
+    const data = await recentCollectionQuery();
     res.status(200).json(data);
   }
   catch (error) {
