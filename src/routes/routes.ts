@@ -55,7 +55,7 @@ router.get('/h5p/content/:id/:file(*)', getH5PContent);
 router.get('/h5p/play/:contentid', h5p.play);
 router.post('/logout', ah.logout);
 router.get('/material', db.getMaterial);
-router.get('/material/:id/:publishedat?', db.getMaterialData);
+
 router.delete('/material/:id', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
 router.put('/material/:id', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, updateEducationalMaterialMetadata);
 router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
@@ -64,7 +64,9 @@ router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMa
 router.post('/material/file/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 
+// TODO: Resolve routes stacking problem - /file must be set before /:id
 router.get('/material/file/:materialId/:publishedat?', fh.downloadMaterialFile);
+router.get('/material/:id/:publishedat?', db.getMaterialData);
 
 router.post('/material/link/:materialId', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.get('/messages/info', aoeRoutes);
