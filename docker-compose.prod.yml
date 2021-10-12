@@ -4,8 +4,8 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
-    image: aoe-web-backend-demo:latest
-    container_name: aoe-web-backend-demo
+    image: aoe-web-backend:latest
+    container_name: aoe-web-backend
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -19,8 +19,8 @@ services:
       - /environment/aoe-web-backend/.env
     user: "root:5606"
     networks:
-      - network-web-backend-demo
+      - network-web-backend
 
 networks:
-  network-web-backend-demo:
+  network-web-backend:
     driver: bridge

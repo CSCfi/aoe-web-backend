@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { downloadFromStorage } from "./fileHandling";
+import connection from '../resources/pg-config.module';
+
 const fs = require("fs");
 const multer  = require("multer");
 const fh = require("./fileHandling");
@@ -22,7 +24,6 @@ const storage = multer.diskStorage({ // notice you are calling the multer.diskSt
 const upload = multer({"storage": storage
                     , "limits": {"fileSize": Number(process.env.THUMBNAIL_FILE_SIZE_LIMIT)}}); // provide the return value from
 // Database connection
-const connection = require("./../db");
 const db = connection.db;
 
 async function uploadImage(req: Request, res: Response) {
