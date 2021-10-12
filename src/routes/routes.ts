@@ -63,7 +63,9 @@ router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenti
 router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
 router.post('/material/file/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
+
 router.get('/material/file/:materialId/:publishedat?', fh.downloadMaterialFile);
+
 router.post('/material/link/:materialId', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.get('/messages/info', aoeRoutes);
 router.get('/metadata/:id', getMetadataExtension);
