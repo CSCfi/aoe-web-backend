@@ -65,7 +65,7 @@ router.post('/material/file/:materialId', isAllasEnabled, ah.checkAuthenticated,
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 
 // TODO: Resolve routes stacking problem - /file must be set before /:id
-router.get('/material/file/:materialId/:publishedat?', fh.downloadMaterialFile);
+router.get('/material/file/:materialid/:publishedat?', fh.downloadMaterialFile);
 router.get('/material/:id/:publishedat?', db.getMaterialData);
 
 router.post('/material/link/:materialId', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);

@@ -5,6 +5,7 @@ import { updateDownloadCounter } from "./analyticsQueries";
 import { hasAccesstoPublication } from "./../services/authService";
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from "./../helpers/officeToPdfConverter";
 import connection from '../resources/pg-config.module';
+import { winstonLogger } from "../util";
 
 // import { ReadStream } from "fs";
 const AWS = require("aws-sdk");
@@ -921,60 +922,68 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
     });
 }
 
-export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
+/**
+ * Download all files related to an educational material as a bundled zip file.
+ *
+ * @param req  Request<any>
+ * @param res  Response<any>
+ * @param next NextFunction
+ */
+export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    winstonLogger.debug('downloadMaterialFile(): materialid=' + req.params.materialid + ', publishedat?=' + req.params.publishedat);
+
+    // Queries to resolve files of the latest educational material requested
+    const queryLatestPublished = "SELECT MAX(publishedat) AS max FROM versioncomposition WHERE educationalmaterialid = $1";
+    const queryVersionFilesIds =
+        "SELECT record.filekey, record.originalfilename " +
+        "FROM versioncomposition " +
+        "RIGHT JOIN material ON material.id = versioncomposition.materialid " +
+        "RIGHT JOIN record ON record.materialid = material.id " +
+        "WHERE material.educationalmaterialid = $1 AND obsoleted = 0 AND publishedat = $2 " +
+        "UNION " +
+        "SELECT attachment.filekey, attachment.originalfilename " +
+        "FROM attachmentversioncomposition AS v " +
+        "INNER JOIN attachment ON v.attachmentid = attachment.id " +
+        "WHERE v.versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND v.versionpublishedat = $2";
+
     try {
-        console.log("downloadMaterialFile");
-        const response = await db.task(async (t: any) => {
-            let publishedat = req.params.publishedat;
-            if (!publishedat) {
-                const q = "SELECT MAX(publishedat) FROM versioncomposition WHERE educationalmaterialid = $1";
-                console.log(q, req.params.materialId);
-                const res = await t.oneOrNone(q, req.params.materialId);
-                publishedat = res.max;
+        const versionFiles: {filekey: string, originalfilename: string}[] = await db.task(async (t: any) => {
+            let publishedAt = req.params.publishedat;
+            if (!publishedAt) {
+                const latestPublished: {max: string} = await t.oneOrNone(queryLatestPublished, req.params.materialid);
+                publishedAt = latestPublished.max;
             }
-            const query =
-                "SELECT record.filekey, record.originalfilename " +
-                "FROM versioncomposition " +
-                "RIGHT JOIN material ON material.id = versioncomposition.materialid " +
-                "RIGHT JOIN record ON record.materialid = material.id " +
-                "WHERE material.educationalmaterialid = $1 AND obsoleted = 0 AND publishedat = $2 " +
-                "UNION " +
-                "SELECT attachment.filekey, attachment.originalfilename " +
-                "FROM attachmentversioncomposition AS v " +
-                "INNER JOIN attachment ON v.attachmentid = attachment.id " +
-                "WHERE v.versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND v.versionpublishedat = $2";
-            console.log(query, [req.params.materialId, publishedat]);
-            return await db.any(query, [req.params.materialId, publishedat]);
+            return await db.any(queryVersionFilesIds, [req.params.materialid, publishedAt]);
         });
-        if (response.length < 1) {
-            console.log("No material found");
-            next(new ErrorHandler(404, "No material found"));
+        if (versionFiles.length < 1) {
+            next(new ErrorHandler(404, 'No material found for educationalmaterialid=' +
+                req.params.materialid + ', publishedat?=' + req.params.publishedat));
         } else {
-            const keys = [];
-            const archiveFiles = [];
-            for (const element of response) {
-                keys.push(element.filekey);
-                archiveFiles.push(element.originalfilename);
+            const fileKeys = [];
+            const fileNames = [];
+            for (const file of versionFiles) {
+                fileKeys.push(file.filekey);
+                fileNames.push(file.originalfilename);
             }
-            console.log(keys, req.params.materialId);
-            // res.set("content-type", "application/zip");
-            res.header("Content-Disposition", "attachment; filename=materials.zip");
-            await downloadAndZipFromStorage(req, res, next, keys, archiveFiles);
-            // update downloadcounter here
-            const idnumber = parseInt(req.params.materialId);
-            console.log("Starting update downloadcounter");
+            // res.header('Content-Type', 'application/zip');
+            res.header('Content-Disposition', 'attachment; filename=materials.zip');
+
+            // Download and zip the file bundle - send the zip file as a response
+            await downloadAndZipFromStorage(req, res, next, fileKeys, fileNames);
+
+            // Try to update download counter
+            const idnumber = parseInt(req.params.materialid);
             if (!req.isAuthenticated() || !(await hasAccesstoPublication(idnumber, req))) {
-                console.log("update downloadcounter");
                 try {
-                    await updateDownloadCounter(req.params.materialId);
+                    await updateDownloadCounter(req.params.materialid);
                 } catch (error) {
-                    console.error("update downloadcounter failed: " + error);
+                    winstonLogger.error('Updating download counter failed: ' + error);
                 }
             }
         }
-    } catch (err) {
-        console.error(err);
-        next(new ErrorHandler(400, "Failed to download file"));
+    } catch (error) {
+        next(new ErrorHandler(400, 'File download failed for educationalmaterialid=' +
+            req.params.materialid + ', publishedat?=' + req.params.publishedat));
     }
 }
 
@@ -1090,20 +1099,19 @@ export async function unZipAndExtract(zipFolder: any) {
     }
 }
 
-
-module.exports = {
-    uploadMaterial: uploadMaterial,
-    uploadFileToMaterial: uploadFileToMaterial,
-    uploadFileToStorage: uploadFileToStorage,
-    downloadFile: downloadFile,
-    unZipAndExtract: unZipAndExtract,
-    downloadFileFromStorage: downloadFileFromStorage,
-    downloadMaterialFile: downloadMaterialFile,
-    checkTemporaryRecordQueue: checkTemporaryRecordQueue,
-    uploadBase64FileToStorage: uploadBase64FileToStorage,
-    uploadAttachmentToMaterial: uploadAttachmentToMaterial,
-    checkTemporaryAttachmentQueue: checkTemporaryAttachmentQueue,
-    insertDataToDisplayName: insertDataToDisplayName,
-    downloadFromStorage: downloadFromStorage,
+export default {
+    uploadMaterial,
+    uploadFileToMaterial,
+    uploadFileToStorage,
+    downloadFile,
+    unZipAndExtract,
+    downloadFileFromStorage,
+    downloadMaterialFile,
+    checkTemporaryRecordQueue,
+    uploadBase64FileToStorage,
+    uploadAttachmentToMaterial,
+    checkTemporaryAttachmentQueue,
+    insertDataToDisplayName,
+    downloadFromStorage,
     readStreamFromStorage
 };
