@@ -1,5 +1,4 @@
 import { winstonLogger } from '../util';
-import { Response } from 'express';
 
 export class ErrorHandler extends Error {
     statusCode: number;
@@ -15,7 +14,7 @@ export const genericErrorMessage = 'Palvelussamme on tällä hetkellä vikatilan
 export const genericErrorMessageEn = 'We currently have an error that affects using the service. We will fix the problem as soon as possible. Find the latest information on our Twitter channel @aoe_suomi.';
 export const genericErrorMessageSv = 'Vi har för närvarande ett fel som påverkar användningen av tjänsten. Vi löser problemet så snart som möjligt. Hitta den senaste informationen på vår Twitter-kanal @aoe_suomi.';
 
-export const handleError = (err, res: Response) => {
+export const handleError = (err, res) => {
     let { statusCode } = err;
     let { message } = err;
     winstonLogger.error('Request default error handler: ' + message);
