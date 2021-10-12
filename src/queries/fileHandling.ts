@@ -966,7 +966,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             if (!req.isAuthenticated() || !(await hasAccesstoPublication(idnumber, req))) {
                 console.log("update downloadcounter");
                 try {
-                    updateDownloadCounter(req.params.materialId);
+                    await updateDownloadCounter(req.params.materialId);
                 } catch (error) {
                     console.error("update downloadcounter failed: " + error);
                 }
