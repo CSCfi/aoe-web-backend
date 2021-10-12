@@ -6,7 +6,7 @@ import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
-import connection from '../resources/pg-config.module';
+import connection from "../resources/pg-config.module";
 
 const fh = require("./fileHandling");
 const pgp = connection.pgp;
