@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { downloadFromStorage } from "./fileHandling";
-import connection from '../resources/pg-config.module';
+import connection from "../resources/pg-config.module";
 
 const fs = require("fs");
 const multer  = require("multer");

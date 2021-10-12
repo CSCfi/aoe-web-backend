@@ -913,6 +913,7 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 console.error("The error in downloadFileFromStorage function (nested try) : " + err);
                 next(new ErrorHandler(500, "Error in download"));
             }
+            console.debug('[DEBUG] downloadFromStorage function completed');
         } catch (err) {
             console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
             next(new ErrorHandler(500, "Error in download"));
@@ -926,14 +927,22 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
         const response = await db.task(async (t: any) => {
             let publishedat = req.params.publishedat;
             if (!publishedat) {
-                const q = "select max(publishedat) from versioncomposition where educationalmaterialid = $1;";
+                const q = "SELECT MAX(publishedat) FROM versioncomposition WHERE educationalmaterialid = $1";
                 console.log(q, req.params.materialId);
                 const res = await t.oneOrNone(q, req.params.materialId);
                 publishedat = res.max;
             }
-            const query = "select record.filekey, record.originalfilename from versioncomposition right join material on material.id = versioncomposition.materialid right join record on record.materialid = material.id where material.educationalmaterialid = $1 and obsoleted = 0 and publishedat = $2" +
-                " union " +
-                "select attachment.filekey, attachment.originalfilename from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where v.versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and v.versionpublishedat = $2;";
+            const query =
+                "SELECT record.filekey, record.originalfilename " +
+                "FROM versioncomposition " +
+                "RIGHT JOIN material ON material.id = versioncomposition.materialid " +
+                "RIGHT JOIN record ON record.materialid = material.id " +
+                "WHERE material.educationalmaterialid = $1 AND obsoleted = 0 AND publishedat = $2 " +
+                "UNION " +
+                "SELECT attachment.filekey, attachment.originalfilename " +
+                "FROM attachmentversioncomposition AS v " +
+                "INNER JOIN attachment ON v.attachmentid = attachment.id " +
+                "WHERE v.versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND v.versionpublishedat = $2";
             console.log(query, [req.params.materialId, publishedat]);
             return await db.any(query, [req.params.materialId, publishedat]);
         });
