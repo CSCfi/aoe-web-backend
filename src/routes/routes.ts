@@ -1,3 +1,4 @@
+import api from './../api'
 import { hasAccessToAoe } from '../services/authService';
 import { updateEducationalMaterialMetadata } from '../controllers/educationalMaterial';
 import { Router } from 'express';
@@ -43,7 +44,13 @@ const rating = require('../rating/rating');
 const thumbnail = require('./../queries/thumbnailHandler');
 
 /**
- * API routes and connected middlewares.
+ * Attach API routes and connected middlewares from the new implementation.
+ * Pass the existing instance of Express Router as an argument.
+ */
+api(router);
+
+/**
+ * Legacy API routes and connected middlewares.
  * Sorted by request URL for the later modularization, refactoring and renaming.
  */
 router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
@@ -65,7 +72,7 @@ router.post('/material/file/:materialId', isAllasEnabled, ah.checkAuthenticated,
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 
 // TODO: Resolve routes stacking problem - /file must be set before /:id
-router.get('/material/file/:materialid/:publishedat?', fh.downloadMaterialFile);
+// router.get('/material/file/:materialid/:publishedat?', fh.downloadMaterialFile);
 router.get('/material/:id/:publishedat?', db.getMaterialData);
 
 router.post('/material/link/:materialId', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
