@@ -958,8 +958,8 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             next(new ErrorHandler(404, 'No material found for educationalmaterialid=' +
                 req.params.materialid + ', publishedat?=' + req.params.publishedat));
         } else {
-            const fileKeys = [];
-            const fileNames = [];
+            const fileKeys: string[] = [];
+            const fileNames: string[] = [];
             for (const file of versionFiles) {
                 fileKeys.push(file.filekey);
                 fileNames.push(file.originalfilename);
@@ -967,14 +967,14 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             // res.header('Content-Type', 'application/zip');
             res.header('Content-Disposition', 'attachment; filename=materials.zip');
 
-            // Download and zip the file bundle - send the zip file as a response
+            // Download files from the object storage and zip the bundle, send the zipped file as a response
             await downloadAndZipFromStorage(req, res, next, fileKeys, fileNames);
 
             // Try to update download counter
-            const idnumber = parseInt(req.params.materialid);
-            if (!req.isAuthenticated() || !(await hasAccesstoPublication(idnumber, req))) {
+            const educationalMaterialId: number = parseInt(req.params.materialid, 10);
+            if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
                 try {
-                    await updateDownloadCounter(req.params.materialid);
+                    await updateDownloadCounter(educationalMaterialId);
                 } catch (error) {
                     winstonLogger.error('Updating download counter failed: ' + error);
                 }
