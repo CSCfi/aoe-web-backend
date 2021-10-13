@@ -61,21 +61,17 @@ router.post('/elasticSearch/search', es.elasticSearchQuery);
 router.get('/h5p/content/:id/:file(*)', getH5PContent);
 router.get('/h5p/play/:contentid', h5p.play);
 router.post('/logout', ah.logout);
+
+// TODO: Unused endpoint?
 router.get('/material', db.getMaterial);
 
-router.delete('/material/:id', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.deleteMaterial);
-router.put('/material/:id', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, updateEducationalMaterialMetadata);
 router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
-router.post('/material/file/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
-
-// TODO: Resolve routes stacking problem - /file must be set before /:id
-// router.get('/material/file/:materialid/:publishedat?', fh.downloadMaterialFile);
 router.get('/material/:id/:publishedat?', db.getMaterialData);
 
-router.post('/material/link/:materialId', ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, db.addLinkToMaterial);
 router.get('/messages/info', aoeRoutes);
 router.get('/metadata/:id', getMetadataExtension);
 router.put('/metadata/:id', metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
@@ -84,8 +80,8 @@ router.post('/oaipmh/metadata', oaipmh.getMaterialMetaData);
 router.get('/pdf/content/:key', downloadPdfFromAllas);
 router.get('/recentmaterial', db.getRecentMaterial);
 router.delete('/removeMaterial/:id', hasAccessToAoe, removeEducationalMaterial);
-router.post('/uploadImage/:id', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
-router.post('/uploadBase64Image/:id', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
+router.post('/uploadImage/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
+router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
 router.get('/thumbnail/:id', thumbnail.downloadEmThumbnail);
 router.put('/updateSettings', ah.checkAuthenticated, updateUserSettings);
 router.get('/user', ah.checkAuthenticated, db.getUser);

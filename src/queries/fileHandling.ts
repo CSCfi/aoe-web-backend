@@ -289,11 +289,11 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                             const material: any = [];
                             db.tx(async (t: any) => {
                                 const queries = [];
-                                const id = await insertDataToMaterialTable(t, req.params.materialId, "", fileDetails.language, fileDetails.priority);
+                                const id = await insertDataToMaterialTable(t, req.params.edumaterialid, "", fileDetails.language, fileDetails.priority);
                                 queries.push(id);
                                 material.push({"id": id.id, "createFrom": file.originalname});
                                 materialid = id.id;
-                                let result = await insertDataToDisplayName(t, req.params.materialId, id.id, fileDetails);
+                                let result = await insertDataToDisplayName(t, req.params.edumaterialid, id.id, fileDetails);
                                 queries.push(result);
                                 result = await insertDataToTempRecordTable(t, file, id.id);
                                 queries.push(result);
@@ -302,7 +302,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                 .then(async (data: any) => {
                                         // return 200 if success and continue sending files to pouta
                                         console.log("uploadFileToMaterial sending to Pouta: " + file.filename);
-                                        resp.id = req.params.materialId;
+                                        resp.id = req.params.edumaterialid;
                                         resp.material = material;
                                         res.status(200).json(resp);
                                         try {
@@ -921,7 +921,7 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
  * @param next NextFunction
  */
 export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction): Promise<void> {
-    winstonLogger.debug('downloadMaterialFile(): materialid=' + req.params.materialid + ', publishedat?=' + req.params.publishedat);
+    winstonLogger.debug('downloadMaterialFile(): edumaterialid=' + req.params.edumaterialid + ', publishedat?=' + req.params.publishedat);
 
     // Queries to resolve files of the latest educational material requested
     const queryLatestPublished = "SELECT MAX(publishedat) AS max FROM versioncomposition WHERE educationalmaterialid = $1";
@@ -941,14 +941,14 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
         const versionFiles: { filekey: string, originalfilename: string }[] = await db.task(async (t: any) => {
             let publishedAt = req.params.publishedat;
             if (!publishedAt) {
-                const latestPublished: { max: string } = await t.oneOrNone(queryLatestPublished, req.params.materialid);
+                const latestPublished: { max: string } = await t.oneOrNone(queryLatestPublished, req.params.edumaterialid);
                 publishedAt = latestPublished.max;
             }
-            return await db.any(queryVersionFilesIds, [req.params.materialid, publishedAt]);
+            return await db.any(queryVersionFilesIds, [req.params.edumaterialid, publishedAt]);
         });
         if (versionFiles.length < 1) {
             next(new ErrorHandler(404, 'No material found for educationalmaterialid=' +
-                req.params.materialid + ', publishedat?=' + req.params.publishedat));
+                req.params.edumaterialid + ', publishedat?=' + req.params.publishedat));
         } else {
             const fileKeys: string[] = [];
             const fileNames: string[] = [];
@@ -963,7 +963,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             await downloadAndZipFromStorage(req, res, next, fileKeys, fileNames);
 
             // Try to update download counter
-            const educationalMaterialId: number = parseInt(req.params.materialid, 10);
+            const educationalMaterialId: number = parseInt(req.params.edumaterialid, 10);
             if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
                 try {
                     await updateDownloadCounter(educationalMaterialId);
@@ -974,7 +974,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
         }
     } catch (error) {
         next(new ErrorHandler(400, 'File download failed for educationalmaterialid=' +
-            req.params.materialid + ', publishedat?=' + req.params.publishedat));
+            req.params.edumaterialid + ', publishedat?=' + req.params.publishedat));
     }
 }
 
