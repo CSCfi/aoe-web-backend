@@ -142,7 +142,8 @@ export async function updateEducationalMaterialMetadata(req: Request, res: Respo
         const eduMaterial = await updateMaterial(metadata, emid);
 
         // 200 OK response to the client and continue to search index and PID update
-        res.status(200).json(eduMaterial);
+        // eduMaterial[1]: { publishedat: string }
+        res.status(200).json(eduMaterial[1]);
 
         // TODO: Refactoring break point
 

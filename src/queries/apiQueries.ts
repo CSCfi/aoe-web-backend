@@ -82,63 +82,72 @@ const mode = new TransactionMode({
     deferrable: true
 });
 
-export async function getMaterialData(req: Request, res: Response, next: NextFunction) {
+export async function getEducationalMaterialMetadata(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
         let query;
-        query = "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage, viewcounter, downloadcounter " +
-            "FROM educationalmaterial as m left join licensecode as l ON l.code = m.licensecode WHERE id = $1 and obsoleted != '1';";
-        let response = await t.any(query, [req.params.id]);
-        const isPublished = (response[0] && response[0].publishedat) ? true : false;
+        query =
+            "SELECT id, createdat, publishedat, updatedat, archivedat, timerequired, agerangemin, agerangemax, " +
+            "licensecode, l.license, obsoleted, originalpublishedat, expires, suitsallearlychildhoodsubjects, " +
+            "suitsallpreprimarysubjects, suitsallbasicstudysubjects, suitsalluppersecondarysubjects, " +
+            "suitsallvocationaldegrees, suitsallselfmotivatedsubjects, suitsallbranches, " +
+            "suitsalluppersecondarysubjectsnew, ratingcontentaverage, ratingvisualaverage, viewcounter, " +
+            "downloadcounter " +
+            "FROM educationalmaterial AS m " +
+            "LEFT JOIN licensecode AS l ON l.code = m.licensecode " +
+            "WHERE id = $1 AND obsoleted != '1'";
+        let response = await t.any(query, [eduMaterialId]);
+        const isPublished = !!(response[0] && response[0].publishedat);
         queries.push(response);
 
         query = "select * from materialname where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from materialdescription where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from educationalaudience where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from learningresourcetype where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from accessibilityfeature where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from accessibilityhazard where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from keyword where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from educationallevel where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from educationaluse where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from publisher where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from author where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from isbasedon where educationalmaterialid = $1;";
-        response = await t.map(query, [req.params.id], (q: any) => {
+        response = await t.map(query, [eduMaterialId], (q: any) => {
             t.any("select * from isbasedonauthor where isbasedonid = $1;", q.id)
                 .then((data: any) => {
                     q.author = data;
@@ -147,55 +156,55 @@ export async function getMaterialData(req: Request, res: Response, next: NextFun
         });
         queries.push(response);
         query = "select * from alignmentobject where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
         // get all materials from material table if not published else get from version table
         if (!isPublished) {
             query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, pdfkey from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
-            response = await t.any(query, [req.params.id]);
-            console.log(query, [req.params.id]);
+            response = await t.any(query, [eduMaterialId]);
+            console.log(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
                 query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
                     "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
                     "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-                console.log(query, [req.params.id, req.params.publishedat]);
-                response = await t.any(query, [req.params.id, req.params.publishedat]);
+                console.log(query, [eduMaterialId, req.params.publishedat]);
+                response = await t.any(query, [eduMaterialId, req.params.publishedat]);
             } else {
                 query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
                     "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
                     "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-                response = await t.any(query, [req.params.id]);
+                response = await t.any(query, [eduMaterialId]);
             }
         }
         queries.push(response);
 
         query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from educationalaudience where educationalmaterialid = $1;";
-        response = await t.any(query, [req.params.id]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
         query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
-        response = await t.oneOrNone(query, [req.params.id]);
+        response = await t.oneOrNone(query, [eduMaterialId]);
         queries.push(response);
         // get all attachments from attachment table if not published else get from version table
         if (!isPublished) {
             query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
-            response = await t.any(query, [req.params.id]);
-            console.log(query, [req.params.id]);
+            response = await t.any(query, [eduMaterialId]);
+            console.log(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
                 // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
-                response = await t.any(query, [req.params.id, req.params.publishedat]);
-                console.log(query, [req.params.id, req.params.publishedat]);
+                response = await t.any(query, [eduMaterialId, req.params.publishedat]);
+                console.log(query, [eduMaterialId, req.params.publishedat]);
             } else {
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
-                response = await t.any(query, [req.params.id, req.params.publishedat]);
-                console.log(query, [req.params.id]);
+                response = await t.any(query, [eduMaterialId, req.params.publishedat]);
+                console.log(query, [eduMaterialId]);
             }
         }
         queries.push(response);
@@ -204,19 +213,19 @@ export async function getMaterialData(req: Request, res: Response, next: NextFun
         // use raw date in version
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
         query = "select distinct publishedat from versioncomposition where educationalmaterialid = $1 order by publishedat desc;";
-        console.log(query, [req.params.id]);
-        response = await t.any(query, [req.params.id]);
+        console.log(query, [eduMaterialId]);
+        response = await t.any(query, [eduMaterialId]);
         queries.push(response);
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
-        // const popularity = await t.one(getPopularityQuery, [req.params.id]);
+        // const popularity = await t.one(getPopularityQuery, [eduMaterialId]);
         // queries.push(popularity);
         if (req.params.publishedat) {
             query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = $2;";
-            response = await t.oneOrNone(query, [req.params.id, req.params.publishedat]);
+            response = await t.oneOrNone(query, [eduMaterialId, req.params.publishedat]);
             queries.push(response);
         } else {
             query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = (select max(publishedat) from educationalmaterialversion where educationalmaterialid = $1);";
-            response = await t.oneOrNone(query, [req.params.id]);
+            response = await t.oneOrNone(query, [eduMaterialId]);
             queries.push(response);
         }
         return t.batch(queries);
@@ -229,7 +238,7 @@ export async function getMaterialData(req: Request, res: Response, next: NextFun
             let owner = false;
             console.log(owner);
             if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
-                owner = await isOwner(req.params.id, req.session.passport.user.uid);
+                owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
             }
             console.log(owner);
             // add displayname object to material object
@@ -1486,7 +1495,7 @@ export async function isOwner(educationalmaterialid: string, username: string) {
 export default {
     addLinkToMaterial,
     getMaterial,
-    getMaterialData,
+    getEducationalMaterialMetadata,
     getUserMaterial,
     getRecentMaterial,
     setEducationalMaterialObsoleted,

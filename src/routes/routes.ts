@@ -70,7 +70,6 @@ router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenti
 router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
 router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
-router.get('/material/:id/:publishedat?', db.getMaterialData);
 
 router.get('/messages/info', aoeRoutes);
 router.get('/metadata/:id', getMetadataExtension);
@@ -79,7 +78,10 @@ router.get('/names/:id', hasAccessToAoe, getMaterialNames);
 router.post('/oaipmh/metadata', oaipmh.getMaterialMetaData);
 router.get('/pdf/content/:key', downloadPdfFromAllas);
 router.get('/recentmaterial', db.getRecentMaterial);
+
+// TODO: Duplicate functionality with DELETE /material/:edumaterialid - endpoint used by administrator archiving functionality
 router.delete('/removeMaterial/:id', hasAccessToAoe, removeEducationalMaterial);
+
 router.post('/uploadImage/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
 router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
 router.get('/thumbnail/:id', thumbnail.downloadEmThumbnail);
