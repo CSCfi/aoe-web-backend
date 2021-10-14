@@ -7,7 +7,8 @@ import v2 from './routes-v2';
  *
  * Modify this module to pick up and drop off API modules.
  *
- * @param router express.Router
+ * @param router  express.Router
+ * @param version string API version
  */
 export default (router: Router, version: string) => {
     if (version === 'v1') {
