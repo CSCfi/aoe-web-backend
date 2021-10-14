@@ -42,6 +42,9 @@ const oaipmh = require('./../queries/oaipmh');
 const rating = require('../rating/rating');
 const thumbnail = require('./../queries/thumbnailHandler');
 
+// Load API version 1.0 from the new implementation before legacy endpoints
+api(router, 'v1');
+
 /**
  * Legacy API routes and connected middlewares.
  * Sorted by request URL for the later modularization, refactoring and renaming.
