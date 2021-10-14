@@ -1,6 +1,5 @@
 import api from './../api'
 import { hasAccessToAoe } from '../services/authService';
-import { updateEducationalMaterialMetadata } from '../controllers/educationalMaterial';
 import { Router } from 'express';
 import { getH5PContent } from '../h5p/h5p';
 import { downloadPdfFromAllas } from '../helpers/officeToPdfConverter';
@@ -42,12 +41,6 @@ const fh = require('./../queries/fileHandling');
 const oaipmh = require('./../queries/oaipmh');
 const rating = require('../rating/rating');
 const thumbnail = require('./../queries/thumbnailHandler');
-
-/**
- * Attach API routes and connected middlewares from the new implementation.
- * Pass the existing instance of Express Router as an argument.
- */
-api(router);
 
 /**
  * Legacy API routes and connected middlewares.

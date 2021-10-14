@@ -1,7 +1,7 @@
-import edumaterial from './edumaterial';
+import metadata from './metadata';
 
-export { default as edumaterial } from './edumaterial';
+export { default as metadata } from './metadata';
 
 export default {
-    edumaterial
+    metadata
 }

@@ -9,7 +9,10 @@ import v2 from './routes-v2';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
-    v1.material(router);
-    v2.edumaterial(router);
+export default (router: Router, version: string) => {
+    if (version === 'v1') {
+        v1.material(router);
+    } else if (version === 'v2') {
+        v2.metadata(router);
+    }
 }
