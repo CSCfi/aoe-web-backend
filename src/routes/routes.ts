@@ -1,4 +1,4 @@
-import api from './../api'
+import apiV1 from './../api/routes-v1'
 import { hasAccessToAoe } from '../services/authService';
 import { Router } from 'express';
 import { getH5PContent } from '../h5p/h5p';
@@ -43,7 +43,7 @@ const rating = require('../rating/rating');
 const thumbnail = require('./../queries/thumbnailHandler');
 
 // Load API version 1.0 from the new implementation before legacy endpoints
-api(router, 'v1');
+apiV1(router);
 
 /**
  * Legacy API routes and connected middlewares.

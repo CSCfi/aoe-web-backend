@@ -1,4 +1,4 @@
-import api from './api';
+import apiV2 from './api/routes-v2';
 import express, { Response, Request, NextFunction, Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
@@ -24,9 +24,9 @@ import { morganHttpLogger } from './util';
 
 const app = express();
 
-// Load API version 2.0
+// Load API version 2.0 and stack on version 1.0
 const apiRouterV2: Router = Router();
-api(apiRouterV2, 'v2');
+apiV2(apiRouterV2);
 
 /**
  * OpenID Connect Session Managament

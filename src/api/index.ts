@@ -5,15 +5,11 @@ import v2 from './routes-v2';
 /**
  * API modules and versions available in runtime environment.
  *
- * Modify this module to pick up and drop off API modules.
+ * Modify this module to pick up and drop off API versions.
  *
  * @param router  express.Router
- * @param version string API version
  */
-export default (router: Router, version: string) => {
-    if (version === 'v1') {
-        v1.material(router);
-    } else if (version === 'v2') {
-        v2.metadata(router);
-    }
+export default (router: Router) => {
+    v1(router);
+    v2(router);
 }
