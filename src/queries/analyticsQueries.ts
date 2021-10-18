@@ -1,4 +1,5 @@
 import connection from "../resources/pg-config.module";
+import { IDatabase } from 'pg-promise';
 
 const pgp = connection.pgp;
 const db = connection.db;

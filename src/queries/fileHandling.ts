@@ -1,24 +1,32 @@
-import { Request, Response, NextFunction } from "express";
-import { ErrorHandler } from "./../helpers/errorHandler";
-import { insertEducationalMaterialName } from "./apiQueries";
-import { updateDownloadCounter } from "./analyticsQueries";
-import { hasAccesstoPublication } from "./../services/authService";
-import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from "./../helpers/officeToPdfConverter";
+import ADMzip from 'adm-zip';
+import AWS from 'aws-sdk';
+import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
+import contentDisposition from 'content-disposition';
+import { Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import multer from 'multer';
+import s3Zip from 's3-zip';
+import path from 'path';
+
+import { updateDownloadCounter } from './analyticsQueries';
+import { insertEducationalMaterialName } from './apiQueries';
+import { hasAccesstoPublication } from '../services/authService';
+import { ErrorHandler } from '../helpers/errorHandler';
+import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import connection from '../resources/pg-config.module';
+import { winstonLogger } from '../util';
 
+// TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
-const AWS = require("aws-sdk");
-const s3Zip = require("s3-zip");
-const globalLog = require("global-request-logger");
-globalLog.initialize();
-const ADMzip = require("adm-zip");
-
-const fs = require("fs");
-const path = require("path");
-const contentDisposition = require("content-disposition");
-
-// File upload dependencies
-const multer = require("multer");
+// const AWS = require("aws-sdk");
+// const s3Zip = require("s3-zip");
+// const globalLog = require("global-request-logger");
+// globalLog.initialize();
+// const ADMzip = require("adm-zip");
+// const fs = require("fs");
+// const path = require("path");
+// const contentDisposition = require("content-disposition");
+// const multer = require("multer");
 
 // define multer storage
 const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
@@ -130,14 +138,13 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
         console.log(req.body);
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
-            upload.single("file")(req , res, async function(err: any) {
+            upload.single("file")(req, res, async function (err: any) {
                     try {
                         if (err) {
                             console.log(err);
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
-                            }
-                            else {
+                            } else {
                                 console.trace(err);
                                 next(new ErrorHandler(500, "Error in upload"));
                             }
@@ -161,8 +168,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                     console.log(err);
                                     next(new ErrorHandler(500, "Error in upload"));
                                 });
-                        }
-                        else {
+                        } else {
                             let materialid: string;
                             const fileDetails = JSON.parse(req.body.fileDetails);
                             const material: any = [];
@@ -172,7 +178,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                 queries.push(emresp);
                                 const id = await insertDataToMaterialTable(t, emresp.id, "", fileDetails.language, fileDetails.priority);
                                 queries.push(id);
-                                material.push({"id" : id.id, "createFrom" : file.originalname});
+                                material.push({"id": id.id, "createFrom": file.originalname});
                                 materialid = id.id;
                                 let result = await insertDataToDisplayName(t, emresp.id, id.id, fileDetails);
                                 queries.push(result);
@@ -180,7 +186,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                 queries.push(result);
                                 return t.batch(queries);
                             })
-                                .then( async (data: any) => {
+                                .then(async (data: any) => {
                                         // return 200 if success and continue sending files to pouta
                                         resp.id = data[0].id;
                                         resp.material = material;
@@ -199,8 +205,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                                         const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                                                         await updatePdfKey(pdfobj.Key, recordid);
                                                     }
-                                                }
-                                                catch (e) {
+                                                } catch (e) {
                                                     console.log("ERROR converting office file to pdf");
                                                     console.error(e);
                                                 }
@@ -211,8 +216,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                                     }
                                                 });
                                             }
-                                        }
-                                        catch (ex) {
+                                        } catch (ex) {
                                             console.log(ex);
                                             console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
                                         }
@@ -221,14 +225,13 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                 )
                                 .catch((err: Error) => {
                                     console.log(err);
-                                    if ( ! res.headersSent) {
+                                    if (!res.headersSent) {
                                         next(new ErrorHandler(500, "Error in upload"));
                                     }
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
                                             console.error(err);
-                                        }
-                                        else {
+                                        } else {
                                             console.log("file removed");
                                         }
                                     });
@@ -237,18 +240,16 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
 
                     } catch (e) {
                         console.log(e);
-                        if ( ! res.headersSent) {
+                        if (!res.headersSent) {
                             next(new ErrorHandler(500, "Error in upload"));
                         }
                     }
                 }
             );
-        }
-        else {
+        } else {
             next(new ErrorHandler(400, "Not found"));
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         next(new ErrorHandler(500, "Error in upload"));
     }
@@ -266,14 +267,13 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
             console.log("uploadFileToMaterial starting");
-            upload.single("file")(req , res, async function(err: any) {
+            upload.single("file")(req, res, async function (err: any) {
                     try {
                         if (err) {
                             console.error(err);
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
-                            }
-                            else {
+                            } else {
                                 console.trace(err);
                                 next(new ErrorHandler(500, "Error in upload"));
                             }
@@ -282,28 +282,27 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                         const resp: any = {};
                         if (!file) {
                             next(new ErrorHandler(400, "No file sent"));
-                        }
-                        else {
+                        } else {
                             console.log("uploadFileToMaterial details to database for: " + file.originalname);
                             let materialid: string;
                             const fileDetails = JSON.parse(req.body.fileDetails);
                             const material: any = [];
                             db.tx(async (t: any) => {
                                 const queries = [];
-                                const id = await insertDataToMaterialTable(t, req.params.materialId, "", fileDetails.language, fileDetails.priority);
+                                const id = await insertDataToMaterialTable(t, req.params.edumaterialid, "", fileDetails.language, fileDetails.priority);
                                 queries.push(id);
-                                material.push({"id" : id.id, "createFrom" : file.originalname});
+                                material.push({"id": id.id, "createFrom": file.originalname});
                                 materialid = id.id;
-                                let result = await insertDataToDisplayName(t, req.params.materialId, id.id, fileDetails);
+                                let result = await insertDataToDisplayName(t, req.params.edumaterialid, id.id, fileDetails);
                                 queries.push(result);
                                 result = await insertDataToTempRecordTable(t, file, id.id);
                                 queries.push(result);
                                 return t.batch(queries);
                             })
-                                .then( async (data: any) => {
+                                .then(async (data: any) => {
                                         // return 200 if success and continue sending files to pouta
                                         console.log("uploadFileToMaterial sending to Pouta: " + file.filename);
-                                        resp.id = req.params.materialId;
+                                        resp.id = req.params.edumaterialid;
                                         resp.material = material;
                                         res.status(200).json(resp);
                                         try {
@@ -312,15 +311,14 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                                 const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
                                                 const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
                                                 try {
-                                                    if (isOfficeMimeType(file.mimetype)) {
+                                                    if (await isOfficeMimeType(file.mimetype)) {
                                                         console.log("Convert file and send to allas");
                                                         const path = await allasFileToPdf(obj.Key);
                                                         const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
                                                         const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                                                         await updatePdfKey(pdfobj.Key, recordid);
                                                     }
-                                                }
-                                                catch (e) {
+                                                } catch (e) {
                                                     console.log("ERROR converting office file to pdf");
                                                     console.error(e);
                                                 }
@@ -331,8 +329,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                                     }
                                                 });
                                             }
-                                        }
-                                        catch (ex) {
+                                        } catch (ex) {
                                             console.log(ex);
                                             console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
                                         }
@@ -341,14 +338,13 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                 )
                                 .catch((err: Error) => {
                                     console.log(err);
-                                    if ( ! res.headersSent) {
+                                    if (!res.headersSent) {
                                         next(new ErrorHandler(500, "Error in upload"));
                                     }
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
                                             console.error(err);
-                                        }
-                                        else {
+                                        } else {
                                             console.log("file removed");
                                         }
                                     });
@@ -356,18 +352,16 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                         }
                     } catch (e) {
                         console.log(e);
-                        if ( ! res.headersSent) {
+                        if (!res.headersSent) {
                             next(new ErrorHandler(500, "Error in upload"));
                         }
                     }
                 }
             );
-        }
-        else {
+        } else {
             next(new ErrorHandler(400, "Not found"));
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.error(err);
         next(new ErrorHandler(500, "Error in upload"));
     }
@@ -379,7 +373,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
  * @param materialid
  * load file to allas storage
  */
-export async function fileToStorage(file: any, materialid: string): Promise<{key: string, recordid: string}> {
+export async function fileToStorage(file: any, materialid: string): Promise<{ key: string, recordid: string }> {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
     await deleteDataFromTempRecordTable(file.filename, materialid);
@@ -490,7 +484,6 @@ export async function insertDataToEducationalMaterialTable(req: Request, t: any)
 }
 
 
-
 export async function insertDataToDisplayName(t: any, educationalmaterialid, materialid: string, fileDetails: any) {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
@@ -540,13 +533,12 @@ export async function insertDataToDisplayName(t: any, educationalmaterialid, mat
     return queries;
 }
 
-export async function insertDataToMaterialTable(t: any, materialID: string, location: any, languages, priority: number) {
-    let query;
+export async function insertDataToMaterialTable(t: any, eduMaterialId: string, location: any, languages, priority: number): Promise<any> {
+    const query = "INSERT INTO material (link, educationalmaterialid, materiallanguagekey, priority) VALUES ($1, $2, $3, $4) RETURNING id";
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
-    console.log(query);
-    const data = await t.one(query, [location, materialID, languages, priority]);
-    return data;
+    winstonLogger.debug('insertDataToMaterialTable(): query=' + query);
+    return await t.one(query, [location, eduMaterialId, languages, priority]);
 }
 
 export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string, metadata: any) {
@@ -865,11 +857,11 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                         const backupws = backupfs.on("error", function (e) {
                             console.error("Error in createReadStream " + path);
                             console.error(e);
-                            next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                            next(new ErrorHandler(500, e.message || "Error in download"));
                         }).pipe(fs.createWriteStream(folderpath)).on("error", function (e) {
                             console.error("Error in createWriteStream " + folderpath);
                             console.error(e);
-                            next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                            next(new ErrorHandler(500, e.message || "Error in download"));
                         });
                         backupws.on("finish", async function () {
                             console.log("We finished the backupfs!");
@@ -896,16 +888,16 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                         const backupfs = fs.createReadStream(path);
                         backupfs.on("error", function (e) {
                             console.error(e);
-                            next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                            next(new ErrorHandler(500, e.message || "Error in download"));
                         }).pipe(res).on("error", function (e) {
                             console.error(e);
-                            next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                            next(new ErrorHandler(500, e.message || "Error in download"));
                         });
 
                     })
                         .pipe(res).on("error", function (e) {
                         console.error(e);
-                        next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                        next(new ErrorHandler(500, e.message || "Error in download"));
                     });
                 }
 
@@ -913,7 +905,6 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
                 console.error("The error in downloadFileFromStorage function (nested try) : " + err);
                 next(new ErrorHandler(500, "Error in download"));
             }
-            console.debug('[DEBUG] downloadFromStorage function completed');
         } catch (err) {
             console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
             next(new ErrorHandler(500, "Error in download"));
@@ -921,76 +912,86 @@ export async function downloadFromStorage(req: Request, res: Response, next: Nex
     });
 }
 
-export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction) {
+/**
+ * Download all files related to an educational material as a bundled zip file.
+ *
+ * @param req  Request<any>
+ * @param res  Response<any>
+ * @param next NextFunction
+ */
+export async function downloadMaterialFile(req: Request, res: Response, next: NextFunction): Promise<void> {
+    winstonLogger.debug('downloadMaterialFile(): edumaterialid=' + req.params.edumaterialid + ', publishedat?=' + req.params.publishedat);
+
+    // Queries to resolve files of the latest educational material requested
+    const queryLatestPublished = "SELECT MAX(publishedat) AS max FROM versioncomposition WHERE educationalmaterialid = $1";
+    const queryVersionFilesIds =
+        "SELECT record.filekey, record.originalfilename " +
+        "FROM versioncomposition " +
+        "RIGHT JOIN material ON material.id = versioncomposition.materialid " +
+        "RIGHT JOIN record ON record.materialid = material.id " +
+        "WHERE material.educationalmaterialid = $1 AND obsoleted = 0 AND publishedat = $2 " +
+        "UNION " +
+        "SELECT attachment.filekey, attachment.originalfilename " +
+        "FROM attachmentversioncomposition AS v " +
+        "INNER JOIN attachment ON v.attachmentid = attachment.id " +
+        "WHERE v.versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND v.versionpublishedat = $2";
+
     try {
-        console.log("downloadMaterialFile");
-        const response = await db.task(async (t: any) => {
-            let publishedat = req.params.publishedat;
-            if (!publishedat) {
-                const q = "SELECT MAX(publishedat) FROM versioncomposition WHERE educationalmaterialid = $1";
-                console.log(q, req.params.materialId);
-                const res = await t.oneOrNone(q, req.params.materialId);
-                publishedat = res.max;
+        const versionFiles: { filekey: string, originalfilename: string }[] = await db.task(async (t: any) => {
+            let publishedAt = req.params.publishedat;
+            if (!publishedAt) {
+                const latestPublished: { max: string } = await t.oneOrNone(queryLatestPublished, req.params.edumaterialid);
+                publishedAt = latestPublished.max;
             }
-            const query =
-                "SELECT record.filekey, record.originalfilename " +
-                "FROM versioncomposition " +
-                "RIGHT JOIN material ON material.id = versioncomposition.materialid " +
-                "RIGHT JOIN record ON record.materialid = material.id " +
-                "WHERE material.educationalmaterialid = $1 AND obsoleted = 0 AND publishedat = $2 " +
-                "UNION " +
-                "SELECT attachment.filekey, attachment.originalfilename " +
-                "FROM attachmentversioncomposition AS v " +
-                "INNER JOIN attachment ON v.attachmentid = attachment.id " +
-                "WHERE v.versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND v.versionpublishedat = $2";
-            console.log(query, [req.params.materialId, publishedat]);
-            return await db.any(query, [req.params.materialId, publishedat]);
+            return await db.any(queryVersionFilesIds, [req.params.edumaterialid, publishedAt]);
         });
-        if (response.length < 1) {
-            console.log("No material found");
-            next(new ErrorHandler(404, "No material found"));
+        if (versionFiles.length < 1) {
+            next(new ErrorHandler(404, 'No material found for educationalmaterialid=' +
+                req.params.edumaterialid + ', publishedat?=' + req.params.publishedat));
         } else {
-            const keys = [];
-            const archiveFiles = [];
-            for (const element of response) {
-                keys.push(element.filekey);
-                archiveFiles.push(element.originalfilename);
+            const fileKeys: string[] = [];
+            const fileNames: string[] = [];
+            for (const file of versionFiles) {
+                fileKeys.push(file.filekey);
+                fileNames.push(file.originalfilename);
             }
-            console.log(keys, req.params.materialId);
-            // res.set("content-type", "application/zip");
-            res.header("Content-Disposition", "attachment; filename=materials.zip");
-            await downloadAndZipFromStorage(req, res, next, keys, archiveFiles);
-            // update downloadcounter here
-            const idnumber = parseInt(req.params.materialId);
-            console.log("Starting update downloadcounter");
-            if (!req.isAuthenticated() || !(await hasAccesstoPublication(idnumber, req))) {
-                console.log("update downloadcounter");
+            // res.header('Content-Type', 'application/zip');
+            res.header('Content-Disposition', 'attachment; filename=materials.zip');
+
+            // Download files from the object storage and zip the bundle, send the zipped file as a response
+            await downloadAndZipFromStorage(req, res, next, fileKeys, fileNames);
+
+            // Try to update download counter
+            const educationalMaterialId: number = parseInt(req.params.edumaterialid, 10);
+            if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
                 try {
-                    await updateDownloadCounter(req.params.materialId);
+                    await updateDownloadCounter(educationalMaterialId.toString());
                 } catch (error) {
-                    console.error("update downloadcounter failed: " + error);
+                    winstonLogger.error('Updating download counter failed: ' + error);
                 }
             }
         }
-    } catch (err) {
-        console.error(err);
-        next(new ErrorHandler(400, "Failed to download file"));
+    } catch (error) {
+        next(new ErrorHandler(400, 'File download failed for educationalmaterialid=' +
+            req.params.edumaterialid + ', publishedat?=' + req.params.publishedat));
     }
 }
 
 /**
+ * Stream and combine files from the object storage to a compressed zip file.
  *
- * @param req
- * @param res
- * @param next
- * @param keys
- * @param archiveFiles
- * pipe zip stream from allas to res. keys list of allas keys. archiveFiles list of file names.
+ * @param req   Request<any>
+ * @param res   Response<any>
+ * @param next  NextFunction
+ * @param keys  string[] Array of object storage keys
+ * @param files string[] Array of file names
  */
-export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: any, archiveFiles: any) {
+export async function downloadAndZipFromStorage(req: Request, res: Response, next: NextFunction, keys: string[], files: string[]): Promise<void> {
     return new Promise(async resolve => {
         try {
-            const config = {
+            // ServiceConfigurationOptions (fields: endpoint, lib: aws-sdk/lib/service) extends
+            // ConfigurationOptions (fields: all others, lib: aws-sdk)
+            const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
                 secretAccessKey: process.env.USER_SECRET,
                 endpoint: process.env.POUTA_END_POINT,
@@ -999,26 +1000,23 @@ export async function downloadAndZipFromStorage(req: Request, res: Response, nex
             AWS.config.update(config);
             const s3 = new AWS.S3();
             const bucketName = process.env.BUCKET_NAME;
-            console.log("Starting s3Zip zipstream!");
+            winstonLogger.debug('Starting s3Zip stream');
             try {
                 s3Zip
-                    .archive({s3: s3, bucket: bucketName}, "", keys, archiveFiles)
-                    .pipe(res).on("finish", async function () {
-                        console.log("We finished the s3Zip zipstream!");
+                    .archive({s3: s3, bucket: bucketName}, '', keys, files)
+                    .pipe(res)
+                    .on('finish', async () => {
+                        winstonLogger.debug('Completed the s3Zip stream');
                         resolve();
-                    }
-                )
-                    .on("error", function (e) {
-                        console.error(e);
-                        next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
+                    })
+                    .on('error', (e) => {
+                        next(new ErrorHandler(500, e.message || 'Error in download'));
                     });
             } catch (err) {
-                console.error(err);
-                next(new ErrorHandler(500, "Failed to download file from storage"));
+                next(new ErrorHandler(500, 'Failed to download file from storage'));
             }
         } catch (err) {
-            console.error(err);
-            next(new ErrorHandler(500, "Failed to download file"));
+            next(new ErrorHandler(500, 'Failed to download file'));
         }
     });
 }
@@ -1090,20 +1088,19 @@ export async function unZipAndExtract(zipFolder: any) {
     }
 }
 
-
-module.exports = {
-    uploadMaterial: uploadMaterial,
-    uploadFileToMaterial: uploadFileToMaterial,
-    uploadFileToStorage: uploadFileToStorage,
-    downloadFile: downloadFile,
-    unZipAndExtract: unZipAndExtract,
-    downloadFileFromStorage: downloadFileFromStorage,
-    downloadMaterialFile: downloadMaterialFile,
-    checkTemporaryRecordQueue: checkTemporaryRecordQueue,
-    uploadBase64FileToStorage: uploadBase64FileToStorage,
-    uploadAttachmentToMaterial: uploadAttachmentToMaterial,
-    checkTemporaryAttachmentQueue: checkTemporaryAttachmentQueue,
-    insertDataToDisplayName: insertDataToDisplayName,
-    downloadFromStorage: downloadFromStorage,
+export default {
+    uploadMaterial,
+    uploadFileToMaterial,
+    uploadFileToStorage,
+    downloadFile,
+    unZipAndExtract,
+    downloadFileFromStorage,
+    downloadMaterialFile,
+    checkTemporaryRecordQueue,
+    uploadBase64FileToStorage,
+    uploadAttachmentToMaterial,
+    checkTemporaryAttachmentQueue,
+    insertDataToDisplayName,
+    downloadFromStorage,
     readStreamFromStorage
 };

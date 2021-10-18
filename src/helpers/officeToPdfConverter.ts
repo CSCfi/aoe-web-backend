@@ -112,7 +112,7 @@ export async function isOfficeMimeType(s: string) {
 export async function downloadPdfFromAllas (req: Request, res: Response, next: NextFunction) {
     try {
         if (!req.params.key) {
-            next(new ErrorHandler("400", "key missing"));
+            next(new ErrorHandler(400, "key missing"));
         }
         const params = {
             "Bucket" : process.env.PDF_BUCKET_NAME,
