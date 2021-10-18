@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { downloadFromStorage } from "./fileHandling";
-import connection from '../resources/pg-config.module';
+import connection from "../resources/pg-config.module";
 
 const fs = require("fs");
 const multer  = require("multer");
@@ -52,10 +52,10 @@ async function uploadImage(req: Request, res: Response) {
                         let query;
                         query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
                         console.log(query);
-                        await db.none(query, [req.params.id]);
+                        await db.none(query, [req.params.edumaterialid]);
                         query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
-                        console.log(query, [obj.Location, file.mimetype, req.params.id, file.filename, obj.Key, obj.Bucket]);
-                        await db.any(query, [obj.Location, file.mimetype, req.params.id, file.filename, obj.Key, obj.Bucket]);
+                        console.log(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
+                        await db.any(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
                     }
                     catch (err) {
                         console.log(err);

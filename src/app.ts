@@ -1,4 +1,5 @@
-import express, { Response, Request, NextFunction } from 'express';
+import apiV2 from './api/routes-v2';
+import express, { Response, Request, NextFunction, Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
@@ -13,7 +14,7 @@ import cors from 'cors';
 import * as homeController from './controllers/home';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { h5pEditor } from './h5p/h5p';
-import apiRouter from './routes/routes';
+import apiRouterV1 from './routes/routes';
 import ah from './services/authService';
 import bodyParser from 'body-parser';
 import redisClient from './resources/redis-client.module';
@@ -22,6 +23,10 @@ import openidClient, { custom, HttpOptions } from 'openid-client';
 import { morganHttpLogger } from './util';
 
 const app = express();
+
+// Load API version 2.0 and stack on version 1.0
+const apiRouterV2: Router = Router();
+apiV2(apiRouterV2);
 
 /**
  * OpenID Connect Session Managament
@@ -174,7 +179,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
 app.get('/', homeController.index);
-app.use('/', apiRouter);
+app.use('/', apiRouterV1);
+app.use('/v2', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {

@@ -3,7 +3,7 @@ import connection from '../resources/pg-config.module';
 
 const db = connection.db;
 
-export function checkAuthenticated(req: Request, res: Response, next: NextFunction) {
+export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
     if (req.isAuthenticated()) {
         return next();
     } else {
@@ -74,28 +74,13 @@ export async function InsertUserToDatabase(userinfo: any, acr: string) {
     }
 }
 
-export async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction) {
-    let id = req.params.id;
-    if (req.params.id) {
-        id = req.params.id;
-    } else if (req.params.materialId) {
-        id = req.params.materialId;
-    } else if (req.params.materialid) {
-        id = req.params.materialid;
-    }
-    const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
-    const result = await db.oneOrNone(query, [id]);
-    console.log(req.session.passport.user.uid);
-    console.log(result);
-    if (!result) {
-        console.log("No result found for id " + id);
-        return res.sendStatus(401);
-    }
-    if (req.session.passport.user.uid === result.usersusername) {
+export async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const query = "SELECT usersusername FROM educationalmaterial WHERE id = $1";
+    const eduMaterial = await db.oneOrNone(query, [req.params.edumaterialid]);
+    if (req.session.passport.user.uid === eduMaterial.usersusername) {
         return next();
-    } else {
-        res.sendStatus(401);
     }
+    res.sendStatus(401);
 }
 
 export async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {

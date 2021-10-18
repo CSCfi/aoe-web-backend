@@ -5,6 +5,7 @@ import { updateEsDocument } from "./../elasticSearch/es";
 import { aoeMaterialVersionUrl } from "./../services/urlService";
 import { getPid } from "./../pid/pidService";
 import { EnumStringMember } from "@babel/types";
+import { winstonLogger } from '../util';
 
 export interface EducationalMaterialMetadata {
     name: {
@@ -127,50 +128,53 @@ interface AuthorsOrganization {
  * @param next
  * update educational material metadata
  */
-export async function updateEducationalMaterialMetadata(req: Request , res: Response , next: NextFunction) {
+export async function updateEducationalMaterialMetadata(req: Request, res: Response, next: NextFunction): Promise<void> {
+    winstonLogger.debug('updateEducationalMaterialMetadata(): edumaterialid=' + req.params.edumaterialid +
+        ', metadata=' + req.body);
+
     try {
         const metadata: EducationalMaterialMetadata = req.body;
-        const emid: string = req.params.id;
+        const emid: string = req.params.edumaterialid;
         if (!metadata || !emid) {
-            console.log("updateEducationalMaterialMetadata data or params missing");
-            return res.status(401).json({"status": "invalid data"});
+            return next(new ErrorHandler(400, 'Metadata update for the educational material ' +
+                'failed: edumaterialid=' + emid + ', metadata=' + metadata));
         }
-        const data = await updateMaterial(metadata, emid);
-        console.log(data);
-        res.status(200).json({"status": "data updated"});
+        const eduMaterial = await updateMaterial(metadata, emid);
+
+        // 200 OK response to the client and continue to search index and PID update
+        // eduMaterial[1]: { publishedat: string }
+        res.status(200).json(eduMaterial[1]);
+
+        // TODO: Refactoring break point
+
         try {
-            updateEsDocument();
-        }
-        catch (error) {
+            await updateEsDocument();
+        } catch (error) {
             console.log("Es update error do something");
             console.error(error);
         }
         try {
-            if (Number(process.env.PID_SERVICE_ENABLED) === 1 && data[1] && data[1].publishedat) {
+            if (Number(process.env.PID_SERVICE_ENABLED) === 1 && eduMaterial[1] && eduMaterial[1].publishedat) {
                 // try to get pid if new version
                 try {
-                console.log("GET NEW PID");
-                const aoeurl = await aoeMaterialVersionUrl(req.params.id, data[1].publishedat);
-                const pidurn = await getPid(aoeurl);
-                await insertUrn(req.params.id, data[1].publishedat, pidurn);
-                }
-                catch (error) {
-                    console.log("Cannot get Pid from " + req.params.id, data[1].publishedat);
+                    console.log("GET NEW PID");
+                    const aoeurl = await aoeMaterialVersionUrl(emid, eduMaterial[1].publishedat);
+                    const pidurn = await getPid(aoeurl);
+                    await insertUrn(emid, eduMaterial[1].publishedat, pidurn);
+                } catch (error) {
+                    console.log("Cannot get Pid from " + emid, eduMaterial[1].publishedat);
                     console.error(error);
                 }
-            }
-            else {
+            } else {
                 console.log("PID SERVICE DISABLED OR NO DATA");
                 console.log(process.env.PID_SERVICE_ENABLED);
-                console.log(data[1]);
+                console.log(eduMaterial[1]);
             }
-        }
-        catch (error) {
+        } catch (error) {
             console.log("ISSUE GETTING PID");
             console.error(error);
         }
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         next(new ErrorHandler(400, "Issue updating material"));
     }
