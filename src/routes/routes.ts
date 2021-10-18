@@ -63,8 +63,11 @@ router.get('/material', db.getMaterial);
 
 router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
-router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
+
+// Keep the order
 router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
+
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
 
 router.get('/messages/info', aoeRoutes);

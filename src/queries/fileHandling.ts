@@ -311,7 +311,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                                 const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
                                                 const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
                                                 try {
-                                                    if (isOfficeMimeType(file.mimetype)) {
+                                                    if (await isOfficeMimeType(file.mimetype)) {
                                                         console.log("Convert file and send to allas");
                                                         const path = await allasFileToPdf(obj.Key);
                                                         const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
@@ -533,13 +533,12 @@ export async function insertDataToDisplayName(t: any, educationalmaterialid, mat
     return queries;
 }
 
-export async function insertDataToMaterialTable(t: any, materialID: string, location: any, languages, priority: number) {
-    let query;
+export async function insertDataToMaterialTable(t: any, eduMaterialId: string, location: any, languages, priority: number): Promise<any> {
+    const query = "INSERT INTO material (link, educationalmaterialid, materiallanguagekey, priority) VALUES ($1, $2, $3, $4) RETURNING id";
     // const str = Object.keys(files).map(function(k) {return "('" + files[k].originalname + "','" + location + "','" + materialID + "')"; }).join(",");
     // const str = "('" + files.originalname + "','" + location + "','" + materialID + "')";
-    console.log(query);
-    const data = await t.one(query, [location, materialID, languages, priority]);
-    return data;
+    winstonLogger.debug('insertDataToMaterialTable(): query=' + query);
+    return await t.one(query, [location, eduMaterialId, languages, priority]);
 }
 
 export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string, metadata: any) {
