@@ -965,7 +965,7 @@ export async function downloadMaterialFile(req: Request, res: Response, next: Ne
             const educationalMaterialId: number = parseInt(req.params.edumaterialid, 10);
             if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
                 try {
-                    await updateDownloadCounter(educationalMaterialId);
+                    await updateDownloadCounter(educationalMaterialId.toString());
                 } catch (error) {
                     winstonLogger.error('Updating download counter failed: ' + error);
                 }
