@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { downloadFromStorage } from "./fileHandling";
 import connection from "../resources/pg-config.module";
+import { winstonLogger } from '../util';
 
 const fs = require("fs");
 const multer  = require("multer");
@@ -50,10 +51,12 @@ async function uploadImage(req: Request, res: Response) {
                     try {
                         const obj: any = await fh.uploadFileToStorage((file.path), file.filename, process.env.THUMBNAIL_BUCKET_NAME);
                         let query;
-                        query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
+                        query = "UPDATE thumbnail SET obsoleted = 1 WHERE educationalmaterialid = $1 AND obsoleted = 0";
                         console.log(query);
                         await db.none(query, [req.params.edumaterialid]);
-                        query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
+                        query = "INSERT INTO thumbnail " +
+                            "(filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) " +
+                            "VALUES ($1, $2, $3, $4, $5, $6)";
                         console.log(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
                         await db.any(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
                     }
@@ -128,19 +131,15 @@ export async function uploadbase64Image(req: Request, res: Response, isEm: boole
             // console.log(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
             // await db.any(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
             if (isEm) {
-                await updateEmThumbnailData(obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket);
-            }
-            else {
-                await updateCollectionThumbnailData(obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket);
+                await updateEmThumbnailData(obj.Location, matches[1], req.params.edumaterialid, fileName, obj.Key, obj.Bucket);
+            } else {
+                await updateCollectionThumbnailData(obj.Location, matches[1], req.params.edumaterialid, fileName, obj.Key, obj.Bucket);
             }
             return obj;
-        }
-        else {
+        } else {
             return res.status(400).json({"error": "application/json expected"});
         }
-
-    }
-    catch (error) {
+    } catch (error) {
         console.log(error);
         throw new Error(error);
     }
@@ -154,7 +153,7 @@ export async function downloadEmThumbnail(req: Request, res: Response, next: Nex
         if (!key) {
             return res.status(200).json({});
         }
-        downloadThumbnail(req, res, next, key);
+        await downloadThumbnail(req, res, next, key);
     }
     catch (error) {
         console.error(error);
@@ -178,11 +177,12 @@ export async function downloadCollectionThumbnail(req: Request, res: Response, n
     }
 }
 /**
+ * Download thumbnail from Pouta
  *
  * @param req
  * @param res
  * @param next
- * download thumbnail from Pouta
+ * @param key
  */
 async function downloadThumbnail(req: Request, res: Response, next: NextFunction, key: string) {
     try {
@@ -228,17 +228,21 @@ async function getColectionThumbnailKey(id: string) {
 }
 
 async function updateEmThumbnailData(filepath: string, mimetype: string, educationalmaterialid: string, filename: string, fileKey: string, fileBucket: string) {
+    winstonLogger.debug('updateEmThumbnailData(): filepath=' + filepath + ', mimetype=' + mimetype +
+        ', educationalmaterialid=' + educationalmaterialid + ', filename=' + filename + ', filekey=' + fileKey +
+        ', fileBucket=' + fileBucket);
     try {
         let query;
-        query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
-        console.log(query);
+        query = "UPDATE thumbnail SET obsoleted = 1 WHERE educationalmaterialid = $1 AND obsoleted = 0";
+        winstonLogger.debug(query);
         await db.none(query, [educationalmaterialid]);
-        query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) VALUES ($1,$2,$3,$4,$5,$6);";
-        console.log(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
+        query = "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) " +
+            "VALUES ($1, $2, $3, $4, $5, $6)";
+        winstonLogger.debug(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
         await db.any(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
     }
     catch (error) {
-        console.log(error);
+        winstonLogger.error('updateEmThumbnailData(): ' + error);
         throw new Error(error);
     }
 }
@@ -261,10 +265,10 @@ async function updateCollectionThumbnailData(filepath: string, mimetype: string,
 
 
 module.exports = {
-    uploadImage : uploadImage,
-    uploadbase64Image : uploadbase64Image,
-    uploadEmBase64Image : uploadEmBase64Image,
-    uploadCollectionBase64Image : uploadCollectionBase64Image,
-    downloadEmThumbnail : downloadEmThumbnail,
-    downloadCollectionThumbnail : downloadCollectionThumbnail,
+    uploadImage,
+    uploadbase64Image,
+    uploadEmBase64Image,
+    uploadCollectionBase64Image,
+    downloadEmThumbnail,
+    downloadCollectionThumbnail
 };

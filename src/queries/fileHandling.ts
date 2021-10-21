@@ -832,7 +832,7 @@ export async function readStreamFromStorage(params: { Bucket: string; Key: strin
  * @param isZip
  * function to download file from Pouta
  */
-export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: { Bucket: string; Key: string; }, filename: string, isZip?: any) {
+export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: { Bucket: string; Key: string; }, filename: string, isZip?: any): Promise<any> {
     return new Promise(async (resolve) => {
         try {
             const config = {
