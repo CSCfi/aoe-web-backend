@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { isAllasEnabled } from '../../services/routeEnablerService';
 import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
-import { uploadEmBase64Image, uploadThumbnailImage } from '../../queries/thumbnailHandler';
+import { uploadbase64Image } from '../../queries/thumbnailHandler';
 
 /**
  * API version 1.0 for requesting files and metadata related to stored educational material.
@@ -14,8 +14,8 @@ import { uploadEmBase64Image, uploadThumbnailImage } from '../../queries/thumbna
  */
 export default (router: Router) => {
 
-    router.post('/uploadImage/:edumaterialid', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadThumbnailImage);
-
-    router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadEmBase64Image);
+    // Upload eduactional material thumbnail image to cloud object storage.
+    // Case of an educational material identified by request parameter name :edumaterialid in uploadbase64Image().
+    router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadbase64Image);
 
 }

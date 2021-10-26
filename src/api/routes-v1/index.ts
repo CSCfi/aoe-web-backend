@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import collection from './collection';
 import material from './material';
 import upload from './upload';
 
+export { default as collection } from './collection';
 export { default as material } from './material';
 export { default as upload } from './upload';
 
@@ -12,6 +14,7 @@ export { default as upload } from './upload';
  * @param router express.Router
  */
 export default (router: Router) => {
+    collection(router);
     material(router);
     upload(router);
 }

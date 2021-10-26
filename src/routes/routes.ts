@@ -42,8 +42,7 @@ const oaipmh = require('./../queries/oaipmh');
 const rating = require('../rating/rating');
 import {
     downloadCollectionThumbnail,
-    downloadEmThumbnail,
-    uploadCollectionBase64Image
+    downloadEmThumbnail
 } from '../queries/thumbnailHandler';
 
 // Load API version 1.0 from the new implementation before legacy endpoints
@@ -103,7 +102,6 @@ router.get('/collection/getCollection/:collectionId', collection.getCollection);
 router.post('/collection/removeMaterial', ah.checkAuthenticated, ah.hasAccessToCollection, removeCollectionValidationRules(), rulesValidate, collection.removeEducationalMaterialFromCollection);
 router.get('/collection/recentCollection', collection.getRecentCollection);
 router.put('/collection/update', ah.checkAuthenticated, ah.hasAccessToCollection, updateCollectionValidationRules(), rulesValidate, collection.updateCollection);
-router.post('/collection/uploadBase64Image/:id', ah.checkAuthenticated, ah.hasAccessToCollectionParams, uploadCollectionBase64Image);
 router.get('/collection/userCollection', ah.checkAuthenticated, collection.getUserCollections);
 router.get('/collection/thumbnail/:id', downloadCollectionThumbnail);
 

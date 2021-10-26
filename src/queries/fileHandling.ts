@@ -684,16 +684,16 @@ export const uploadFileToStorage = async (filePath: string, filename: string, bu
 }
 
 /**
+ * Upload a file from the local file system to the cloud object storage.
  *
- * @param base64data
- * @param filename
- * @param bucketName
- * base64 data to storage
+ * @param base64data Buffer File binary content Base64 encoded
+ * @param filename   string Target file name in object storage system
+ * @param bucketName string Target bucket in object storage system
  */
 export async function uploadBase64FileToStorage(base64data: Buffer, filename: string, bucketName: string): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
-            const config = {
+            const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
                 secretAccessKey: process.env.USER_SECRET,
                 endpoint: process.env.POUTA_END_POINT,
@@ -701,33 +701,29 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
             };
             AWS.config.update(config);
             const s3 = new AWS.S3();
-            const key = filename;
             try {
                 const params = {
                     Bucket: bucketName,
-                    Key: key,
+                    Key: filename,
                     Body: base64data
                 };
-                const time = Date.now();
+                const startTime: number = Date.now();
                 s3.upload(params, (err: any, data: any) => {
                     if (err) {
-                        console.error(`Upload Error ${err}`);
+                        winstonLogger.error('Reading file from the local file system failed in uploadFileToStorage(): ' + err);
                         reject(new Error(err));
                     }
-
                     if (data) {
-                        console.log((Date.now() - time) / 1000);
-                        console.log("Upload Completed");
-                        console.log(data);
+                        winstonLogger.debug('Uploading file to the cloud object storage completed in ' + ((Date.now() - startTime) / 1000) + 's');
                         resolve(data);
                     }
                 });
             } catch (err) {
-                console.log(err);
+                winstonLogger.error('Error in uploading file to the cloud object storage in uploadFileToStorage(): ' + err);
                 reject(new Error(err));
             }
         } catch (err) {
-            console.log(err);
+            winstonLogger.error('Error in processing file in uploadFileToStorage(): ' + err);
             reject(new Error(err));
         }
     });
