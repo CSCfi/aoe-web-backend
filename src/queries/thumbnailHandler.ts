@@ -79,12 +79,11 @@ export const uploadThumbnailImage = async (req: Request, res: Response): Promise
     }
 }
 
-export async function uploadCollectionBase64Image(req: Request, res: Response, next: NextFunction) {
+export async function uploadCollectionBase64Image(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const obj: any = uploadbase64Image(req, res, false);
         return res.status(200).json({"url" : obj.Location});
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         next(new ErrorHandler(500, "Issue uploading thumbnail"));
     }
@@ -102,6 +101,9 @@ export async function uploadEmBase64Image(req: Request, res: Response, next: Nex
 }
 
 export async function uploadbase64Image(req: Request, res: Response, isEm: boolean): Promise<any> {
+
+    // ID of educational material (isEm=true) or collection (isEm=false)
+    const entityId = isEm ? req.params.edumaterialid : req.params.id;
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("application/json")) {
@@ -123,9 +125,9 @@ export async function uploadbase64Image(req: Request, res: Response, isEm: boole
             // console.log(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
             // await db.any(query, [obj.Location, matches[1], req.params.id, fileName, obj.Key, obj.Bucket]);
             if (isEm) {
-                await updateEmThumbnailData(obj.Location, matches[1], req.params.edumaterialid, fileName, obj.Key, obj.Bucket);
+                await updateEmThumbnailData(obj.Location, matches[1], entityId, fileName, obj.Key, obj.Bucket);
             } else {
-                await updateCollectionThumbnailData(obj.Location, matches[1], req.params.edumaterialid, fileName, obj.Key, obj.Bucket);
+                await updateCollectionThumbnailData(obj.Location, matches[1], entityId, fileName, obj.Key, obj.Bucket);
             }
             return obj;
         } else {
