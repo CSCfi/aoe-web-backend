@@ -33,7 +33,7 @@ export const uploadbase64Image = async (req: Request, res: Response, next: NextF
             } else {
                 await updateCollectionThumbnailData(obj.Location, matches[1], req.params.collectionid, fileName, obj.Key, obj.Bucket);
             }
-            return obj;
+            return res.status(200).json({"url" : obj.Location});
         } else {
             return res.status(400).json({"error": "application/json expected"});
         }
