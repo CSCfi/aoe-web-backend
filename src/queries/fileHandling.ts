@@ -638,7 +638,7 @@ export async function deleteDataToTempAttachmentTable(filename: any, materialId:
  * @param filename   string Target file name in object storage system
  * @param bucketName string Target bucket in object storage system
  */
-export const uploadFileToStorage = (filePath: string, filename: string, bucketName: string): Promise<any> => {
+export const uploadFileToStorage = async (filePath: string, filename: string, bucketName: string): Promise<any> => {
     return new Promise((resolve, reject) => {
         try {
             const config: ServiceConfigurationOptions = {
