@@ -16,7 +16,6 @@ services:
       - NODE_ENV=development
     env_file:
       - ./.env
-    # command: sh -c "node dist/server.js"
     networks:
       - aoe-local-network
 

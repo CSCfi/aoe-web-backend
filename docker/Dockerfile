@@ -1,17 +1,15 @@
-FROM node:14 as node_builder
+FROM node:14-alpine as node_builder
 WORKDIR /app
-COPY package.json /app/
-RUN npm install
 COPY ./ /app
 ARG env=prod
-# fix build issue
-RUN npm run build -- --prod
 
-########################################################################################################################
+# Install only locked dependencies from package-lock.json (faster)
+RUN npm ci && \
+    npm run build -- --prod
 
 FROM centos:7
 
-# Initialize system
+# Make directories with permissions and install required packages
 RUN groupadd --gid 5606 webapp && \
     useradd -ms /bin/false -d /app node && \
     yum install -y epel-release && \
@@ -27,7 +25,7 @@ RUN groupadd --gid 5606 webapp && \
     usermod -aG 5606 node && \
     ln -s /webdata /app/webdata
 
-# Copy sources and other files
+# Copy source code and configuration files to the app directory
 COPY --from=node_builder /app/dist/ /app/dist/
 COPY ./views /app/views
 COPY ./package.json /app
