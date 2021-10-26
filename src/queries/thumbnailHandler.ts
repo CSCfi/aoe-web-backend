@@ -101,7 +101,7 @@ export async function uploadEmBase64Image(req: Request, res: Response, next: Nex
     }
 }
 
-export async function uploadbase64Image(req: Request, res: Response, isEm: boolean) {
+export async function uploadbase64Image(req: Request, res: Response, isEm: boolean): Promise<any> {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("application/json")) {
@@ -112,9 +112,9 @@ export async function uploadbase64Image(req: Request, res: Response, isEm: boole
                 return res.status(400).json({"expecting" : "data:image/png;base64,..."});
             }
             const extension = mime.getExtension(matches[1]);
-            const fileName = "thumbnail" + Date.now() + "." + extension;
-            const buff = Buffer.from(base64Data, "base64");
-            const obj: any = await fh.uploadBase64FileToStorage(buff.toString(), fileName, process.env.THUMBNAIL_BUCKET_NAME);
+            const fileName = "thumbnail-" + Date.now() + "." + extension;
+            const buff: Buffer = Buffer.from(base64Data, "base64");
+            const obj: any = await fh.uploadBase64FileToStorage(buff, fileName, process.env.THUMBNAIL_BUCKET_NAME);
             // let query;
             // query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
             // console.log(query);

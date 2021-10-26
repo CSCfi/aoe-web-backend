@@ -690,7 +690,7 @@ export const uploadFileToStorage = async (filePath: string, filename: string, bu
  * @param bucketName
  * base64 data to storage
  */
-export async function uploadBase64FileToStorage(base64data: string, filename: string, bucketName: string) {
+export async function uploadBase64FileToStorage(base64data: Buffer, filename: string, bucketName: string): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
             const config = {
