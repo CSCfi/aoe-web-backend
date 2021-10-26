@@ -639,7 +639,7 @@ export async function deleteDataToTempAttachmentTable(filename: any, materialId:
  * @param bucketName string Target bucket in object storage system
  */
 export const uploadFileToStorage = async (filePath: string, filename: string, bucketName: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
         try {
             const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
