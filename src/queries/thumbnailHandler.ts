@@ -2,7 +2,7 @@ import { ErrorHandler } from '../helpers/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import fh, { downloadFromStorage } from './fileHandling';
 import mime from 'mime';
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 import { IDatabase } from 'pg-promise';
 import { winstonLogger } from '../util';
 
@@ -38,7 +38,7 @@ export const uploadbase64Image = async (req: Request, res: Response, next: NextF
             return res.status(400).json({"error": "application/json expected"});
         }
     } catch (error) {
-        next(new ErrorHandler(500, 'uploadbase64Image() - Thumbnail image upload failed: ' + error));
+        next(new ErrorHandler(500, 'uploadbase64Image() Thumbnail image upload failed:' + error));
     }
 }
 
@@ -55,7 +55,7 @@ export const downloadEmThumbnail = async (req: Request, res: Response, next: Nex
         }
         await downloadThumbnail(req, res, next, key);
     } catch (error) {
-        next(new ErrorHandler(500, 'downloadEmThumbnail() - Downloading the thumbnail image failed: ' + error));
+        next(new ErrorHandler(500, 'downloadEmThumbnail() Downloading the thumbnail image failed: ' + error));
     }
 }
 
@@ -73,7 +73,7 @@ export const downloadCollectionThumbnail = async (req: Request, res: Response, n
         await downloadThumbnail(req, res, next, key);
     } catch (error) {
         console.error(error);
-        next(new ErrorHandler(500, 'downloadCollectionThumbnail() - Downloading the thumbnail image failed: ' + error));
+        next(new ErrorHandler(500, 'downloadCollectionThumbnail() Downloading the thumbnail image failed: ' + error));
     }
 }
 
@@ -94,7 +94,7 @@ async function downloadThumbnail(req: Request, res: Response, next: NextFunction
         };
         await downloadFromStorage(req, res, next, params, key);
     } catch (error) {
-        next(new ErrorHandler(500, 'downloadThumbnail() - Error: ' + error));
+        next(new ErrorHandler(500, 'downloadThumbnail() Error: ' + error));
     }
 }
 
@@ -112,13 +112,16 @@ async function updateEmThumbnailData(filepath: string, mimetype: string, educati
         ', fileBucket=' + fileBucket);
     try {
         let query;
-        query = "UPDATE thumbnail SET obsoleted = 1 WHERE educationalmaterialid = $1 AND obsoleted = 0";
-        winstonLogger.debug('updateEmThumbnailData() - Query: ' + query);
+        query =
+            "UPDATE thumbnail " +
+            "SET obsoleted = 1 " +
+            "WHERE educationalmaterialid = $1 AND obsoleted = 0";
+        winstonLogger.debug('updateEmThumbnailData() Query: ' + query);
         await db.none(query, [educationalmaterialid]);
         query =
             "INSERT INTO thumbnail (filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket) " +
             "VALUES ($1, $2, $3, $4, $5, $6)";
-        winstonLogger.debug('updateEmThumbnailData() - Query: ' + query + ' ' + [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
+        winstonLogger.debug('updateEmThumbnailData() Query: ' + query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
         await db.any(query, [filepath, mimetype, educationalmaterialid, filename, fileKey, fileBucket]);
     } catch (error) {
         winstonLogger.error('updateEmThumbnailData(): ' + error);
@@ -138,12 +141,12 @@ async function updateCollectionThumbnailData(filepath: string, mimetype: string,
     try {
         let query;
         query = "UPDATE collectionthumbnail SET obsoleted = 1 WHERE collectionid = $1 AND obsoleted = 0";
-        winstonLogger.debug('updateCollectionThumbnailData() - Query: ' + query);
+        winstonLogger.debug('updateCollectionThumbnailData() Query: ' + query);
         await db.none(query, [collectionid]);
         query =
             "INSERT INTO collectionthumbnail (filepath, mimetype, collectionid, filename, fileKey, fileBucket) " +
             "VALUES ($1, $2, $3, $4, $5, $6)";
-        winstonLogger.debug('updateCollectionThumbnailData() - Query: ' + query + ' ' +
+        winstonLogger.debug('updateCollectionThumbnailData() Query: ' + query,
             [filepath, mimetype, collectionid, filename, fileKey, fileBucket]);
         await db.any(query, [filepath, mimetype, collectionid, filename, fileKey, fileBucket]);
     } catch (error) {

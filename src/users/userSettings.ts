@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { sendVerificationEmail } from "./../services/mailService";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 
 const pgp = connection.pgp;
 const db = connection.db;

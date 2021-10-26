@@ -1,24 +1,24 @@
 version: "3.8"
 services:
-#  aoe-web-backend:
-#    build:
-#      context: .
-#      dockerfile: ./docker/aoe-web-backend/Dockerfile
-#    image: aoe-web-backend:latest
-#    container_name: aoe-web-backend
-#    restart: unless-stopped
-#    ports:
-#      - "3000:3000"
-#    depends_on:
-#      - aoe-postgres
-#      - aoe-redis-session
-#    environment:
-#      - NODE_ENV=development
-#    env_file:
-#      - ./.env
-#    command: sh -c "node dist/server.js"
-#    networks:
-#      - aoe-local-network
+  aoe-web-backend:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    image: aoe-web-backend:latest
+    container_name: aoe-web-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - aoe-postgres
+      - aoe-redis-session
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - ./.env
+    # command: sh -c "node dist/server.js"
+    networks:
+      - aoe-local-network
 
   aoe-postgres:
     build:

@@ -13,7 +13,7 @@ import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 import { winstonLogger } from '../util';
 
 // TODO: Remove legacy dependencies

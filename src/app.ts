@@ -17,7 +17,7 @@ import { h5pEditor } from './h5p/h5p';
 import apiRouterV1 from './routes/routes';
 import ah from './services/authService';
 import bodyParser from 'body-parser';
-import redisClient from './resources/redis-client.module';
+import redisClient from './resources/redis-client';
 import connectRedis from 'connect-redis';
 import openidClient, { custom, HttpOptions } from 'openid-client';
 import { morganHttpLogger } from './util';
@@ -180,7 +180,7 @@ app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
 app.get('/', homeController.index);
 app.use('/', apiRouterV1);
-app.use('/v2', apiRouterV2);
+app.use('/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {

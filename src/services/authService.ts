@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 
 const db = connection.db;
 
