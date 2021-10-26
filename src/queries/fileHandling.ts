@@ -1,12 +1,12 @@
 import ADMzip from 'adm-zip';
-import AWS from 'aws-sdk';
+import AWS, { S3 } from 'aws-sdk';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import contentDisposition from 'content-disposition';
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import s3Zip from 's3-zip';
 import path from 'path';
+import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
@@ -632,59 +632,52 @@ export async function deleteDataToTempAttachmentTable(filename: any, materialId:
 }
 
 /**
+ * Upload a file from the local file system to the cloud object storage.
  *
- * @param filePath
- * @param filename
- * @param bucketName
- * send file to allas storage bucket
+ * @param filePath   string Path and file name in local file system
+ * @param filename   string Target file name in object storage system
+ * @param bucketName string Target bucket in object storage system
  */
-export async function uploadFileToStorage(filePath: string, filename: string, bucketName: string) {
-    return new Promise(async (resolve, reject) => {
+export const uploadFileToStorage = (filePath: string, filename: string, bucketName: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
         try {
-            const util = require("util");
-            const config = {
+            const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
                 secretAccessKey: process.env.USER_SECRET,
                 endpoint: process.env.POUTA_END_POINT,
                 region: process.env.REGION
             };
             AWS.config.update(config);
-            const s3 = new AWS.S3();
-            // const bucketName = process.env.BUCKET_NAME;
-            const key = filename;
+            const s3: S3 = new AWS.S3();
             fs.readFile(filePath, async (err: any, data: any) => {
                 if (err) {
-                    console.error(err);
+                    winstonLogger.error('Reading file from the local file system failed in uploadFileToStorage(): ' + err);
                     return reject(new Error(err));
                 }
                 try {
                     const params = {
                         Bucket: bucketName,
-                        Key: key,
+                        Key: filename,
                         Body: data
                     };
-                    const time = Date.now();
+                    const startTime: number = Date.now();
                     s3.upload(params, (err: any, data: any) => {
                         if (err) {
-                            console.error(`Upload Error ${err}`);
+                            winstonLogger.error('Uploading file to the cloud object storage failed in uploadFileToStorage(): ' + err);
                             reject(new Error(err));
                         }
-
                         if (data) {
-                            console.log((Date.now() - time) / 1000);
-                            console.log("Upload Completed");
-                            console.log(data);
+                            winstonLogger.debug('Uploading file to the cloud object storage completed in ' + ((Date.now() - startTime) / 1000) + 's');
                             resolve(data);
                         }
                     });
                 } catch (err) {
-                    console.log(err);
+                    winstonLogger.error('Error in uploading file to the cloud object storage in uploadFileToStorage(): ' + err);
                     reject(new Error(err));
                 }
-
             });
         } catch (err) {
-            console.log(err);
+            winstonLogger.error('Error in processing file in uploadFileToStorage(): ' + err);
             reject(new Error(err));
         }
     });

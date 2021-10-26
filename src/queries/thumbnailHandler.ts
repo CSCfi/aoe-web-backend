@@ -1,55 +1,51 @@
-import { Request, Response, NextFunction } from "express";
-import { ErrorHandler } from "./../helpers/errorHandler";
-import { downloadFromStorage } from "./fileHandling";
-import connection from "../resources/pg-config.module";
+import { ErrorHandler } from '../helpers/errorHandler';
+import { Request, Response, NextFunction } from 'express';
+import fh, { downloadFromStorage, uploadFileToStorage } from './fileHandling';
+import multer, { DiskStorageOptions, Multer, StorageEngine } from 'multer';
+import connection from '../resources/pg-config.module';
+import { IDatabase } from 'pg-promise';
 import { winstonLogger } from '../util';
 
 const fs = require("fs");
-const multer  = require("multer");
-const fh = require("./fileHandling");
 const mime = require("mime");
 
-const storage = multer.diskStorage({ // notice you are calling the multer.diskStorage() method here, not multer()
-    destination: function(req: Request, file: any, cb: any) {
-        console.log(process.env.THUMBNAIL_END_POINT);
+// Database connection
+const db: IDatabase<any> = connection.db;
+
+const diskStorageOptions: DiskStorageOptions = {
+    destination: (req: Request, file: any, cb: any) => {
         cb(undefined, process.env.THUMBNAIL_END_POINT);
     },
-    filename: function(req: Request, file: any, cb: any) {
-        const ext = file.originalname.substring(file.originalname.lastIndexOf("."), file.originalname.length);
-        // let str = file.originalname.substring(0, file.originalname.lastIndexOf("."));
-        // str = str.replace(/[^a-zA-Z0-9]/g, "");
-        cb(undefined, "thumbnail" + "-" + Date.now() + ext);
+    filename: (req: Request, file: any, cb: any) => {
+        const ext: string = file.originalname.substring(file.originalname.lastIndexOf('.'), file.originalname.length);
+        cb(undefined, 'thumbnail-' + Date.now() + ext);
     }
-});
+};
+const engine: StorageEngine = multer.diskStorage(diskStorageOptions);
+const upload: Multer = multer({'storage': engine, 'limits': {'fileSize': Number(process.env.THUMBNAIL_FILE_SIZE_LIMIT)}});
 
-const upload = multer({"storage": storage
-                    , "limits": {"fileSize": Number(process.env.THUMBNAIL_FILE_SIZE_LIMIT)}}); // provide the return value from
-// Database connection
-const db = connection.db;
-
-async function uploadImage(req: Request, res: Response) {
+export const uploadThumbnailImage = async (req: Request, res: Response): Promise<any> => {
     try {
-        const contentType = req.headers["content-type"];
-        if (contentType.startsWith("multipart/form-data")) {
-            await upload.single("image")(req , res, await async function(err: any) {
+        const contentType = req.headers['content-type'];
+        if (contentType.startsWith('multipart/form-data')) {
+            await upload.single('image')(req, res, async (err: any) => {
                 try {
                     if (err) {
-                        if (err.code === "LIMIT_FILE_SIZE") {
-                            console.log(err);
-                            return res.status(413).send(err.message);
-                        }
-                        else {
-                            console.trace(err);
-                            return res.status(500).send("Failure in file upload");
+                        if (err.code === 'LIMIT_FILE_SIZE') {
+                            winstonLogger.error('Thumbnail upload failed for large file size in uploadThumbnailImage(): ' + err);
+                            return res.status(413).send(err.message); // 413 Payload Too Large
+                        } else {
+                            winstonLogger.error('Thumbnail upload failed in uploadThumbnailImage(): ' + err);
+                            return res.status(500).send('Thumbnail upload failed');
                         }
                     }
                     const file = (<any>req).file;
-                    console.log(file);
-                    if (file == undefined) {
-                        return res.status(400).send("No file sent");
+                    if (file === undefined) {
+                        winstonLogger.error('Thumbnail upload failed for missing file in uploadThumbnailImage()');
+                        return res.status(400).send('Thumbnail upload failed for missing file');
                     }
                     try {
-                        const obj: any = await fh.uploadFileToStorage((file.path), file.filename, process.env.THUMBNAIL_BUCKET_NAME);
+                        const obj: any = await uploadFileToStorage((file.path), file.filename, process.env.THUMBNAIL_BUCKET_NAME);
                         let query;
                         query = "UPDATE thumbnail SET obsoleted = 1 WHERE educationalmaterialid = $1 AND obsoleted = 0";
                         console.log(query);
@@ -59,29 +55,25 @@ async function uploadImage(req: Request, res: Response) {
                             "VALUES ($1, $2, $3, $4, $5, $6)";
                         console.log(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
                         await db.any(query, [obj.Location, file.mimetype, req.params.edumaterialid, file.filename, obj.Key, obj.Bucket]);
-                    }
-                    catch (err) {
+                    } catch (err) {
                         console.log(err);
                         return res.status(500).send("upload failed");
                     }
                     res.status(200).json({"status" : "Image upload done"});
                     fs.unlink(file.path, (err: any) => {
                         if (err) {
-                        console.error(err);
+                            console.error(err);
                         }
                     });
-                }
-                catch (err) {
+                } catch (err) {
                     console.log(err);
                     return res.status(500).send("upload failed");
                 }
             });
-        }
-        else {
+        } else {
             res.status(500).json({"error" : "upload failed"});
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         return res.status(500).send("error");
     }
@@ -98,7 +90,7 @@ export async function uploadCollectionBase64Image(req: Request, res: Response, n
     }
 }
 
-export async function uploadEmBase64Image(req: Request, res: Response, next: NextFunction) {
+export async function uploadEmBase64Image(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const obj: any = uploadbase64Image(req, res, true);
         return res.status(200).json({"url" : obj.Location});
@@ -122,7 +114,7 @@ export async function uploadbase64Image(req: Request, res: Response, isEm: boole
             const extension = mime.getExtension(matches[1]);
             const fileName = "thumbnail" + Date.now() + "." + extension;
             const buff = Buffer.from(base64Data, "base64");
-            const obj: any = await fh.uploadBase64FileToStorage(buff, fileName, process.env.THUMBNAIL_BUCKET_NAME);
+            const obj: any = await fh.uploadBase64FileToStorage(buff.toString(), fileName, process.env.THUMBNAIL_BUCKET_NAME);
             // let query;
             // query = "update thumbnail set obsoleted = 1 where educationalmaterialid = $1 and obsoleted = 0;";
             // console.log(query);
@@ -263,9 +255,8 @@ async function updateCollectionThumbnailData(filepath: string, mimetype: string,
     }
 }
 
-
-module.exports = {
-    uploadImage,
+export default {
+    uploadImage: uploadThumbnailImage,
     uploadbase64Image,
     uploadEmBase64Image,
     uploadCollectionBase64Image,

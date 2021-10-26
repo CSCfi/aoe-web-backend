@@ -74,7 +74,7 @@ export async function InsertUserToDatabase(userinfo: any, acr: string) {
     }
 }
 
-export async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction): Promise<any> {
+export async function hasAccessToPublicatication(req: Request, res: Response, next: NextFunction): Promise<any> {
     const query = "SELECT usersusername FROM educationalmaterial WHERE id = $1";
     const eduMaterial = await db.oneOrNone(query, [req.params.edumaterialid]);
     if (req.session.passport.user.uid === eduMaterial.usersusername) {
@@ -213,7 +213,7 @@ export default {
     hasAccesstoPublication,
     checkAuthenticated,
     InsertUserToDatabase,
-    hasAccessToPublicaticationMW,
+    hasAccessToPublicatication,
     logout,
     hasAccessToMaterial,
     hasAccessToAttachmentFile,

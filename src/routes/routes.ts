@@ -1,4 +1,4 @@
-import apiV1 from './../api/routes-v1'
+import apiV1 from './../api/routes-v1';
 import { hasAccessToAoe } from '../services/authService';
 import { Router } from 'express';
 import { getH5PContent } from '../h5p/h5p';
@@ -40,7 +40,11 @@ const h5p = require('./../h5p/h5p');
 const fh = require('./../queries/fileHandling');
 const oaipmh = require('./../queries/oaipmh');
 const rating = require('../rating/rating');
-const thumbnail = require('./../queries/thumbnailHandler');
+import {
+    downloadCollectionThumbnail,
+    downloadEmThumbnail,
+    uploadCollectionBase64Image
+} from '../queries/thumbnailHandler';
 
 // Load API version 1.0 from the new implementation before legacy endpoints
 apiV1(router);
@@ -65,7 +69,7 @@ router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.ha
 router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 
 // Keep the order
-router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, fh.uploadFileToMaterial);
+router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicatication, fh.uploadFileToMaterial);
 router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
 
 router.delete('/material/file/:materialid/:fileid', ah.checkAuthenticated, ah.hasAccessToMaterial, db.deleteRecord);
@@ -81,9 +85,7 @@ router.get('/recentmaterial', db.getRecentMaterial);
 // TODO: Duplicate functionality with DELETE /material/:edumaterialid - endpoint used by administrator archiving functionality
 router.delete('/removeMaterial/:id', hasAccessToAoe, removeEducationalMaterial);
 
-router.post('/uploadImage/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadImage);
-router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicaticationMW, thumbnail.uploadEmBase64Image);
-router.get('/thumbnail/:id', thumbnail.downloadEmThumbnail);
+router.get('/thumbnail/:id', downloadEmThumbnail);
 router.put('/updateSettings', ah.checkAuthenticated, updateUserSettings);
 router.get('/user', ah.checkAuthenticated, db.getUser);
 router.put('/user', ah.checkAuthenticated, db.updateUser);
@@ -101,9 +103,9 @@ router.get('/collection/getCollection/:collectionId', collection.getCollection);
 router.post('/collection/removeMaterial', ah.checkAuthenticated, ah.hasAccessToCollection, removeCollectionValidationRules(), rulesValidate, collection.removeEducationalMaterialFromCollection);
 router.get('/collection/recentCollection', collection.getRecentCollection);
 router.put('/collection/update', ah.checkAuthenticated, ah.hasAccessToCollection, updateCollectionValidationRules(), rulesValidate, collection.updateCollection);
-router.post('/collection/uploadBase64Image/:id', ah.checkAuthenticated, ah.hasAccessToCollectionParams, thumbnail.uploadCollectionBase64Image);
+router.post('/collection/uploadBase64Image/:id', ah.checkAuthenticated, ah.hasAccessToCollectionParams, uploadCollectionBase64Image);
 router.get('/collection/userCollection', ah.checkAuthenticated, collection.getUserCollections);
-router.get('/collection/thumbnail/:id', thumbnail.downloadCollectionThumbnail);
+router.get('/collection/thumbnail/:id', downloadCollectionThumbnail);
 
 // Rating request endpoints
 router.post('/rating', ah.checkAuthenticated, ratingValidationRules(), rulesValidate, validateRatingUser, rating.addRating);

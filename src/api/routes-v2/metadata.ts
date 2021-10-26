@@ -3,7 +3,7 @@ import { Router } from 'express';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational materials.
- * This module is a collection of legacy endpoints starting with /maetadata/.
+ * This module is a collection of endpoints starting with /maetadata/.
  * Endpoints ordered by the request URL (1) and method (2).
  *
  * @param router express.Router
