@@ -1,3 +1,4 @@
+import apiRoot from './api/routes-root';
 import apiV2 from './api/routes-v2';
 import express, { Response, Request, NextFunction, Router } from 'express';
 import compression from 'compression';
@@ -11,7 +12,6 @@ import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
 import { ErrorHandler, handleError } from './helpers/errorHandler';
 import cors from 'cors';
-import * as homeController from './controllers/home';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { h5pEditor } from './h5p/h5p';
 import apiRouterV1 from './routes/routes';
@@ -23,6 +23,10 @@ import openidClient, { custom, HttpOptions } from 'openid-client';
 import { morganHttpLogger } from './util';
 
 const app = express();
+
+// Load API root modules
+const apiRouterRoot: Router = Router();
+apiRoot(apiRouterRoot);
 
 // Load API version 2.0 and stack on version 1.0
 const apiRouterV2: Router = Router();
@@ -178,8 +182,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
-app.get('/', homeController.index);
-app.use('/', apiRouterV1);
+app.use('/favicon.ico', express.static('./views/favicon.ico'));
+app.use('/', [apiRouterRoot, apiRouterV1]);
 app.use('/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
@@ -187,9 +191,11 @@ app.use((err, req, res) => {
     handleError(err, res);
 });
 
-app.set('port', 3000);
-app.set('views', path.join(__dirname, '../views'));
+// Root status page with Pug template
+app.set('views', './views');
 app.set('view engine', 'pug');
+
+app.set('port', 3000);
 require('./aoeScheduler');
 
 export default app;
