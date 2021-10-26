@@ -1,16 +1,19 @@
 import { ErrorHandler } from '../helpers/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import fh, { downloadFromStorage } from './fileHandling';
+import mime from 'mime';
 import connection from '../resources/pg-config.module';
 import { IDatabase } from 'pg-promise';
 import { winstonLogger } from '../util';
 
-// const fs = require("fs");
-const mime = require("mime");
-
 // Database connection
 const db: IDatabase<any> = connection.db;
 
+/**
+ * @param req
+ * @param res
+ * @param next
+ */
 export const uploadbase64Image = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const contentType = req.headers['content-type'];
@@ -39,6 +42,11 @@ export const uploadbase64Image = async (req: Request, res: Response, next: NextF
     }
 }
 
+/**
+ * @param req
+ * @param res
+ * @param next
+ */
 export const downloadEmThumbnail = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const key = req.params.id;
@@ -51,6 +59,11 @@ export const downloadEmThumbnail = async (req: Request, res: Response, next: Nex
     }
 }
 
+/**
+ * @param req
+ * @param res
+ * @param next
+ */
 export const downloadCollectionThumbnail = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const key = req.params.id;
@@ -65,8 +78,6 @@ export const downloadCollectionThumbnail = async (req: Request, res: Response, n
 }
 
 /**
- * Download thumbnail from Pouta
- *
  * @param req
  * @param res
  * @param next
@@ -115,6 +126,14 @@ async function updateEmThumbnailData(filepath: string, mimetype: string, educati
     }
 }
 
+/**
+ * @param filepath
+ * @param mimetype
+ * @param collectionid
+ * @param filename
+ * @param fileKey
+ * @param fileBucket
+ */
 async function updateCollectionThumbnailData(filepath: string, mimetype: string, collectionid: string, filename: string, fileKey: string, fileBucket: string) {
     try {
         let query;

@@ -1,7 +1,4 @@
 import { Router } from 'express';
-import { isAllasEnabled } from '../../services/routeEnablerService';
-import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
-import { uploadbase64Image } from '../../queries/thumbnailHandler';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
@@ -14,6 +11,6 @@ import { uploadbase64Image } from '../../queries/thumbnailHandler';
  */
 export default (router: Router) => {
 
-    router.post('/material/:edumaterialid/base64', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadbase64Image);
+    //
 
 }
