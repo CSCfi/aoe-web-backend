@@ -28,7 +28,7 @@ export const uploadThumbnailImage = async (req: Request, res: Response): Promise
     try {
         const contentType = req.headers['content-type'];
         if (contentType.startsWith('multipart/form-data')) {
-            await upload.single('image')(req, res, async (err: any) => {
+            await upload.single('image')(req, res, await async function(err: any) {
                 try {
                     if (err) {
                         if (err.code === 'LIMIT_FILE_SIZE') {
