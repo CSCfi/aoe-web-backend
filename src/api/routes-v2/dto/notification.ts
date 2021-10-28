@@ -1,6 +1,6 @@
 export default class Notification {
-    public notification;
-    public updated;
+    public notification: string;
+    public updated: string;
 
     constructor(notification: string) {
         this.notification = notification;
