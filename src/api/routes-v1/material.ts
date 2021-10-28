@@ -19,12 +19,15 @@ export default (router: Router) => {
     // Create new version of an educational material by updating the metadata, update search index and assign a new PID.
     router.put('/material/:edumaterialid', checkAuthenticated, hasAccessToPublicatication, updateEducationalMaterialMetadata);
 
-    // Get all metadata of an educational material - version specified optionally with publishing date (:publishedat).
-    // Variable :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
+    // Get all metadata of an educational material.
+    // Version specified optionally with publishing date (:publishedat).
+    // :publishedat format 'YYYY-MM-DDTHH:mm:ss.SSSZ' (ISODate) - regex path validation in API v2.0.
+    // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
     router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?', getEducationalMaterialMetadata);
 
-    // Download all files related to an educational material and stream as a single zip file fron the object storage.
-    // Variable :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
+    // Download all files related to an educational material and stream as a single zip file from the cloud object storage.
+    // :publishedat format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' (ISODate) - regex path validation in API v2.0.
+    // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
     router.get('/material/file/:edumaterialid([0-9]{1,6})/:publishedat?', downloadMaterialFile);
 
     // Save a link type material to an educational material.

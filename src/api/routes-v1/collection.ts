@@ -11,8 +11,8 @@ import { uploadbase64Image } from '../../queries/thumbnailHandler';
  */
 export default (router: Router) => {
 
-    // Upload collection thumbnail image to cloud object storage.
-    // Case of a collection identified by request parameter name :collectionid in uploadbase64Image().
+    // Upload collection thumbnail image file to the cloud object storage.
+    // Case of a collection (instead of educational material) identified by request parameter name :collectionid in uploadbase64Image().
     router.post('/collection/uploadBase64Image/:collectionid', checkAuthenticated, hasAccessToCollectionParams, uploadbase64Image);
 
 }

@@ -13,7 +13,7 @@ import { uploadbase64Image } from '../../queries/thumbnailHandler';
  */
 export default (router: Router) => {
 
-    // Upload collection thumbnail image to cloud object storage.
+    // Upload collection thumbnail image file to the cloud object storage.
     // Case of a collection identified by request parameter name :collectionid in uploadbase64Image().
     router.post('/collection/:collectionid([0-9]{1,6})/thumbnail', checkAuthenticated, hasAccessToCollectionParams, uploadbase64Image);
 

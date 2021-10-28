@@ -14,8 +14,8 @@ import { uploadbase64Image } from '../../queries/thumbnailHandler';
  */
 export default (router: Router) => {
 
-    // Upload eduactional material thumbnail image to cloud object storage.
-    // Case of an educational material identified by request parameter name :edumaterialid in uploadbase64Image().
+    // Upload eduactional material thumbnail image to the cloud object storage.
+    // Case of an educational material (instead of collection) identified by request parameter name :edumaterialid in uploadbase64Image().
     router.post('/uploadBase64Image/:edumaterialid', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadbase64Image);
 
 }

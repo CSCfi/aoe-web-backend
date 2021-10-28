@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const db = connection.db;
 
@@ -163,13 +164,13 @@ export async function hasAccessToAoe(req: Request, res: Response, next: NextFunc
         }
         const result = await hasAoeAccess(req.session.passport.user.uid);
         if (!result) {
-            console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+            winstonLogger.error('Unauthorized process request by ', [req.session.passport.user.uid]);
             return res.sendStatus(401);
         } else {
             return next();
         }
-    } catch (e) {
-        console.error(e);
+    } catch (error) {
+        winstonLogger.error('Authorization failed in hasAccessToAoe(): ' + error);
         return res.sendStatus(500);
     }
 }
@@ -193,10 +194,9 @@ export async function userInfo(req: Request, res: Response): Promise<any> {
 }
 
 export async function hasAoeAccess(username: string): Promise<any> {
-    const query = "Select username from aoeuser where username = $1;";
+    const query = "SELECT username FROM aoeuser WHERE username = $1";
     const result = await db.oneOrNone(query, [username]);
     if (!result) {
-        console.log("No result found for " + [username]);
         return false;
     } else {
         return true;
