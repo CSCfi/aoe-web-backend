@@ -1,4 +1,0 @@
-- name: Install s3
-  yum:
-    name: s3cmd
-    state: latest

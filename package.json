@@ -92,6 +92,7 @@
         "@types/jquery": "^3.5.4",
         "@types/lodash": "^4.14.165",
         "@types/lusca": "^1.6.2",
+        "@types/mime": "^2.0.3",
         "@types/morgan": "^1.9.2",
         "@types/multer": "^1.4.7",
         "@types/node": "^14.14.7",

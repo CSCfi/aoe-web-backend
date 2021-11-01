@@ -4,7 +4,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
 import { getPopularityQuery } from "./../queries/analyticsQueries";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const index = process.env.ES_INDEX;

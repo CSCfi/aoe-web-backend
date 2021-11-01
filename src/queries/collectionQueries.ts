@@ -1,4 +1,4 @@
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 
 const pgp = connection.pgp;
 const db = connection.db;

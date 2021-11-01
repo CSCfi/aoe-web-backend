@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from "./../services/urlService";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 
 const pgp = connection.pgp;
 const db = connection.db;

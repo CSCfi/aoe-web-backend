@@ -1,5 +1,5 @@
 // import { Rating } from "./../rating/rating";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 import { RatingInformation } from "../rating/interface/rating-information.interface";
 
 const pgp = connection.pgp;

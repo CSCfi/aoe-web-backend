@@ -1,19 +1,19 @@
 import ADMzip from 'adm-zip';
-import AWS from 'aws-sdk';
+import AWS, { S3 } from 'aws-sdk';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import contentDisposition from 'content-disposition';
 import { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import multer from 'multer';
-import s3Zip from 's3-zip';
 import path from 'path';
+import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 import { winstonLogger } from '../util';
 
 // TODO: Remove legacy dependencies
@@ -41,9 +41,9 @@ const storage = multer.diskStorage({ // notice you are calling the multer.diskSt
     }
 });
 const upload = multer({
-    "storage": storage
-    , "limits": {"fileSize": Number(process.env.FILE_SIZE_LIMIT)}
-    , "preservePath": true
+    "storage": storage,
+    "limits": {"fileSize": Number(process.env.FILE_SIZE_LIMIT)},
+    "preservePath": true
 }); // provide the return value from
 // Database connection
 const db = connection.db;
@@ -55,7 +55,7 @@ const db = connection.db;
  * @param next
  * attachment upload to educational material req.params.materialId
  */
-export async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -133,7 +133,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
  * @param next
  * upload single file and create educational material if empty only educational material is created
  */
-export async function uploadMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         console.log(req.body);
         const contentType = req.headers["content-type"];
@@ -262,7 +262,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
  * @param next
  * upload single file to educational material req.params.materialId
  */
-export async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function uploadFileToMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
@@ -393,7 +393,7 @@ export async function fileToStorage(file: any, materialid: string): Promise<{ ke
  * @param attachmentId
  * load attachment to allas storage
  */
-export async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string) {
+export async function attachmentFileToStorage(file: any, metadata: any, materialid: string, attachmentId: string): Promise<any> {
     const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
     // await insertDataToAttachmentTable(file, materialid, obj.Key, obj.Bucket, obj.Location, metadata);
     await updateAttachment(obj.Key, obj.Bucket, obj.Location, attachmentId);
@@ -408,7 +408,7 @@ export async function attachmentFileToStorage(file: any, metadata: any, material
 /**
  * check if files in temporaryrecord table and try to load to allas storage
  */
-export async function checkTemporaryRecordQueue() {
+export async function checkTemporaryRecordQueue(): Promise<any> {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
@@ -442,7 +442,7 @@ export async function checkTemporaryRecordQueue() {
 /**
  * check if files in temporaryattachment table and try to load to allas storage
  */
-export async function checkTemporaryAttachmentQueue() {
+export async function checkTemporaryAttachmentQueue(): Promise<any> {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
@@ -475,7 +475,7 @@ export async function checkTemporaryAttachmentQueue() {
     }
 }
 
-export async function insertDataToEducationalMaterialTable(req: Request, t: any) {
+export async function insertDataToEducationalMaterialTable(req: Request, t: any): Promise<any> {
     const query = "insert into educationalmaterial (Usersusername)" +
         " values ($1) returning id;";
     const data = await t.one(query, [req.session.passport.user.uid]);
@@ -484,7 +484,7 @@ export async function insertDataToEducationalMaterialTable(req: Request, t: any)
 }
 
 
-export async function insertDataToDisplayName(t: any, educationalmaterialid, materialid: string, fileDetails: any) {
+export async function insertDataToDisplayName(t: any, educationalmaterialid, materialid: string, fileDetails: any): Promise<any> {
     const queries = [];
     const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     if (fileDetails.displayName && materialid) {
@@ -541,7 +541,7 @@ export async function insertDataToMaterialTable(t: any, eduMaterialId: string, l
     return await t.one(query, [location, eduMaterialId, languages, priority]);
 }
 
-export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string, metadata: any) {
+export async function insertDataToAttachmentTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string, metadata: any): Promise<any> {
     const queries = [];
     let query;
     const data = await db.tx(async (t: any) => {
@@ -563,7 +563,7 @@ export async function insertDataToAttachmentTable(files: any, materialID: any, f
     return data[1].id;
 }
 
-export async function updateAttachment(fileKey: any, fileBucket: any, location: string, attachmentId: string) {
+export async function updateAttachment(fileKey: any, fileBucket: any, location: string, attachmentId: string): Promise<any> {
     const queries = [];
     let query;
     await db.tx(async (t: any) => {
@@ -577,7 +577,7 @@ export async function updateAttachment(fileKey: any, fileBucket: any, location: 
     });
 }
 
-export async function insertDataToTempAttachmentTable(files: any, metadata: any, attachmentId: string) {
+export async function insertDataToTempAttachmentTable(files: any, metadata: any, attachmentId: string): Promise<any> {
     const query = "INSERT INTO temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, " +
         "defaultfile, kind, label, srclang, attachmentid) " +
         "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id";
@@ -587,7 +587,7 @@ export async function insertDataToTempAttachmentTable(files: any, metadata: any,
     return data;
 }
 
-export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string) {
+export async function insertDataToRecordTable(files: any, materialID: any, fileKey: any, fileBucket: any, location: string): Promise<any> {
     let query;
     try {
         const data = await db.tx(async (t: any) => {
@@ -608,7 +608,7 @@ export async function insertDataToRecordTable(files: any, materialID: any, fileK
     }
 }
 
-export async function insertDataToTempRecordTable(t: any, files: any, materialId: any) {
+export async function insertDataToTempRecordTable(t: any, files: any, materialId: any): Promise<any> {
     const query = "INSERT INTO temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, " +
         "materialid) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id";
     console.log(query);
@@ -617,90 +617,81 @@ export async function insertDataToTempRecordTable(t: any, files: any, materialId
     return data;
 }
 
-export async function deleteDataFromTempRecordTable(filename: any, materialId: any) {
+export async function deleteDataFromTempRecordTable(filename: any, materialId: any): Promise<any> {
     const query = "DELETE FROM temporaryrecord WHERE filename = $1 AND materialid = $2";
     console.log(query);
-    const data = await db.any(query, [filename, materialId]);
-    return data;
+    return await db.any(query, [filename, materialId]);
 }
 
-export async function deleteDataToTempAttachmentTable(filename: any, materialId: any) {
+export async function deleteDataToTempAttachmentTable(filename: any, materialId: any): Promise<any> {
     const query = "DELETE FROM temporaryattachment WHERE filename = $1 AND id = $2";
     console.log(query, [filename, materialId]);
-    const data = await db.any(query, [filename, materialId]);
-    return data;
+    return await db.any(query, [filename, materialId]);
 }
 
 /**
+ * Upload a file from the local file system to the cloud object storage.
  *
- * @param filePath
- * @param filename
- * @param bucketName
- * send file to allas storage bucket
+ * @param filePath   string Path and file name in local file system
+ * @param filename   string Target file name in object storage system
+ * @param bucketName string Target bucket in object storage system
  */
-export async function uploadFileToStorage(filePath: string, filename: string, bucketName: string) {
+export const uploadFileToStorage = async (filePath: string, filename: string, bucketName: string): Promise<any> => {
     return new Promise(async (resolve, reject) => {
         try {
-            const util = require("util");
-            const config = {
+            const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
                 secretAccessKey: process.env.USER_SECRET,
                 endpoint: process.env.POUTA_END_POINT,
                 region: process.env.REGION
             };
             AWS.config.update(config);
-            const s3 = new AWS.S3();
-            // const bucketName = process.env.BUCKET_NAME;
-            const key = filename;
+            const s3: S3 = new AWS.S3();
             fs.readFile(filePath, async (err: any, data: any) => {
                 if (err) {
-                    console.error(err);
+                    winstonLogger.error('Reading file from the local file system failed in uploadFileToStorage(): ' + err);
                     return reject(new Error(err));
                 }
                 try {
                     const params = {
                         Bucket: bucketName,
-                        Key: key,
+                        Key: filename,
                         Body: data
                     };
-                    const time = Date.now();
+                    const startTime: number = Date.now();
                     s3.upload(params, (err: any, data: any) => {
                         if (err) {
-                            console.error(`Upload Error ${err}`);
+                            winstonLogger.error('Uploading file to the cloud object storage failed in uploadFileToStorage(): ' + err);
                             reject(new Error(err));
                         }
-
                         if (data) {
-                            console.log((Date.now() - time) / 1000);
-                            console.log("Upload Completed");
-                            console.log(data);
+                            winstonLogger.debug('Uploading file to the cloud object storage completed in ' + ((Date.now() - startTime) / 1000) + 's');
                             resolve(data);
                         }
                     });
                 } catch (err) {
-                    console.log(err);
+                    winstonLogger.error('Error in uploading file to the cloud object storage in uploadFileToStorage(): ' + err);
                     reject(new Error(err));
                 }
-
             });
         } catch (err) {
-            console.log(err);
+            winstonLogger.error('Error in processing file in uploadFileToStorage(): ' + err);
             reject(new Error(err));
         }
     });
 }
 
 /**
+ * Upload a file from the local file system to the cloud object storage.
  *
- * @param base64data
- * @param filename
- * @param bucketName
- * base64 data to storage
+ * @param base64data Buffer File binary content Base64 encoded
+ * @param filename   string Target file name in object storage system
+ * @param bucketName string Target bucket in object storage system
  */
-export async function uploadBase64FileToStorage(base64data: string, filename: string, bucketName: string) {
+export async function uploadBase64FileToStorage(base64data: Buffer, filename: string, bucketName: string): Promise<any> {
     return new Promise(async (resolve, reject) => {
         try {
-            const config = {
+            const config: ServiceConfigurationOptions = {
                 accessKeyId: process.env.USER_KEY,
                 secretAccessKey: process.env.USER_SECRET,
                 endpoint: process.env.POUTA_END_POINT,
@@ -708,40 +699,36 @@ export async function uploadBase64FileToStorage(base64data: string, filename: st
             };
             AWS.config.update(config);
             const s3 = new AWS.S3();
-            const key = filename;
             try {
                 const params = {
                     Bucket: bucketName,
-                    Key: key,
+                    Key: filename,
                     Body: base64data
                 };
-                const time = Date.now();
+                const startTime: number = Date.now();
                 s3.upload(params, (err: any, data: any) => {
                     if (err) {
-                        console.error(`Upload Error ${err}`);
+                        winstonLogger.error('Reading file from the local file system failed in uploadBase64FileToStorage(): ' + err);
                         reject(new Error(err));
                     }
-
                     if (data) {
-                        console.log((Date.now() - time) / 1000);
-                        console.log("Upload Completed");
-                        console.log(data);
+                        winstonLogger.debug('Uploading file to the cloud object storage completed in ' + ((Date.now() - startTime) / 1000) + 's');
                         resolve(data);
                     }
                 });
             } catch (err) {
-                console.log(err);
+                winstonLogger.error('Error in uploading file to the cloud object storage in uploadBase64FileToStorage(): ' + err);
                 reject(new Error(err));
             }
         } catch (err) {
-            console.log(err);
+            winstonLogger.error('Error in processing file in uploadBase64FileToStorage(): ' + err);
             reject(new Error(err));
         }
     });
 }
 
 
-export async function downloadFile(req: Request, res: Response, next: NextFunction) {
+export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const data = await downloadFileFromStorage(req, res, next);
         console.log("The data in DownloadFile function: " + data);
@@ -763,7 +750,7 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
  * download file from allas bucket
  * optional parameter isZip to html files
  */
-export async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any) {
+export async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any): Promise<any> {
     console.log("The isZip value in downloadFileFromStorage: " + isZip);
     console.log("The req.params in downloadFileFromStorage: " + req.params);
     console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
@@ -804,7 +791,7 @@ export async function downloadFileFromStorage(req: Request, res: Response, next:
  * @param params
  * readstream from allas. params object: bucket name and allas filekey
  */
-export async function readStreamFromStorage(params: { Bucket: string; Key: string; }) {
+export async function readStreamFromStorage(params: { Bucket: string; Key: string; }): Promise<any> {
     try {
         const config = {
             accessKeyId: process.env.USER_KEY,
@@ -1021,7 +1008,7 @@ export async function downloadAndZipFromStorage(req: Request, res: Response, nex
     });
 }
 
-export async function unZipAndExtract(zipFolder: any) {
+export async function unZipAndExtract(zipFolder: any): Promise<any> {
     const searchRecursive = function (dir, pattern) {
         // This is where we store pattern matches of all files inside the directory
         let results = [];

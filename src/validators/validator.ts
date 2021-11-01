@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
 import { winstonLogger } from '../util';
 
 const db = connection.db;

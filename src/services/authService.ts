@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import connection from '../resources/pg-config.module';
+import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const db = connection.db;
 
@@ -12,7 +13,7 @@ export function checkAuthenticated(req: Request, res: Response, next: NextFuncti
     }
 }
 
-export async function getUserData(req: Request, res: Response) {
+export async function getUserData(req: Request, res: Response): Promise<any> {
     const query = "SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;";
     const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
     res.status(200).json({
@@ -28,7 +29,7 @@ export async function getUserData(req: Request, res: Response) {
 //  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
-export async function hasAccesstoPublication(id: number, req: Request) {
+export async function hasAccesstoPublication(id: number, req: Request): Promise<any> {
     // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
     // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
     try {
@@ -49,7 +50,7 @@ export async function hasAccesstoPublication(id: number, req: Request) {
     }
 }
 
-export async function InsertUserToDatabase(userinfo: any, acr: string) {
+export async function InsertUserToDatabase(userinfo: any, acr: string): Promise<any> {
     try {
         console.log("The userinfo in function at authservice: " + userinfo);
         let uid: string;
@@ -74,7 +75,7 @@ export async function InsertUserToDatabase(userinfo: any, acr: string) {
     }
 }
 
-export async function hasAccessToPublicaticationMW(req: Request, res: Response, next: NextFunction): Promise<any> {
+export async function hasAccessToPublicatication(req: Request, res: Response, next: NextFunction): Promise<any> {
     const query = "SELECT usersusername FROM educationalmaterial WHERE id = $1";
     const eduMaterial = await db.oneOrNone(query, [req.params.edumaterialid]);
     if (req.session.passport.user.uid === eduMaterial.usersusername) {
@@ -83,7 +84,7 @@ export async function hasAccessToPublicaticationMW(req: Request, res: Response, 
     res.sendStatus(401);
 }
 
-export async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     let id = req.params.materialId;
     if (req.params.materialId) {
         id = req.params.materialId;
@@ -105,7 +106,7 @@ export async function hasAccessToMaterial(req: Request, res: Response, next: Nex
     }
 }
 
-export async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction): Promise<any> {
     const id = req.params.attachmentid;
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = " +
         "(select materialid from attachment where attachment.id =$1);";
@@ -123,7 +124,7 @@ export async function hasAccessToAttachmentFile(req: Request, res: Response, nex
     }
 }
 
-export async function hasAccessToCollection(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToCollection(req: Request, res: Response, next: NextFunction): Promise<any> {
     const id = req.body.collectionId;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
@@ -134,8 +135,8 @@ export async function hasAccessToCollection(req: Request, res: Response, next: N
     }
 }
 
-export async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction) {
-    const id = req.params.id;
+export async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction): Promise<any> {
+    const id = req.params.collectionid;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
         console.log("No result found for " + [id, req.session.passport.user.uid]);
@@ -145,7 +146,7 @@ export async function hasAccessToCollectionParams(req: Request, res: Response, n
     }
 }
 
-export async function hasAccessToCollectionId(id: string, username: string) {
+export async function hasAccessToCollectionId(id: string, username: string): Promise<any> {
     const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await db.oneOrNone(query, [id, username]);
     if (!result) {
@@ -156,25 +157,25 @@ export async function hasAccessToCollectionId(id: string, username: string) {
     }
 }
 
-export async function hasAccessToAoe(req: Request, res: Response, next: NextFunction) {
+export async function hasAccessToAoe(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         if (!req.isAuthenticated()) {
             return res.sendStatus(401);
         }
         const result = await hasAoeAccess(req.session.passport.user.uid);
         if (!result) {
-            console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+            winstonLogger.error('Unauthorized process request by ', [req.session.passport.user.uid]);
             return res.sendStatus(401);
         } else {
             return next();
         }
-    } catch (e) {
-        console.error(e);
+    } catch (error) {
+        winstonLogger.error('Authorization failed in hasAccessToAoe(): ' + error);
         return res.sendStatus(500);
     }
 }
 
-export async function userInfo(req: Request, res: Response, next: NextFunction) {
+export async function userInfo(req: Request, res: Response): Promise<any> {
     try {
         if (!req.isAuthenticated()) {
             return res.sendStatus(404);
@@ -192,18 +193,17 @@ export async function userInfo(req: Request, res: Response, next: NextFunction) 
     }
 }
 
-export async function hasAoeAccess(username: string) {
-    const query = "Select username from aoeuser where username = $1;";
+export async function hasAoeAccess(username: string): Promise<any> {
+    const query = "SELECT username FROM aoeuser WHERE username = $1";
     const result = await db.oneOrNone(query, [username]);
     if (!result) {
-        console.log("No result found for " + [username]);
         return false;
     } else {
         return true;
     }
 }
 
-export function logout(req: Request, res: Response) {
+export function logout(req: Request, res: Response): void {
     req.logout();
     res.status(200).json({"status": "ok"});
 }
@@ -213,7 +213,7 @@ export default {
     hasAccesstoPublication,
     checkAuthenticated,
     InsertUserToDatabase,
-    hasAccessToPublicaticationMW,
+    hasAccessToPublicatication,
     logout,
     hasAccessToMaterial,
     hasAccessToAttachmentFile,

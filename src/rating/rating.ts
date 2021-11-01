@@ -10,7 +10,7 @@ import { RatingInformation } from "./interface/rating-information.interface";
  * @param res  Response<any>
  * @param next NextFunction
  */
-export async function addRating(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function addRating(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const ratingInformation: RatingInformation = {
             educationalMaterialId: req.body.materialId,
@@ -30,13 +30,13 @@ export async function addRating(req: Request, res: Response, next: NextFunction)
 }
 
 /**
+ * Get educational material ratings.
  *
- * @param req
- * @param res
- * @param next
- * get educational material ratings
+ * @param req  Request<any>
+ * @param res  Response<any>
+ * @param next NextFunction
  */
-export async function getRating(req: Request, res: Response, next: NextFunction) {
+export async function getRating(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const response = await getRatings(req.params.materialId);
         if (!response.averages) {
@@ -51,13 +51,13 @@ export async function getRating(req: Request, res: Response, next: NextFunction)
 }
 
 /**
+ * Get educational material ratings for a user.
  *
- * @param req
- * @param res
- * @param next
- * get educational material ratings for a user
+ * @param req  Request<any>
+ * @param res  Response<any>
+ * @param next NextFunction
  */
-export async function getUserRating(req: Request, res: Response, next: NextFunction) {
+export async function getUserRating(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const response = await getUserRatings(req.session.passport.user.uid, req.params.materialId);
         if (!response.materialId) {
