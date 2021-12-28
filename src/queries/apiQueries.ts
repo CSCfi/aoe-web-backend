@@ -62,7 +62,7 @@ export async function addLinkToMaterial(req: Request, res: Response, next: NextF
 
 export async function getMaterial(req: Request, res: Response, next: NextFunction) {
     try {
-        const query = "SELECT * FROM educationalmaterial where obeleted != 1 order by id desc limit 100;";
+        const query = "SELECT * FROM educationalmaterial where obsoleted != 1 order by id desc limit 100;";
         const data = await db.any(query);
         res.status(200).json(data);
     } catch (err) {
