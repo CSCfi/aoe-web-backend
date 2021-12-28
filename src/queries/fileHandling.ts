@@ -788,7 +788,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 // Check if the criteria for streaming service redirect are fulfilled
                 if (requestRedirected(fileDetails)) {
                     res.status(302).set({
-                        'location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.key
+                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.key
                     });
                     return resolve();
                 }
