@@ -731,7 +731,7 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
 export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const data = await downloadFileFromStorage(req, res, next);
-        console.log("The data in DownloadFile function: " + data);
+        if (!data) return res.end();
         res.status(200).send(data);
     } catch (err) {
         console.error(err);
@@ -739,6 +739,19 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
             next(new ErrorHandler(400, "Failed to download file"));
         }
     }
+}
+
+const STREAM_REDIRECT_CRITERIA = {
+    mimeTypeArr: [
+        'video/mp4'
+    ] as string[],
+    minFileSize: parseInt(process.env.STREAM_FILESIZE_MIN, 10) as number,
+    redirectUri: process.env.STREAM_REDIRECT_URI as string
+}
+
+const requestRedirected = (fileDetails: { originalfilename: string, filesize: number, mimetype: string }): boolean => {
+    return fileDetails.filesize >= STREAM_REDIRECT_CRITERIA.minFileSize &&
+        STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
 }
 
 /**
@@ -750,38 +763,44 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
  * download file from allas bucket
  * optional parameter isZip to html files
  */
-export async function downloadFileFromStorage(req: Request, res: Response, next: NextFunction, isZip?: any): Promise<any> {
-    console.log("The isZip value in downloadFileFromStorage: " + isZip);
-    console.log("The req.params in downloadFileFromStorage: " + req.params);
-    console.log("The req.params.key in downloadFileFromStorage: " + req.params.key);
+export const downloadFileFromStorage = async (req: Request, res: Response, next: NextFunction, isZip?: any): Promise<any> => {
+    winstonLogger.debug('downloadFileFromStorage(): req.params.key=' + req.params.key + ', isZip=' + isZip);
+
+    const fileName: string = req.params.key as string;
     return new Promise(async (resolve) => {
         try {
             const query =
-                "SELECT originalfilename FROM record " +
+                "SELECT originalfilename, filesize, mimetype FROM record " +
                 "RIGHT JOIN material AS m ON m.id = materialid " +
                 "WHERE m.obsoleted = 0 AND filekey = $1 " +
                 "UNION " +
-                "SELECT originalfilename FROM attachment " +
+                "SELECT originalfilename, filesize, mimetype FROM attachment " +
                 "WHERE filekey = $1 AND obsoleted = 0";
-            console.log("The query from downloadFileFromStorage: " + query, [req.params.key]);
-            const response = await db.oneOrNone(query, [req.params.key]);
-            console.log("The response from query in downloadFileFromStorage function: " + response);
-            if (!response) {
-                console.log("No material found from database");
-                next(new ErrorHandler(400, "Failed to download file"));
+            winstonLogger.debug('downloadFileFromStorage() Query: ' + query, [fileName]);
+
+            const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
+                await db.oneOrNone(query, [fileName]);
+            winstonLogger.debug('downloadFileFromStorage() Response: ' + fileDetails);
+
+            if (!fileDetails) {
+                next(new ErrorHandler(400, 'Requested file ' + fileName + ' not found in database'));
             } else {
+                // Check if the criteria for streaming service redirect are fulfilled
+                if (requestRedirected(fileDetails)) {
+                    res.status(302).set({
+                        'location': STREAM_REDIRECT_CRITERIA.redirectUri + fileDetails.originalfilename
+                    });
+                    return resolve();
+                }
                 const params = {
                     Bucket: process.env.BUCKET_NAME,
                     Key: req.params.key
                 };
-                const resp = await downloadFromStorage(req, res, next, params, response.originalfilename, isZip);
-                console.log("This is response: " + resp);
+                const resp = await downloadFromStorage(req, res, next, params, fileDetails.originalfilename, isZip);
                 resolve(resp);
             }
-
         } catch (err) {
-            console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
-            next(new ErrorHandler(500, "Error in download"));
+            next(new ErrorHandler(500, 'Downloading a single file failed in downloadFileFromStorage()'));
         }
     });
 }
