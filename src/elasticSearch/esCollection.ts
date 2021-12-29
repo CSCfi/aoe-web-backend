@@ -137,8 +137,8 @@ export async function collectionDataToEs(index: string, data: any) {
     try {
         if (data.length > 0) {
         const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
-        // console.log("THIS IS BODY:");
-        // console.log(JSON.stringify(body));
+        // winstonLogger.debug("THIS IS BODY:");
+        // winstonLogger.debug(JSON.stringify(body));
         const { body: bulkResponse } = await client.bulk({ refresh: true, body });
         if (bulkResponse.errors) {
             const erroredDocuments = [];

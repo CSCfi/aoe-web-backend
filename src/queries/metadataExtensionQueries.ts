@@ -3,6 +3,7 @@ import connection from '../resources/pg-connect';
 const pgp = connection.pgp;
 const db = connection.db;
 import { MetadataExtension } from "./../metadataExtension/metadataExtension";
+import { winstonLogger } from '../util';
 
 export async function insertMetadataExtension(id: string, username: string, metadata: MetadataExtension) {
     try {
@@ -10,7 +11,7 @@ export async function insertMetadataExtension(id: string, username: string, meta
             let query;
             let response;
             const queries = [];
-            console.log("starting insertMetadataExtension");
+            winstonLogger.debug("starting insertMetadataExtension");
             query = "DELETE FROM accessibilityfeatureextension where educationalmaterialid = $1 and usersusername = $2;";
             response  = await t.none(query, [id, username]);
             queries.push(response);

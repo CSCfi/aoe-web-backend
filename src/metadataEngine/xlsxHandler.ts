@@ -1,4 +1,6 @@
 // handling and validating xlsx file
+import { winstonLogger } from '../util';
+
 const csv = require ("fast-csv");
 const xlsx = require("xlsx");
 import { Request, Response, NextFunction } from "express";
@@ -173,7 +175,7 @@ async function hasDuplicates(array: any, obj: any) {
         const value = obj[array[i]];
         // if (value !== "" && value !== 0) {
             if (map[value]) {
-                console.log("dublicate:" + value);
+                winstonLogger.debug("dublicate:" + value);
                 return true;
             }
             map[value] = true;
@@ -208,12 +210,12 @@ async function uploadXlsx(req: Request, res: Response) {
                         if (data.length === 0 ) {
                             return res.status(400).send("Cannot find data in metadata sheet");
                         }
-                        console.log(data);
+                        winstonLogger.debug(data);
                         // validate data
                         const obj: any = await validate(data);
                         const key = "error";
                         if (Object.keys(obj[key]).length > 0) {
-                            console.log(obj);
+                            winstonLogger.debug(obj);
                             fs.unlinkSync((<any>req).file.path);
                             return res.status(400).json(obj);
                         }
@@ -222,7 +224,7 @@ async function uploadXlsx(req: Request, res: Response) {
                         const rowkey = "row";
                         o[rowkey] = [];
                         for (const d in data) {
-                            console.log("inserting row " + (Number(d) + 2));
+                            winstonLogger.debug("inserting row " + (Number(d) + 2));
                             const materialobj = await mapper.createMaterialObject(data[d]);
                             await apiQ.insertEducationalMaterial(materialobj, function(err: any, result: any) {
                                 if (err) {
@@ -243,14 +245,14 @@ async function uploadXlsx(req: Request, res: Response) {
                         res.status(200).json(o);
                     }
                     catch (err) {
-                        console.log(err);
+                        winstonLogger.debug(err);
                         fs.unlinkSync((<any>req).file.path);
                         res.status(500).send("Error in file handling. Xlsx file expected");
                     }
                 });
             }
             catch (err) {
-                console.log(err);
+                winstonLogger.debug(err);
                 fs.unlinkSync((<any>req).file.path);
                 res.status(500).send("error");
             }
@@ -260,7 +262,7 @@ async function uploadXlsx(req: Request, res: Response) {
         }
 }
     catch (error) {
-        console.log(error);
+        winstonLogger.debug(error);
         res.status(500).send("error");
     }
 }

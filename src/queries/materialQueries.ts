@@ -42,7 +42,7 @@ export async function changeEducationalMaterialUser(emid: string, id: string) {
             }
             else {
                 query = "UPDATE educationalmaterial SET usersusername = $1 where id = $2;";
-                console.log("changeEducationalMaterialOwner: " + query, [username.username, emid]);
+                winstonLogger.debug("changeEducationalMaterialOwner: " + query, [username.username, emid]);
                 await t.none(query, [username.username, emid]);
                 return true;
             }

@@ -51,11 +51,11 @@ export async function addLinkToMaterial(req: Request, res: Response, next: NextF
                 res.status(200).json(response);
             })
             .catch((err: Error) => {
-                console.error(err);
+                winstonLogger.error(err);
                 next(new ErrorHandler(400, "Issue adding link to material"));
             });
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue adding link to material"));
     }
 }
@@ -67,7 +67,7 @@ export async function getMaterial(req: Request, res: Response, next: NextFunctio
         const data = await db.any(query);
         res.status(200).json(data);
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue getting materials "));
         // res.status(500).send("getting materials not succeeded");
     }
@@ -264,16 +264,16 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
             }
             jsonObj.id = data[0][0].id;
             jsonObj.materials = data[14];
-            // console.log("The jsonObj before first check: " + JSON.stringify(jsonObj));
+            // winstonLogger.debug("The jsonObj before first check: " + JSON.stringify(jsonObj));
             for (const i in jsonObj.materials) {
                 let ext = "";
                 if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
                     ext = jsonObj.materials[i]["originalfilename"].substring(jsonObj.materials[i]["originalfilename"].lastIndexOf("."), jsonObj.materials[i]["originalfilename"].length);
                     // if (ext === ".h5p") {
                     //     req.params.key = jsonObj.materials[i].filekey;
-                    //     console.log("h5p file found !!!!!!");
+                    //     winstonLogger.debug("h5p file found !!!!!!");
                     //     const result = await fh.downloadFileFromStorage(req, res, next, true);
-                    //     console.log("The result from fh.downloadFile with isZip True value: " + result);
+                    //     winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
                     // }
                 }
                 if (ext === ".h5p") {
@@ -416,7 +416,7 @@ export async function getUserMaterial(req: Request, res: Response, next: NextFun
                 res.status(200).json(data);
             });
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue getting users material"));
     }
 }
@@ -466,7 +466,7 @@ export async function getRecentMaterial(req: Request, res: Response, next: NextF
                 res.status(200).json(data);
             });
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue getting recent materials"));
     }
 }
@@ -881,18 +881,17 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
             for (const element of isBasedonArr) {
                 query = "INSERT INTO isbasedon (materialname, url, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (materialname, educationalmaterialid) DO UPDATE SET url = $2 returning id;";
-                console.log(query, [element.name, element.url, emid]);
+                winstonLogger.debug(query, [element.name, element.url, emid]);
                 const resp = await t.one(query, [element.name, element.url, emid]);
                 queries.push(resp);
                 for (const author of element.author) {
                     query = "INSERT INTO isbasedonauthor (authorname, isbasedonid) VALUES ($1,$2);";
-                    console.log(query, [author, resp.id]);
+                    winstonLogger.debug(query, [author, resp.id]);
                     queries.push(t.none(query, [author, resp.id]));
                 }
             }
         }
-// alignmentObjects
-        console.log("inserting alignmentObjects");
+        // alignmentObjects
         const alignmentObjectArr = metadata.alignmentObjects;
 
         if (alignmentObjectArr == undefined) {
@@ -916,20 +915,20 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 }
                 if (toBeDeleted) {
                     query = "DELETE FROM alignmentobject where id = " + element.id + ";";
-                    console.log(query);
+                    winstonLogger.debug(query);
                     queries.push(await t.any(query));
                 }
             }
             const cs = new pgp.helpers.ColumnSet(["alignmenttype", "targetname", "source", "educationalmaterialid", "objectkey", "educationalframework", "targeturl"], {table: "alignmentobject"});
             // data input values:
-            // console.log(arr);
+            // winstonLogger.debug(arr);
             const values: any = [];
             // const updateValues: Array<object> = [];
             // for ( let i = 0; i < arr.length; i += 1) {
             //     alignmentObjectArr[i].educationalmaterialid = emid;
             // }
             alignmentObjectArr.forEach(async (element: any) => {
-                console.log(element.educationalFramework);
+                winstonLogger.debug(element.educationalFramework);
                 const obj = {
                     alignmenttype: element.alignmentType,
                     targetname: element.targetName,
@@ -942,13 +941,12 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 values.push(obj);
                 // updateValues.push({educationalframework : ((element.educationalFramework == undefined) ? "" : element.educationalFramework)});
             });
-            console.log(values);
+            winstonLogger.debug(values);
             query = pgp.helpers.insert(values, cs) + " ON CONFLICT ON CONSTRAINT constraint_alignmentobject DO UPDATE Set educationalframework = excluded.educationalframework";
-            console.log(query);
+            winstonLogger.debug(query);
             queries.push(await t.any(query));
         }
-// author
-        console.log("inserting author");
+        // Author
         params = [];
         const authorArr = metadata.authors;
         query = "DELETE FROM author where educationalmaterialid = $1;";
@@ -957,17 +955,16 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
 
         for (const element of authorArr) {
             query = "INSERT INTO author (authorname, organization, educationalmaterialid, organizationkey) VALUES ($1,$2,$3,$4);";
-            console.log(query, [element.author, element.organization, emid]);
+            winstonLogger.debug(query, [element.author, element.organization, emid]);
             queries.push(await t.any(query, [((element.author == undefined) ? "" : element.author), ((element.organization == undefined) ? "" : element.organization.value), emid, ((element.organization == undefined) ? "" : element.organization.key)]));
         }
 
-        // filedetails
-        console.log("inserting filedetails");
+        // File details
         params = [];
         const fileDetailArr = metadata.fileDetails;
         if (fileDetailArr == undefined) {
             // query = "DELETE FROM materialdisplayname where materialid = $1;";
-            // console.log(query, [emid]);
+            // winstonLogger.debug(query, [emid]);
             // response  = await t.any(query, [emid]);
             // queries.push(response);
         } else {
@@ -975,17 +972,16 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 const dnresult = await fh.insertDataToDisplayName(t, emid, element.id, element);
                 queries.push(dnresult);
                 query = "UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3";
-                console.log("update material name: " + query, [element.language, element.id, emid]);
+                winstonLogger.debug("update material name: " + query, [element.language, element.id, emid]);
                 queries.push(await t.any(query, [element.language, element.id, emid]));
                 if (element.link) {
                     query = "UPDATE material SET link = $1 WHERE id = $2 AND educationalmaterialid = $3";
-                    console.log("update link: " + query, [element.link, element.id, emid]);
+                    winstonLogger.debug("update link: " + query, [element.link, element.id, emid]);
                     queries.push(await t.any(query, [element.link, element.id, emid]));
                 }
             }
         }
-// accessibilityFeatures
-        console.log("inserting accessibilityFeatures");
+        // Accessibility features
         params = [];
         arr = metadata.accessibilityFeatures;
         if (arr == undefined || arr.length < 1) {
@@ -998,26 +994,26 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
             query = "select id from (select * from accessibilityfeature where educationalmaterialid = $1) as i left join" +
                 "(select t.accessibilityfeaturekey from ( values " + params.join(",") + " ) as t(accessibilityfeaturekey)) as a on i.accessibilityfeaturekey = a.accessibilityfeaturekey where a.accessibilityfeaturekey is null;";
-            console.log(query);
+            winstonLogger.debug(query);
             response = await t.any(query, [emid]);
-            console.log(response);
+            winstonLogger.debug(response);
             queries.push(response);
             for (const element of response) {
                 if (element.dnid !== null) {
                     query = "DELETE FROM accessibilityfeature where id = " + element.id + ";";
-                    console.log(query);
+                    winstonLogger.debug(query);
                     queries.push(await t.any(query));
                 }
             }
             for (const element of arr) {
                 query = "INSERT INTO accessibilityfeature (accessibilityfeaturekey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (accessibilityfeaturekey, educationalmaterialid) DO NOTHING;";
                 // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                console.log(query, [element.key, element.value, emid]);
+                winstonLogger.debug(query, [element.key, element.value, emid]);
                 queries.push(await t.any(query, [element.key, element.value, emid]));
             }
         }
 // accessibilityHazards
-        console.log("inserting accessibilityHazards");
+        winstonLogger.debug("inserting accessibilityHazards");
         params = [];
         arr = metadata.accessibilityHazards;
         if (arr == undefined || arr.length < 1) {
@@ -1030,26 +1026,26 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
             query = "select id from (select * from accessibilityhazard where educationalmaterialid = $1) as i left join" +
                 "(select t.accessibilityhazardkey from ( values " + params.join(",") + " ) as t(accessibilityhazardkey)) as a on i.accessibilityhazardkey = a.accessibilityhazardkey where a.accessibilityhazardkey is null;";
-            console.log(query);
+            winstonLogger.debug(query);
             response = await t.any(query, [emid]);
-            console.log(response);
+            winstonLogger.debug(response);
             queries.push(response);
             for (const element of response) {
                 if (element.dnid !== null) {
                     query = "DELETE FROM accessibilityhazard where id = " + element.id + ";";
-                    console.log(query);
+                    winstonLogger.debug(query);
                     queries.push(await t.any(query));
                 }
             }
             for (const element of arr) {
                 query = "INSERT INTO accessibilityhazard (accessibilityhazardkey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (accessibilityhazardkey, educationalmaterialid) DO NOTHING;";
                 // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                console.log(query, [element.key, element.value, emid]);
+                winstonLogger.debug(query, [element.key, element.value, emid]);
                 queries.push(await t.any(query, [element.key, element.value, emid]));
             }
         }
 // educationalLevels
-        console.log("inserting educationalLevels");
+        winstonLogger.debug("inserting educationalLevels");
         params = [];
         arr = metadata.educationalLevels;
         if (arr == undefined || arr.length < 1) {
@@ -1062,38 +1058,38 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
             query = "select id from (select * from educationallevel where educationalmaterialid = $1) as i left join" +
                 "(select t.educationallevelkey from ( values " + params.join(",") + " ) as t(educationallevelkey)) as a on i.educationallevelkey = a.educationallevelkey where a.educationallevelkey is null;";
-            console.log(query);
+            winstonLogger.debug(query);
             response = await t.any(query, [emid]);
-            console.log(response);
+            winstonLogger.debug(response);
             queries.push(response);
             for (const element of response) {
                 if (element.dnid !== null) {
                     query = "DELETE FROM educationallevel where id = " + element.id + ";";
-                    console.log(query);
+                    winstonLogger.debug(query);
                     queries.push(await t.any(query));
                 }
             }
             for (const element of arr) {
                 query = "INSERT INTO educationallevel (educationallevelkey, value, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (educationallevelkey, educationalmaterialid) DO NOTHING;";
                 // query = "INSERT INTO materialdisplayname (displayname, language, materialid, slug) VALUES ($1,$2,$3,$4) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1, slug = $4;";
-                console.log(query, [element.key, element.value, emid]);
+                winstonLogger.debug(query, [element.key, element.value, emid]);
                 queries.push(await t.any(query, [element.key, element.value, emid]));
             }
         }
 
-        console.log("update attachmentDetails");
+        winstonLogger.debug("update attachmentDetails");
         const attachmentDetailArr = metadata.attachmentDetails;
         if (attachmentDetailArr) {
             for (const element of attachmentDetailArr) {
                 query = "update attachment set kind = $1, defaultfile = $2, label = $3, srclang = $4 where (id = $5 " +
                     "and (select educationalmaterialid from material where id = (select materialid from attachment where id = $5)) = $6);";
-                console.log(query, [element.kind, element.default, element.label, element.lang, element.id, emid]);
+                winstonLogger.debug(query, [element.kind, element.default, element.label, element.lang, element.id, emid]);
                 queries.push(await t.none(query, [element.kind, element.default, element.label, element.lang, element.id, emid]));
             }
         }
         let publishedat;
         if (metadata.isVersioned) {
-            console.log("versioned true");
+            winstonLogger.debug("versioned true");
             const arr = metadata.materials;
             if (metadata.materials) {
                 query = "UPDATE educationalmaterial SET publishedat = now() WHERE id = $1 AND publishedat IS NULL;";
@@ -1106,13 +1102,13 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 for (const element of arr) {
                     // query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) VALUES ($1,$2,now(),$3);";
                     query = "INSERT INTO versioncomposition (educationalmaterialid, materialid, publishedat, priority) select $1,$2,now()::timestamp(3),$3 where exists (select * from material where id = $2 and educationalmaterialid = $1);";
-                    console.log(query, [emid, element.materialId, element.priority]);
+                    winstonLogger.debug(query, [emid, element.materialId, element.priority]);
                     queries.push(await t.none(query, [emid, element.materialId, element.priority]));
                     // add attachments
                     if (element.attachments) {
                         for (const att of element.attachments) {
                             query = "INSERT INTO attachmentversioncomposition (versioneducationalmaterialid, versionmaterialid, versionpublishedat, attachmentid) select $1,$2,now()::timestamp(3),$3 where exists (select * from attachment where id = $3 and materialid = $2);";
-                            console.log(query, [emid, element.materialId, att]);
+                            winstonLogger.debug(query, [emid, element.materialId, att]);
                             queries.push(await t.none(query, [emid, element.materialId, att]));
                         }
                     }
@@ -1123,7 +1119,7 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             if (materialArr) {
                 for (const element of materialArr) {
                     query = "UPDATE versioncomposition SET priority = $3 WHERE educationalmaterialid = $1 and materialid = $2 and publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
-                    console.log(query, [emid, element.materialId, element.priority]);
+                    winstonLogger.debug(query, [emid, element.materialId, element.priority]);
                     queries.push(await t.none(query, [emid, element.materialId, element.priority]));
                 }
             }
@@ -1134,7 +1130,7 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             return data;
         })
         .catch((err: Error) => {
-            console.error(err);
+            winstonLogger.error(err);
             throw(err);
             // next(new ErrorHandler(400, "Issue updating material"));
         });
@@ -1146,7 +1142,7 @@ export async function insertUrn(id: string, publishedat: string, urn: string) {
             "WHERE educationalmaterialid = $1 AND publishedat = $2";
         await db.none(query, [id, publishedat, urn]);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         throw new Error(error);
     }
 }
@@ -1155,14 +1151,14 @@ export async function createUser(req: Request, res: Response, next: NextFunction
     try {
         const query = "INSERT INTO users (firstname, lastname, username, preferredlanguage, preferredtargetname," +
             "preferredalignmenttype) VALUES ($1, $2, $3, 'fi', '', '') RETURNING username";
-        console.log(req.body);
+        winstonLogger.debug(req.body);
         if (req.body.username === undefined) {
             next(new ErrorHandler(500, "Username cannot be undefined"));
         }
         const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.username]);
         res.status(200).json(data);
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue creating user"));
     }
 }
@@ -1172,12 +1168,12 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
         const query = "UPDATE users SET (firstname, lastname, preferredlanguage, preferredtargetname, " +
             "preferredalignmenttype) = ($1, $2, $3, $4, $5) " +
             "WHERE username = $6";
-        console.log(query);
+        winstonLogger.debug(query);
         const data = await db.any(query, [req.body.firstname, req.body.lastname, req.body.preferredlanguage,
             req.body.preferredtargetname, req.body.preferredalignmenttype, req.session.passport.user.uid]);
         res.status(200).json("user updated");
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue updating user"));
     }
 }
@@ -1185,11 +1181,11 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
 export async function updateTermsOfUsage(req: Request, res: Response, next: NextFunction) {
     try {
         const query = "UPDATE users SET termsofusage = '1' WHERE username = $1";
-        console.log(query);
+        winstonLogger.debug(query);
         const data = await db.any(query, [req.session.passport.user.uid]);
         res.status(200).json("terms of usage updated");
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Update failed"));
     }
 }
@@ -1197,11 +1193,11 @@ export async function updateTermsOfUsage(req: Request, res: Response, next: Next
 export async function getUser(req: Request, res: Response, next: NextFunction) {
     try {
         const query = "SELECT * FROM users WHERE username = $1";
-        console.log(query);
+        winstonLogger.debug(query);
         const data = await db.any(query, [req.session.passport.user.uid]);
         res.status(200).json(data);
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Issue processing get user request"));
     }
 }
@@ -1271,7 +1267,7 @@ export async function insertEducationalMaterial(obj: any, func: any) {
         func(undefined, "Success");
     } catch (err) {
         await db.any("ROLLBACK");
-        console.log(err);
+        winstonLogger.debug(err);
         func(err);
     }
 }
@@ -1294,7 +1290,7 @@ export async function insertIntoEducationalMaterial(obj: any) {
         originalpublishedat: obj.originalpublishedat
     };
     const query = pgp.helpers.insert(materialData, undefined, "educationalmaterial") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     const data = await db.any(query);
     return data;
 }
@@ -1307,7 +1303,7 @@ export async function insertIntoMaterialName(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "materialname") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1318,7 +1314,7 @@ export async function insertIntoMaterialDescription(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "materialdescription") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1328,7 +1324,7 @@ export async function insertIntoEducationalAudience(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "educationalaudience") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1338,7 +1334,7 @@ export async function insertIntoLearningResourceType(obj: any, materialid: any) 
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "learningresourcetype") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1358,7 +1354,7 @@ export async function insertIntoAccessibilityFeature(obj: any, materialid: any) 
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "accessibilityfeature") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1368,7 +1364,7 @@ export async function insertIntoAccessibilityHazard(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "accessibilityhazard") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1379,7 +1375,7 @@ export async function insertIntoKeyWord(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "keyword") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1389,7 +1385,7 @@ export async function insertIntoEducationalLevel(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "educationallevel") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1399,7 +1395,7 @@ export async function insertIntoEducationalUse(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "educationaluse") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1409,7 +1405,7 @@ export async function insertIntoPublisher(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "publisher") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1420,7 +1416,7 @@ export async function insertIntoInLanguage(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "inlanguage") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1432,7 +1428,7 @@ export async function insertIntoAlignmentObject(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "alignmentobject") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1444,7 +1440,7 @@ export async function insertIntoMaterial(obj: any, materialid: any) {
         educationalmaterialid: materialid
     };
     const query = pgp.helpers.insert(data, undefined, "material") + "RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     await db.any(query);
 }
 
@@ -1459,11 +1455,11 @@ function createSlug(str: string) {
 export async function isOwner(educationalmaterialid: string, username: string) {
     if (educationalmaterialid && username) {
         const query = "SELECT UsersUserName from EducationalMaterial WHERE id = $1";
-        console.log(query);
+        winstonLogger.debug(query);
         const result = await db.oneOrNone(query, educationalmaterialid);
-        console.log(result);
+        winstonLogger.debug(result);
         if (!result) {
-            console.log("isOwner: No result found for id " + educationalmaterialid);
+            winstonLogger.debug("isOwner: No result found for id " + educationalmaterialid);
             return false;
         } else if (username === result.usersusername) {
             return true;

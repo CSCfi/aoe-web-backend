@@ -26,7 +26,7 @@ export async function getUserData(req: Request, res: Response): Promise<any> {
         "termsUpdated": data.termsupdated,
         "allowTransfer": data.allowtransfer
     });
-//  console.log("The req session in getuserdata: " + JSON.stringify(req.session));
+//  winstonLogger.debug("The req session in getuserdata: " + JSON.stringify(req.session));
 }
 
 export async function hasAccesstoPublication(id: number, req: Request): Promise<any> {
@@ -187,7 +187,7 @@ export async function userInfo(req: Request, res: Response): Promise<any> {
             return res.sendStatus(200);
         }
     } catch (e) {
-        console.error(e);
+        winstonLogger.error(e);
         return res.sendStatus(404);
     }
 }

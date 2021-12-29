@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
+import { winstonLogger } from '../util';
 export interface AoeRouteMessage {
     "enabled": string;
     "message": {
@@ -19,9 +20,9 @@ export const loginErrorMessageSv = "Det finns för närvarande ett fel vid inlog
 export async function isAllasEnabled(req: Request, res: Response, next: NextFunction) {
     try {
         const allas = Number(process.env.ALLAS_ENABLED);
-        console.log(allas);
+        winstonLogger.debug(allas);
         if (!allas) {
-            console.log("allas disabled");
+            winstonLogger.debug("allas disabled");
             const statusCode = 503;
             const message = allasErrorMessage;
             res.status(statusCode).json({
@@ -32,7 +33,7 @@ export async function isAllasEnabled(req: Request, res: Response, next: NextFunc
 
         }
         else {
-            console.log("allas enabled");
+            winstonLogger.debug("allas enabled");
             next();
         }
     }

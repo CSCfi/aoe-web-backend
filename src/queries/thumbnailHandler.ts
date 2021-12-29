@@ -72,7 +72,7 @@ export const downloadCollectionThumbnail = async (req: Request, res: Response, n
         }
         await downloadThumbnail(req, res, next, key);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, 'downloadCollectionThumbnail() Downloading the thumbnail image failed: ' + error));
     }
 }

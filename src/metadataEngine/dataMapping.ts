@@ -1,3 +1,5 @@
+import { winstonLogger } from '../util';
+
 async function createMaterialObject(indata: any) {
     let obj: any = {};
     let data = await createEducationalMaterialObject(indata);
@@ -57,11 +59,11 @@ async function createEducationalMaterialObject(indata: any) {
     const key = "educationalmaterial";
     obj[key] = [];
     const date = new Date(Date.now());
-    console.log(date);
-    console.log(indata.julkaisuajankohta.replace(/\./g, "/"));
+    winstonLogger.debug(date);
+    winstonLogger.debug(indata.julkaisuajankohta.replace(/\./g, "/"));
     const cleanJulkaisuAjankohta = parseDate(indata.julkaisuajankohta);
     const cleanOppimateriaaliVanhenee = parseDate(indata.oppimateriaali_vanhenee);
-    console.log(cleanJulkaisuAjankohta);
+    winstonLogger.debug(cleanJulkaisuAjankohta);
     const materialData = {
         technicalname : indata.nimi,
         createdat : date,

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { sendVerificationEmail } from "./../services/mailService";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -32,7 +33,7 @@ export async function updateUserSettings(req: Request, res: Response, next: Next
     return res.status(200).json({"status": "ok"});
   }
   catch (error) {
-    console.error(error);
+    winstonLogger.error(error);
     next(new ErrorHandler(500, "Issue updating user settings"));
   }
 }

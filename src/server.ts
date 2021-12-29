@@ -4,6 +4,7 @@ dotenv.config();
 import consoleStamp from 'console-stamp';
 import errorHandler from 'errorhandler';
 import app from './app';
+import { winstonLogger } from './util';
 
 /**
  * Add timestamp to console logging.
@@ -21,7 +22,7 @@ app.use(errorHandler());
  * Start Express server.
  */
 const server = app.listen(process.env.PORT || 3000, () => {
-    console.log('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
+    winstonLogger.debug('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
 });
 
 /**
@@ -29,18 +30,18 @@ const server = app.listen(process.env.PORT || 3000, () => {
  */
 server.on('connection', (socket) => {
     socket.setTimeout(600 * 60 * 1000);
-    // console.log("SOCKET OPENED" + JSON.stringify(socket.address()));
+    // winstonLogger.debug("SOCKET OPENED" + JSON.stringify(socket.address()));
     // socket.on("end", function () {
-    //     console.log("SOCKET END: other end of the socket sends a FIN packet");
+    //     winstonLogger.debug("SOCKET END: other end of the socket sends a FIN packet");
     // });
     // socket.on("timeout", function () {
-    //     console.log("SOCKET TIMEOUT");
+    //     winstonLogger.debug("SOCKET TIMEOUT");
     // });
     // socket.on("error", function (error) {
-    //     console.log("SOCKET ERROR: " + JSON.stringify(error));
+    //     winstonLogger.debug("SOCKET ERROR: " + JSON.stringify(error));
     // });
     // socket.on("close", function (had_error) {
-    //     console.log("SOCKET CLOSED. IT WAS ERROR: " + had_error);
+    //     winstonLogger.debug("SOCKET CLOSED. IT WAS ERROR: " + had_error);
     // });
 });
 

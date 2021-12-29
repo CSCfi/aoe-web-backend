@@ -67,7 +67,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
                             } else {
-                                console.error(err);
+                                winstonLogger.error(err);
                                 next(new ErrorHandler(500, "Failure in file upload"));
                             }
                         }
@@ -101,7 +101,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                                 await deleteDataToTempAttachmentTable(file.filename, result[0].id);
                                 fs.unlink("./" + file.path, (err: any) => {
                                     if (err) {
-                                        console.error(err);
+                                        winstonLogger.error(err);
                                     }
                                 });
                             }
@@ -110,7 +110,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                                 JSON.stringify((<any>req).file));
                         }
                     } catch (e) {
-                        console.error(e);
+                        winstonLogger.error(e);
                         if (!res.headersSent) {
                             next(new ErrorHandler(500, "Failure in file upload"));
                         }
@@ -121,7 +121,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
             next(new ErrorHandler(400, "Wrong contentType"));
         }
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Not found"));
     }
 }
@@ -145,7 +145,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
                             } else {
-                                console.trace(err);
+                                winstonLogger.error(err);
                                 next(new ErrorHandler(500, "Error in upload"));
                             }
                         }
@@ -207,12 +207,12 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                                     }
                                                 } catch (e) {
                                                     winstonLogger.debug("ERROR converting office file to pdf");
-                                                    console.error(e);
+                                                    winstonLogger.error(e);
                                                 }
                                                 await deleteDataFromTempRecordTable(file.filename, materialid);
                                                 fs.unlink("./" + file.path, (err: any) => {
                                                     if (err) {
-                                                        console.error(err);
+                                                        winstonLogger.error(err);
                                                     }
                                                 });
                                             }
@@ -266,11 +266,11 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
             upload.single("file")(req, res, async function (err: any) {
                     try {
                         if (err) {
-                            console.error(err);
+                            winstonLogger.error(err);
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
                             } else {
-                                console.trace(err);
+                                winstonLogger.error(err);
                                 next(new ErrorHandler(500, "Error in upload"));
                             }
                         }
@@ -319,7 +319,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                                 await deleteDataFromTempRecordTable(file.filename, materialid);
                                                 fs.unlink("./" + file.path, (err: any) => {
                                                     if (err) {
-                                                        console.error(err);
+                                                        winstonLogger.error(err);
                                                     }
                                                 });
                                             }
@@ -353,7 +353,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
             next(new ErrorHandler(400, "Not found"));
         }
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "Error in upload"));
     }
 }
@@ -370,7 +370,7 @@ export async function fileToStorage(file: any, materialid: string): Promise<{ ke
     await deleteDataFromTempRecordTable(file.filename, materialid);
     fs.unlink("./" + file.path, (err: any) => {
         if (err) {
-            console.error(err);
+            winstonLogger.error(err);
         }
     });
     return {key: obj.Key, recordid: recordid};
@@ -391,7 +391,7 @@ export async function attachmentFileToStorage(file: any, metadata: any, material
     await deleteDataToTempAttachmentTable(file.filename, materialid);
     fs.unlink("./" + file.path, (err: any) => {
         if (err) {
-            console.error(err);
+            winstonLogger.error(err);
         }
     });
 }
@@ -614,7 +614,7 @@ export async function deleteDataFromTempRecordTable(filename: any, materialId: a
 
 export async function deleteDataToTempAttachmentTable(filename: any, materialId: any): Promise<any> {
     const query = "DELETE FROM temporaryattachment WHERE filename = $1 AND id = $2";
-    console.log(query, [filename, materialId]);
+    winstonLogger.debug(query, [filename, materialId]);
     return await db.any(query, [filename, materialId]);
 }
 
@@ -813,10 +813,10 @@ export async function readStreamFromStorage(params: { Bucket: string; Key: strin
         };
         AWS.config.update(config);
         const s3 = new AWS.S3();
-        console.log("Returning stream");
+        winstonLogger.debug("Returning stream");
         return s3.getObject(params).createReadStream();
     } catch (error) {
-        console.log("throw readStreamFromStorage error");
+        winstonLogger.debug("throw readStreamFromStorage error");
         throw new Error(error);
     }
 }
@@ -1053,39 +1053,39 @@ export async function unZipAndExtract(zipFolder: any): Promise<any> {
 
         // We unzip the file that is received to the function
         // We unzip the file to the folder specified in the env variables, + filename
-        console.log("The folderpath that came to the unZipandExtract function: " + zipFolder);
+        winstonLogger.debug("The folderpath that came to the unZipandExtract function: " + zipFolder);
         // const filenameParsed = zipFolder.substring(0, zipFolder.lastIndexOf("/"));
         const filenameParsedNicely = zipFolder.slice(0, -4);
-        console.log("Hopefully the filename is parsed corectly: " + filenameParsedNicely);
-        // console.log("The filenameParsed: " + filenameParsed);
-        console.log("Does the file exist? : " + fs.existsSync(zipFolder));
+        winstonLogger.debug("Hopefully the filename is parsed corectly: " + filenameParsedNicely);
+        // winstonLogger.debug("The filenameParsed: " + filenameParsed);
+        winstonLogger.debug("Does the file exist? : " + fs.existsSync(zipFolder));
         const zip = new ADMzip(zipFolder);
         // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
         // const folderPath = process.env.HTMLFOLDER + "/" + filename;
         // Here we finally extract the zipped file to the folder we just specified.
         // const zipEntries = zip.getEntries();
         // zipEntries.forEach(function (zipEntry) {
-        //     console.log(zipEntry.getData().toString("utf8"));
+        //     winstonLogger.debug(zipEntry.getData().toString("utf8"));
         // });
         zip.extractAllTo(filenameParsedNicely, true);
 
         const pathToReturn = zipFolder + "/index.html";
-        console.log("The pathtoreturn: " + pathToReturn);
+        winstonLogger.debug("The pathtoreturn: " + pathToReturn);
         const results = await searchRecursive(filenameParsedNicely, "index.html");
         if (Array.isArray(results) && results.length) {
-            console.log("The results: " + results);
+            winstonLogger.debug("The results: " + results);
             return results[0];
         }
         const resultshtm = await searchRecursive(filenameParsedNicely, "index.htm");
         if (Array.isArray(resultshtm) && resultshtm.length) {
-            console.log("The resultshtm: " + resultshtm);
+            winstonLogger.debug("The resultshtm: " + resultshtm);
             return resultshtm[0];
         } else {
-            console.log("the unzipandextract returns false");
+            winstonLogger.debug("the unzipandextract returns false");
             return false;
         }
     } catch (err) {
-        console.log("The error in unzipAndExtract function for HTML zip: " + err);
+        winstonLogger.debug("The error in unzipAndExtract function for HTML zip: " + err);
         return false;
     }
 }

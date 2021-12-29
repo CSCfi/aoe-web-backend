@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 // import { IUserRequest} from "./../definitions"
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertMetadataExtension, metadataExtension, usersMetadataExtension } from "./../queries/metadataExtensionQueries";
+import { winstonLogger } from '../util';
 export class MetadataExtension {
     "keywords": Array<{"key": string; "value": string}>;
     "accessibilityFeatures": Array<{"value": string; "key": string}>;
@@ -18,7 +19,7 @@ export class MetadataExtension {
 export async function addMetadataExtension(req: Request , res: Response, next: NextFunction) {
     try {
       const metadata = new MetadataExtension(req.body);
-      console.log(metadata);
+      winstonLogger.debug(metadata);
       if (!req.params.id) {
           return res.status(404);
       }
@@ -26,7 +27,7 @@ export async function addMetadataExtension(req: Request , res: Response, next: N
       res.status(200).json({status: "success"});
     }
     catch (error) {
-      console.error(error);
+      winstonLogger.error(error);
       next(new ErrorHandler(500, "Issue adding metadata extension"));
     }
 }
@@ -40,7 +41,7 @@ export async function getMetadataExtension(req: Request , res: Response, next: N
       res.status(200).json(data);
     }
     catch (error) {
-      console.error(error);
+      winstonLogger.error(error);
       next(new ErrorHandler(500, "Issue getting metadata extension"));
     }
 }
@@ -54,7 +55,7 @@ export async function getUsersMetadataExtension(req: Request , res: Response, ne
       res.status(200).json(data);
     }
     catch (error) {
-      console.error(error);
+      winstonLogger.error(error);
       next(new ErrorHandler(500, "Issue getting metadata extension"));
     }
 }

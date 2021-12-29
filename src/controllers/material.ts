@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { updateEducationalMaterial, getUsers, changeEducationalMaterialUser, getOwnerName, getMaterialName } from "./../queries/materialQueries";
 import { deleteDocument } from "./../elasticSearch/esQueries";
+import { winstonLogger } from '../util';
 /**
  *
  * @param req
@@ -14,8 +15,7 @@ export async function removeEducationalMaterial(req: Request , res: Response, ne
         if (!req.params.id) {
             return res.sendStatus(404);
         }
-        console.log("Strarting removeEducationalMaterial");
-        console.log("removeEducationalMaterial: user " + req.session.passport.user.uid + " deleting educational material " + req.params.id);
+        winstonLogger.debug("removeEducationalMaterial: user " + req.session.passport.user.uid + " deleting educational material " + req.params.id);
         const id = req.params.id;
         await updateEducationalMaterial(id);
         res.status(200).json( {"status" : "success", "statusCode": 200});
@@ -23,8 +23,7 @@ export async function removeEducationalMaterial(req: Request , res: Response, ne
         await deleteDocument(index, id);
     }
     catch (error) {
-        console.error(error);
-        next(new ErrorHandler(500, "Issue removing material"));
+        next(new ErrorHandler(500, "Issue removing material" + error));
     }
 }
 /**
@@ -40,7 +39,7 @@ export async function getAoeUsers(req: Request , res: Response, next: NextFuncti
         res.status(200).json({"users": users});
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue getting users"));
     }
 }
@@ -56,7 +55,7 @@ export async function changeMaterialUser(req: Request , res: Response, next: Nex
         if (!req.body.materialid || !req.body.userid) {
             return res.sendStatus(404);
         }
-        console.log("changeMaterialUser user: " + req.session.passport.user.uid + " changing educational material " + req.body.materialid + " user to " + req.body.materialid);
+        winstonLogger.debug("changeMaterialUser user: " + req.session.passport.user.uid + " changing educational material " + req.body.materialid + " user to " + req.body.materialid);
         const users = await changeEducationalMaterialUser(req.body.materialid, req.body.userid);
         if (!users) {
             return res.sendStatus(404);
@@ -66,7 +65,7 @@ export async function changeMaterialUser(req: Request , res: Response, next: Nex
         }
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue changing users"));
     }
 }
@@ -86,7 +85,7 @@ export async function getMaterialNames(req: Request , res: Response, next: NextF
         }
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue changing users"));
     }
 }

@@ -25,7 +25,7 @@ scheduleJob("0 0 4 * * *", function() {
         }
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
     }
 });
 scheduleJob("0 0 10 * * *", function() {
@@ -34,7 +34,7 @@ scheduleJob("0 0 10 * * *", function() {
         sendExpirationMail();
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
     }
 });
 

@@ -20,7 +20,7 @@ import bodyParser from 'body-parser';
 import redisClient from './resources/redis-client';
 import connectRedis from 'connect-redis';
 import openidClient, { custom, HttpOptions } from 'openid-client';
-import { morganHttpLogger } from './util';
+import { morganHttpLogger, winstonLogger } from './util';
 
 const app = express();
 
@@ -88,7 +88,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                             return done(undefined, {uid: userinfo.sub, name: nameparsed});
                         })
                         .catch((err: Error) => {
-                            console.error(err);
+                            winstonLogger.error(err);
                             return done('Login error when inserting suomi.fi information to database ', undefined);
                         });
                 } else if (tokenset.claims().acr == process.env.HAKAACR) {
@@ -98,7 +98,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                             return done(undefined, {uid: userinfo.eppn, name: nameparsed});
                         })
                         .catch((err: Error) => {
-                            console.error(err);
+                            winstonLogger.error(err);
                             return done('Login error', undefined);
                         });
                 } else if (tokenset.claims().acr == process.env.MPASSACR) {
@@ -108,18 +108,18 @@ Issuer.discover(process.env.PROXY_URI || '')
                             return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
                         })
                         .catch((err: Error) => {
-                            console.error(err);
+                            winstonLogger.error(err);
                             return done('Login error', undefined);
                         });
                 } else {
-                    console.error('Unknown authentication method: ' + tokenset.claims().acr);
+                    winstonLogger.error('Unknown authentication method: ' + tokenset.claims().acr);
                     throw new ErrorHandler(400, 'Unknown authentication method');
                 }
             }),
         );
     })
     .catch((error: any) => {
-        console.error(error);
+        winstonLogger.error(error);
     });
 
 app.use(passport.initialize());
@@ -143,7 +143,7 @@ app.get(
 app.get(
     '/secure/redirect',
     (req: Request, res: Response, next: NextFunction) => {
-        // console.log("here");
+        // winstonLogger.debug("here");
         next();
     },
     passport.authenticate('oidc', {

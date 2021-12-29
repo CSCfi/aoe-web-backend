@@ -87,7 +87,7 @@ export async function createCollection(req: Request, res: Response, next: NextFu
         const id = await insertCollection(req.session.passport.user.uid, collection);
         res.status(200).json(id);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue creating collection"));
     }
 }
@@ -105,7 +105,7 @@ export async function addEducationalMaterialToCollection(req: Request, res: Resp
         await insertEducationalMaterialToCollection(collection);
         res.status(200).json({"status": "ok"});
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue adding material to collection"));
     }
 }
@@ -123,7 +123,7 @@ export async function removeEducationalMaterialFromCollection(req: Request, res:
         await deleteEducationalMaterialFromCollection(collection);
         res.status(200).json({"status": "ok"});
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue removing material from collection"));
     }
 }
@@ -140,7 +140,7 @@ export async function getUserCollections(req: Request, res: Response, next: Next
         const data = await userCollections(req.session.passport.user.uid);
         res.status(200).json(data);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue getting collection"));
     }
 }
@@ -162,7 +162,7 @@ export async function getCollection(req: Request, res: Response, next: NextFunct
         }
         res.status(200).json(data);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue getting collection"));
     }
 }
@@ -186,7 +186,7 @@ export async function updateCollection(req: Request, res: Response, next: NextFu
             winstonLogger.error("Collection Es update failed data out of sync");
         }
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue updating collection"));
     }
 }
@@ -203,7 +203,7 @@ export async function getRecentCollection(req: Request, res: Response, next: Nex
         const data = await recentCollectionQuery();
         res.status(200).json(data);
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(500, "Issue getting recent collection"));
     }
 }

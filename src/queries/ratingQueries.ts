@@ -127,7 +127,7 @@ export async function getUserRatings(username: string, materialId: string) {
     try {
         const data = await db.task(async (t: any) => {
             const query = "SELECT educationalmaterialid, ratingcontent, ratingvisual, feedbackpositive, feedbacksuggest, feedbackpurpose, updatedat from rating where usersusername = $1 and educationalmaterialid = $2;";
-            console.log(query, [username, materialId]);
+            winstonLogger.debug(query, [username, materialId]);
             const ratings = await t.oneOrNone(query, [username, materialId]);
             return {ratings};
         });
@@ -145,7 +145,7 @@ export async function getUserRatings(username: string, materialId: string) {
             };
         }
     } catch (err) {
-        console.error(err);
+        winstonLogger.error(err);
         throw new Error(err);
     }
 }

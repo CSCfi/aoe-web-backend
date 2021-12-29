@@ -34,7 +34,7 @@ export async function play(req: Request, res: Response, next: NextFunction) {
         res.status(200).end();
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(error.statusCode, "Issue playing h5p"));
     }
 }
@@ -117,14 +117,14 @@ export async function startH5Pplayer(contentid: string) {
     stream.pipe(fs.createWriteStream(filepath));
     stream.on("end", async function() {
         try {
-            // console.log("We finished the zipstream!");
+            // winstonLogger.debug("We finished the zipstream!");
             // const data = await fs.readFileSync(filepath);
-            // console.log("uploading h5p package #####################################");
+            // winstonLogger.debug("uploading h5p package #####################################");
             // const options = {
             //     "onlyInstallLibraries": false
             // };
             // const result = await h5pEditor.uploadPackage(data, user, options);
-            // console.log("saving h5p package");
+            // winstonLogger.debug("saving h5p package");
             // let mainlib;
             // for (const lib of result.metadata.preloadedDependencies) {
             //     if (lib.machineName == result.metadata.mainLibrary) {
@@ -146,7 +146,7 @@ export async function startH5Pplayer(contentid: string) {
             //     config
             // );
             // // const content = result.parameters;
-            // console.log("rendering h5p page: " + contentid);
+            // winstonLogger.debug("rendering h5p page: " + contentid);
             // // page = await h5pPlayer.render(contentid, content);
             // page = await h5pPlayer.render(contentid);
             page = await renderH5Ppage(contentid, filepath);

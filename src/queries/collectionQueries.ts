@@ -286,54 +286,54 @@ export async function insertCollectionMetadata(collection: Collection) {
                 }
             }
             query = "DELETE FROM collectioneducationaluse where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.educationalUses) {
                 arr = collection.educationalUses;
                 for (const element of arr) {
                     query = "INSERT INTO collectioneducationaluse (collectionid, value, educationalusekey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
             query = "DELETE FROM collectionaccessibilityhazard where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.accessibilityHazards) {
                 arr = collection.accessibilityHazards;
                 for (const element of arr) {
                     query = "INSERT INTO collectionaccessibilityhazard (collectionid, value, accessibilityhazardkey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
             query = "DELETE FROM collectionaccessibilityfeature where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.accessibilityFeatures) {
                 arr = collection.accessibilityFeatures;
                 for (const element of arr) {
                     query = "INSERT INTO collectionaccessibilityfeature (collectionid, value, accessibilityfeaturekey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
 
             query = "DELETE FROM collectioneducationallevel where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.educationalLevels) {
                 arr = collection.educationalLevels;
                 for (const element of arr) {
                     query = "INSERT INTO collectioneducationallevel (collectionid, value, educationallevelkey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
@@ -341,7 +341,7 @@ export async function insertCollectionMetadata(collection: Collection) {
 
             if (collection.publish) {
                 query = "UPDATE collection SET publishedat = now() where id = $1 and publishedat IS NULL;";
-                console.log(query, [collectionId]);
+                winstonLogger.debug(query, [collectionId]);
                 response  = await t.none(query, [collectionId]);
                 queries.push(response);
             }
@@ -349,21 +349,21 @@ export async function insertCollectionMetadata(collection: Collection) {
                 arr = collection.materials;
                 for (const element of arr) {
                     query = "UPDATE collectioneducationalmaterial SET priority = $1 where collectionid = $2 and educationalmaterialid = $3;";
-                    console.log(query, [element.priority, collectionId, element.id]);
+                    winstonLogger.debug(query, [element.priority, collectionId, element.id]);
                     response  = await t.none(query, [element.priority, collectionId, element.id]);
                     queries.push(response);
                 }
             }
 
             query = "DELETE FROM collectionheading where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.headings) {
                 arr = collection.headings;
                 for (const element of arr) {
                     query = "INSERT INTO collectionheading (collectionid, heading, description, priority) VALUES ($1,$2,$3,$4);";
-                    console.log(query, [collectionId, element.heading, element.description, element.priority]);
+                    winstonLogger.debug(query, [collectionId, element.heading, element.description, element.priority]);
                     response  = await t.none(query, [collectionId, element.heading, element.description, element.priority]);
                     queries.push(response);
                 }
@@ -373,16 +373,16 @@ export async function insertCollectionMetadata(collection: Collection) {
         return data;
     }
     catch (err) {
-        console.log(err);
+        winstonLogger.debug(err);
         throw new Error(err);
     }
 }
 export async function recentCollectionQuery() {
     try {
         const data = await db.task(async (t: any) => {
-            console.log("recentCollectionQuery:");
+            winstonLogger.debug("recentCollectionQuery:");
             let query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description from collection WHERE publishedat IS NOT NULL ORDER BY updatedAt DESC LIMIT 6;";
-            console.log(query);
+            winstonLogger.debug(query);
             const collections = await Promise.all(
                 await t.map(query, [], async (q: any) => {
                     query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
@@ -421,7 +421,7 @@ export async function recentCollectionQuery() {
         return data;
     }
     catch (err) {
-        console.log(err);
+        winstonLogger.debug(err);
         throw new Error(err);
     }
 }

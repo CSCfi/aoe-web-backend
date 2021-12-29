@@ -16,7 +16,7 @@ export interface PidHeader {
 export const pidHeader: PidHeader = {"Content-Type": "application/json", "apikey": process.env.PID_KEY};
 
 // axios.interceptors.request.use(request => {
-//     console.log("Starting Request", JSON.stringify(request, undefined, 2));
+//     winstonLogger.debug("Starting Request", JSON.stringify(request, undefined, 2));
 //     return request;
 //   });
 export async function getPid(url: string) {
@@ -27,7 +27,7 @@ export async function getPid(url: string) {
         return response.data;
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
     }
 }
 
@@ -47,7 +47,7 @@ export async function getEmPids() {
             }
             catch (error) {
                 winstonLogger.debug("Error getting urn " + element.educationalmaterialid, element.publishedat);
-                console.error(error);
+                winstonLogger.error(error);
                 errorCount = errorCount + 1;
             }
             if (errorCount > 10) {

@@ -1,4 +1,5 @@
 import redis, { RedisClient } from 'redis';
+import { winstonLogger } from '../util';
 
 const redisHost: string = process.env.REDIS_HOST || '';
 const redisPort: number = Number(process.env.REDIS_PORT) || 0;
@@ -18,16 +19,16 @@ const redisClient: RedisClient = redis.createClient({
  * Redis Connection Event Handlers
  */
 redisClient.on('connection', () => {
-    console.log('REDIS [redis://' + redisHost + ':' + redisPort + '] Connecting...');
+    winstonLogger.debug('REDIS [redis://' + redisHost + ':' + redisPort + '] Connecting...');
 });
 redisClient.on('ready', () => {
-    console.log('REDIS [redis://' + redisHost + ':' + redisPort + '] Connection is operable');
+    winstonLogger.debug('REDIS [redis://' + redisHost + ':' + redisPort + '] Connection is operable');
 });
 redisClient.on('reconnecting', () => {
-    console.log('REDIS [redis://' + redisHost + ':' + redisPort + '] Reconnecting...');
+    winstonLogger.debug('REDIS [redis://' + redisHost + ':' + redisPort + '] Reconnecting...');
 });
 redisClient.on('error', (error: Error) => {
-    console.error('REDIS [redis://' + redisHost + ':' + redisPort + '] Error: ' + error);
+    winstonLogger.error('REDIS [redis://' + redisHost + ':' + redisPort + '] Error: ' + error);
 });
 
 export default redisClient;

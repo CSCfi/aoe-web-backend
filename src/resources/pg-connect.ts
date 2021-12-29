@@ -17,8 +17,8 @@ const PG_URL_HOST: string = 'postgres://' + PG_HOST + ':' + PG_PORT;
 const initOptions: IInitOptions = {
     error: (error: Error, e: IEventContext<IClient>) => {
         if (e.cn) {
-            console.error('PG [' + PG_URL_HOST + '] Connection Error:', e.cn);
-            console.error('ERROR:', error.message);
+            winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Error:', e.cn);
+            winstonLogger.error('ERROR:', error.message);
         }
     },
     promiseLib: promise,
@@ -37,7 +37,7 @@ const db: IDatabase<any> = pgp(PG_URL_FULL);
 // Test DB connection
 db.connect()
     .then((obj: IConnected<any, IClient>) => {
-        console.log('PG [' + PG_URL_HOST + '] Connection is operable');
+        winstonLogger.debug('PG [' + PG_URL_HOST + '] Connection is operable');
         obj.done();
     })
     .catch((error: Error) => {

@@ -31,30 +31,30 @@ export async function sendExpirationMail() {
         mailOptions.to = emailArray;
         winstonLogger.debug(emailArray);
         if (!(process.env.SEND_EMAIL === "1")) {
-            console.log("Email sending disabled");
+            winstonLogger.debug("Email sending disabled");
         }
         else {
             const materials = await getExpiredMaterials();
-            console.log(materials);
+            winstonLogger.debug(materials);
             for (const element of emailArray) {
                 mailOptions.to = element;
                 const info = await transporter.sendMail(mailOptions);
-                console.log("Message sent: %s", info.messageId);
-                // console.log("Message sent: %s", info.response);
+                winstonLogger.debug("Message sent: %s", info.messageId);
+                // winstonLogger.debug("Message sent: %s", info.response);
             }
         }
     }
     catch (error) {
-        console.log(error);
+        winstonLogger.debug(error);
     }
 }
 
 export async function sendRatingNotificationMail() {
     try {
         const emails = await getNewRatings();
-        console.log(emails);
+        winstonLogger.debug(emails);
         const emailArray = emails.filter(m => m.email != undefined).map(m => m.email);
-        console.log("emailArray: " + emailArray);
+        winstonLogger.debug("emailArray: " + emailArray);
         const holder = {};
         emails.forEach(function(d) {
             if (holder.hasOwnProperty(d.email)) {
@@ -63,9 +63,9 @@ export async function sendRatingNotificationMail() {
               holder[d.email] = d.materialname;
             }
           });
-        console.log(holder);
+        winstonLogger.debug(holder);
         if (!(process.env.SEND_EMAIL === "1")) {
-            console.log("Email sending disabled");
+            winstonLogger.debug("Email sending disabled");
         }
         else {
             for (const element of emailArray) {
@@ -75,20 +75,20 @@ export async function sendRatingNotificationMail() {
                     subject: "Uusi arvio - Avointen oppimateriaalien kirjasto (aoe.fi)",
                     text: await ratingNotificationText(holder[element])
                   };
-                console.log("sending rating mail to: " + element);
+                winstonLogger.debug("sending rating mail to: " + element);
                 try {
                     const info = await transporter.sendMail(mailOptions);
-                    console.log("Message sent: %s", info.messageId);
-                    // console.log("Message sent: %s", info.response);
+                    winstonLogger.debug("Message sent: %s", info.messageId);
+                    // winstonLogger.debug("Message sent: %s", info.response);
                 }
                 catch (error) {
-                    console.error(error);
+                    winstonLogger.error(error);
                 }
             }
         }
     }
     catch (error) {
-        console.log(error);
+        winstonLogger.debug(error);
     }
 }
 export async function getExpiredMaterials() {
@@ -126,8 +126,8 @@ export async function sendVerificationEmail(user: string, email: string) {
     const token_mail_verification = sign(mail, jwtSecret, { expiresIn: "1d" });
 
     const url = process.env.BASE_URL + "verify?id=" + token_mail_verification;
-    console.log(url);
-    console.log(await verificationEmailText(url));
+    winstonLogger.debug(url);
+    winstonLogger.debug(await verificationEmailText(url));
     const mailOptions = {
         from: process.env.EMAIL_FROM,
         to: email,
@@ -136,8 +136,8 @@ export async function sendVerificationEmail(user: string, email: string) {
     };
     if (process.env.SEND_EMAIL === "1") {
     const info = await transporter.sendMail(mailOptions);
-    console.log("Message sent: %s", info.messageId);
-    // console.log("Message sent: %s", info.response);
+    winstonLogger.debug("Message sent: %s", info.messageId);
+    // winstonLogger.debug("Message sent: %s", info.response);
     }
     return url;
 }
@@ -149,11 +149,11 @@ export async function verifyEmailToken(req: Request, res: Response, next: NextFu
         try {
             const decoded = await verify(token, jwtSecret);
             const id = decoded.id;
-            console.log(id);
+            winstonLogger.debug(id);
             updateVerifiedEmail(id);
             return res.redirect(process.env.VERIFY_EMAIL_REDIRECT_URL || "/");
         } catch (err) {
-            console.log(err);
+            winstonLogger.debug(err);
             return res.sendStatus(403);
         }
     } else {

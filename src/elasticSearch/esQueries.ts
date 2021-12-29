@@ -79,7 +79,7 @@ export function hasDownloadableFiles(materials: Array<{ filekey: string }>) {
     return false;
   }
   catch (err) {
-    console.error(err);
+    winstonLogger.error(err);
     throw new Error(err);
   }
 }
@@ -311,7 +311,7 @@ export async function deleteDocument(index: string, id: string) {
       winstonLogger.debug(resp);
 
   } catch (error) {
-      console.error(error);
+      winstonLogger.error(error);
   }
 }
 

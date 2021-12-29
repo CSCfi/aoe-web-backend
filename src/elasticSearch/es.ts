@@ -247,15 +247,15 @@ export async function metadataToEs(offset: number, limit: number) {
             return q;
             }).then(t.batch)
             .catch((error: any) => {
-                console.error(error);
+                winstonLogger.error(error);
                 return error;
             }) ;
         }).then(async (data: any) => {
             winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
             if (data.length > 0) {
             const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
-            // console.log("THIS IS BODY:");
-            // console.log(JSON.stringify(body));
+            // winstonLogger.debug("THIS IS BODY:");
+            // winstonLogger.debug(JSON.stringify(body));
             const { body: bulkResponse } = await client.bulk({ refresh: true, body });
             if (bulkResponse.errors) {
                 const erroredDocuments = [];
@@ -413,7 +413,7 @@ export async function updateEsDocument(updateCounters?: boolean) {
             return q;
             }).then(t.batch)
             .catch((error: any) => {
-                console.trace(error);
+                winstonLogger.error(error);
                 return error;
             }) ;
         })
@@ -470,7 +470,7 @@ export async function createEsCollectionIndex() {
     }
     catch (err) {
         winstonLogger.debug("Error creating collection index");
-        console.error(err);
+        winstonLogger.error(err);
     }
 }
 

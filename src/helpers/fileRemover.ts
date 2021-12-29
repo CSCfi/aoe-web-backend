@@ -1,3 +1,5 @@
+import { winstonLogger } from '../util';
+
 const fs = require("fs");
 const path = require("path");
 
@@ -16,7 +18,7 @@ export function rmDir(dirPath, removeSelf) {
         fs.rmdirSync(dirPath);
         }
         catch (e) {
-            console.error(e);
+            winstonLogger.error(e);
             return;
         }
   }

@@ -150,32 +150,29 @@ export async function updateEducationalMaterialMetadata(req: Request, res: Respo
         try {
             await updateEsDocument();
         } catch (error) {
-            console.log("Es update error do something");
-            console.error(error);
+            winstonLogger.error(error);
         }
         try {
             if (Number(process.env.PID_SERVICE_ENABLED) === 1 && eduMaterial[1] && eduMaterial[1].publishedat) {
                 // try to get pid if new version
                 try {
-                    console.log("GET NEW PID");
                     const aoeurl = await aoeMaterialVersionUrl(emid, eduMaterial[1].publishedat);
                     const pidurn = await getPid(aoeurl);
                     await insertUrn(emid, eduMaterial[1].publishedat, pidurn);
                 } catch (error) {
-                    console.log("Cannot get Pid from " + emid, eduMaterial[1].publishedat);
-                    console.error(error);
+                    winstonLogger.debug("Cannot get Pid from " + emid, eduMaterial[1].publishedat);
+                    winstonLogger.error(error);
                 }
             } else {
-                console.log("PID SERVICE DISABLED OR NO DATA");
-                console.log(process.env.PID_SERVICE_ENABLED);
-                console.log(eduMaterial[1]);
+                winstonLogger.debug("PID SERVICE DISABLED OR NO DATA");
+                winstonLogger.debug(process.env.PID_SERVICE_ENABLED);
+                winstonLogger.debug(eduMaterial[1]);
             }
         } catch (error) {
-            console.log("ISSUE GETTING PID");
-            console.error(error);
+            winstonLogger.error(error);
         }
     } catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(400, "Issue updating material"));
     }
 }

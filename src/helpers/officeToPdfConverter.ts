@@ -122,7 +122,7 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
         await downloadFromStorage(req, res, next, params, req.params.key);
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
     }
 }
@@ -131,30 +131,30 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
 //         if (!req.params.key) {
 //             next(new ErrorHandler("400", "key missing"));
 //         }
-//         console.log("readstreamfrompouta");
+//         winstonLogger.debug("readstreamfrompouta");
 //         const params = {
 //             "Bucket" : process.env.BUCKET_NAME,
 //             "Key" : req.params.key
 //         };
 //         const folderpath = process.env.HTMLFOLDER + "/" + req.params.key;
 //         const filename = req.params.key.substring(0, req.params.key.lastIndexOf(".")) + ".pdf";
-//         console.log("filename: " + filename);
+//         winstonLogger.debug("filename: " + filename);
 //         const stream = await readStreamFromStorage(params);
 //         stream.on("error", function(e) {
-//             console.error(e);
+//             winstonLogger.error(e);
 //             next(new ErrorHandler(e.statusCode, e.message || "Error in download"));
 //         });
 //         stream.pipe(fs.createWriteStream(folderpath));
 //         stream.on("end", async function() {
 //             try {
-//             console.log("starting officeToPdf");
-//             console.log(folderpath);
-//             console.log(filename);
+//             winstonLogger.debug("starting officeToPdf");
+//             winstonLogger.debug(folderpath);
+//             winstonLogger.debug(filename);
 //             const path = await officeToPdf(folderpath, filename);
-//             console.log("starting createReadStream: " + path);
+//             winstonLogger.debug("starting createReadStream: " + path);
 //             const readstream = fs.createReadStream(path);
 //             readstream.on("error", function(e) {
-//                 console.error(e);
+//                 winstonLogger.error(e);
 //                 next(new ErrorHandler(e.statusCode, "Error in sending pdf"));
 //             });
 //             res.header("Content-Disposition", contentDisposition(filename));
@@ -163,13 +163,13 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
 //             // outstream.pipe(res);
 //             }
 //             catch (error) {
-//                 console.error(error);
+//                 winstonLogger.error(error);
 //                 next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
 //             }
 //         });
 //     }
 //     catch (error) {
-//         console.error(error);
+//         winstonLogger.error(error);
 //         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
 //     }
 // }
@@ -190,7 +190,7 @@ export async function officeToPdf(filepath: string, filename: string) {
         const promise = new Promise<string>((resolve, reject) => {
             libre.convert(file, extend, undefined, (err, done) => {
                 if (err) {
-                    console.error("Error converting file:" + err);
+                    winstonLogger.error("Error converting file:" + err);
                     return reject(err);
                 }
                 winstonLogger.debug("officeToPdf write to file: " + outputPath);
@@ -226,7 +226,7 @@ export async function officeFilesToAllasAsPdf() {
                     await updatePdfKey(obj.Key, element.id);
                 }
                 catch (e) {
-                    console.error(e);
+                    winstonLogger.error(e);
                 }
             }
         }
@@ -248,7 +248,7 @@ export async function getOfficeFiles() {
 
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         throw new Error(error);
     }
 }
@@ -316,7 +316,7 @@ export async function updatePdfKey(key: string, id: string) {
 
     }
     catch (error) {
-        console.error(error);
+        winstonLogger.error(error);
         throw new Error(error);
     }
 }
