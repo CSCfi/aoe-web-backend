@@ -894,8 +894,9 @@ export const downloadFromStorage = async (req: Request,
                 // res.header('Content-Disposition', contentDisposition(origFilename));
                 fileStream
                     .on('error', (error: Error) => {
-                        winstonLogger.error('downloadFromStorage() - Error in single file download stream ' +
-                            '(trying backup): ' + error);
+                        winstonLogger.error('downloadFromStorage() - Error in single file download stream: ' +
+                            error);
+                        reject();
                         // const backupfs = await readStreamFromBackup(key);
                         // let path = process.env.BACK_UP_PATH + key;
                         // if (s3params.Bucket == process.env.THUMBNAIL_BUCKET_NAME) { // In case of a thumbnail
