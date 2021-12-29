@@ -769,7 +769,9 @@ const requestRedirected = (fileDetails: { originalfilename: string, filesize: nu
  */
 export const downloadFileFromStorage = async (req: Request, res: Response, next: NextFunction, isZip?: boolean): Promise<any> => {
     winstonLogger.debug('downloadFileFromStorage(): req.params.filename=' + req.params.filename + ', isZip=' + isZip);
-    const fileName: string = req.params.filename as string;
+
+    // TODO: Remove req.params.key refrence from apiQueries.ts:286 (and below)
+    const fileName: string = req.params.filename as string || req.params.key as string;
     return new Promise(async (resolve) => {
         try {
             const query =
@@ -782,7 +784,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
-            winstonLogger.debug('downloadFileFromStorage() Response: ' + fileDetails);
+            winstonLogger.debug('downloadFileFromStorage() Response: ' + JSON.stringify(fileDetails));
 
             if (!fileDetails) {
                 next(new ErrorHandler(400, 'Requested file ' + fileName + ' not found in database'));
