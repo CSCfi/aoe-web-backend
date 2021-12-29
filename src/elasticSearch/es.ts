@@ -4,7 +4,7 @@ import { ErrorHandler } from "./../helpers/errorHandler";
 import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
 import { getPopularityQuery } from "./../queries/analyticsQueries";
-import connection from '../resources/pg-connect';
+import connection from "../resources/pg-connect";
 import { winstonLogger } from '../util';
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");

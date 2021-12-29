@@ -135,7 +135,7 @@ async function getMaterialMetaData(req: Request, res: Response) {
                 return q;
             }).then(t.batch)
                 .catch((error: any) => {
-                    console.log(error);
+                    winstonLogger.error(error);
                     return error;
                 });
         })
@@ -152,11 +152,11 @@ async function getMaterialMetaData(req: Request, res: Response) {
                 res.status(200).json(obj);
             })
             .catch((error: any) => {
-                console.log(error);
+                winstonLogger.error(error);
                 res.sendStatus(500);
             });
     } catch (err) {
-        console.log(err);
+        winstonLogger.error(err);
         res.sendStatus(500);
     }
 }

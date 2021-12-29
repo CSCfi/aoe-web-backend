@@ -739,7 +739,6 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
         }
         // educationalUse
-        console.log("inserting educationalUse");
         const educationalUseParams = [];
         const educationalUseArr = metadata.educationalUses;
         if (educationalUseArr == undefined || educationalUseArr.length < 1) {
@@ -754,20 +753,19 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 "(select t.educationalusekey from ( values " + educationalUseParams.join(",") + " ) as t(educationalusekey)) as a on i.educationalusekey = a.educationalusekey where a.educationalusekey is null;";
             response = await t.any(query, [emid]);
             queries.push(response);
-            console.log(response);
+            winstonLogger.debug(response);
             for (const element of response) {
                 query = "DELETE FROM educationaluse where id = " + element.id + ";";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query));
             }
             for (const element of educationalUseArr) {
                 query = "INSERT INTO educationaluse (value, educationalmaterialid, educationalusekey) VALUES ($1,$2,$3) ON CONFLICT (educationalusekey,educationalmaterialid) DO UPDATE SET value = $1;";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // learningResourceType
-        console.log("inserting learningResourceType");
         const learningResourceTypeParams = [];
         const learningResourceTypeArr = metadata.learningResourceTypes;
         if (learningResourceTypeArr == undefined || learningResourceTypeArr.length < 1) {
@@ -782,21 +780,20 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 "(select t.learningresourcetypekey from ( values " + learningResourceTypeParams.join(",") + " ) as t(learningresourcetypekey)) as a on i.learningresourcetypekey = a.learningresourcetypekey where a.learningresourcetypekey is null;";
             response = await t.any(query, [emid]);
             queries.push(response);
-            console.log(response);
+            winstonLogger.debug(response);
             for (const element of response) {
                 query = "DELETE FROM learningresourcetype where id = " + element.id + ";";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query));
             }
             for (const element of learningResourceTypeArr) {
                 query = "INSERT INTO learningresourcetype (value, educationalmaterialid, learningresourcetypekey) VALUES ($1,$2,$3) ON CONFLICT (learningresourcetypekey,educationalmaterialid) DO UPDATE SET value = $1;";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
 
         // keywords
-        console.log("inserting keywords");
         let params = [];
         let arr = metadata.keywords;
         if (arr == undefined || arr.length < 1) {
@@ -813,23 +810,22 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM keyword where id = " + element.id + ";";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query));
             }
             for (const element of arr) {
                 query = "INSERT INTO keyword (value, educationalmaterialid, keywordkey) VALUES ($1,$2,$3) ON CONFLICT (keywordkey, educationalmaterialid) DO UPDATE SET value = $1;";
-                console.log(query, [element.value, emid, element.key]);
+                winstonLogger.debug(query, [element.value, emid, element.key]);
                 queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // publisher
-        console.log("inserting publisher");
         params = [];
         arr = metadata.publisher;
-        console.log(arr);
+        winstonLogger.debug(arr);
         if (arr == undefined || arr.length < 1) {
             query = "DELETE FROM publisher where educationalmaterialid = $1;";
-            console.log(query, [emid]);
+            winstonLogger.debug(query, [emid]);
             response = await t.any(query, [emid]);
             queries.push(response);
         } else {
@@ -838,22 +834,21 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             }
             query = "select id from (select * from publisher where educationalmaterialid = $1) as i left join" +
                 "(select t.publisherkey from ( values " + params.join(",") + " ) as t(publisherkey)) as a on i.publisherkey = a.publisherkey where a.publisherkey is null;";
-            console.log(query);
+            winstonLogger.debug(query);
             response = await t.any(query, [emid]);
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM publisher where id = " + element.id + ";";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query));
             }
             for (const element of arr) {
                 query = "INSERT INTO publisher (name, educationalmaterialid, publisherkey) VALUES ($1,$2,$3) ON CONFLICT (publisherkey, educationalmaterialid) DO UPDATE SET name = $1";
-                console.log(query);
+                winstonLogger.debug(query);
                 queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }
         // isBasedOn
-        console.log("inserting isBasedOn");
         params = [];
         let isBasedonArr = [];
         if (metadata.isBasedOn) {
@@ -880,7 +875,7 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
                 }
                 if (toBeDeleted) {
                     query = "DELETE FROM isbasedon where id = " + element.id + ";";
-                    console.log(query);
+                    winstonLogger.debug(query);
                     queries.push(await t.any(query));
                 }
             }

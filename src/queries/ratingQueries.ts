@@ -1,6 +1,7 @@
 // import { Rating } from "./../rating/rating";
 import connection from '../resources/pg-connect';
 import { RatingInformation } from "../rating/interface/rating-information.interface";
+import { winstonLogger } from '../util';
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -38,14 +39,14 @@ export async function insertRating(rating: RatingInformation, username: string):
                 "feedbackpurpose = $5, updatedat = NOW()";
             const response = await t.none(query, [rating.ratingContent, rating.ratingVisual, rating.feedbackPositive,
                 rating.feedbackSuggest, rating.feedbackPurpose, rating.educationalMaterialId, username]);
-            console.log("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual,
+            winstonLogger.debug("RatingQueries insertRating: " + query, [rating.ratingContent, rating.ratingVisual,
                 rating.feedbackPositive, rating.feedbackSuggest, rating.feedbackPurpose, rating.educationalMaterialId,
                 username]);
             queries.push(response);
             return t.batch(queries);
         });
     } catch (err) {
-        console.log(err);
+        winstonLogger.error(err);
         throw new Error(err);
     }
 }
@@ -57,13 +58,13 @@ export async function insertRatingAverage(id: string) {
             const query = "UPDATE educationalmaterial SET ratingcontentaverage = " +
                 "(SELECT AVG(ratingcontent) FROM rating WHERE educationalmaterialid = $1), ratingvisualaverage = " +
                 "(SELECT AVG(ratingvisual) FROM rating WHERE educationalmaterialid = $1) WHERE id = $1";
-            console.log("RatingQueries insertRatingAverage: " + query, [id]);
+            winstonLogger.debug("RatingQueries insertRatingAverage: " + query, [id]);
             const response = await t.none(query, [id]);
             queries.push(response);
             return t.batch(queries);
         });
     } catch (err) {
-        console.log(err);
+        winstonLogger.error(err);
         throw new Error(err);
     }
 }
@@ -74,7 +75,7 @@ export async function getRatings(materialId: string) {
         const data = await db.task(async (t: any) => {
             let query;
             query = "SELECT ratingcontentaverage, ratingvisualaverage from educationalmaterial where id = $1 and obsoleted = 0;";
-            console.log("RatingQueries getRatings: " + query, [materialId]);
+            winstonLogger.debug("RatingQueries getRatings: " + query, [materialId]);
             const averages = await t.oneOrNone(query, [materialId]);
             if (!averages) {
                 return {};
@@ -117,7 +118,7 @@ export async function getRatings(materialId: string) {
             ratings
         };
     } catch (err) {
-        console.log(err);
+        winstonLogger.error(err);
         throw new Error(err);
     }
 }

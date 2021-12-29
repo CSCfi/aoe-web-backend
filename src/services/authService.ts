@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import connection from '../resources/pg-connect';
+import connection from "../resources/pg-connect";
 import { winstonLogger } from '../util';
 
 const db = connection.db;
@@ -92,10 +92,10 @@ export async function hasAccessToMaterial(req: Request, res: Response, next: Nex
     }
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = $1";
     const result = await db.oneOrNone(query, [id]);
-    console.log(req.session.passport.user.uid);
-    console.log(result);
+    winstonLogger.debug(req.session.passport.user.uid);
+    winstonLogger.debug(result);
     if (!result) {
-        console.log("No result found for id " + id);
+        winstonLogger.debug("No result found for id " + id);
         return res.sendStatus(401);
     }
     if (req.session.passport.user.uid === result.usersusername) {
@@ -110,10 +110,10 @@ export async function hasAccessToAttachmentFile(req: Request, res: Response, nex
     const query = "Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = " +
         "(select materialid from attachment where attachment.id =$1);";
     const result = await db.oneOrNone(query, [id]);
-    console.log(req.session.passport.user.uid);
-    console.log(result);
+    winstonLogger.debug(req.session.passport.user.uid);
+    winstonLogger.debug(result);
     if (!result) {
-        console.log("No result found for id " + id);
+        winstonLogger.debug("No result found for id " + id);
         return res.sendStatus(401);
     }
     if (req.session.passport.user.uid === result.usersusername) {
@@ -127,7 +127,7 @@ export async function hasAccessToCollection(req: Request, res: Response, next: N
     const id = req.body.collectionId;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
-        console.log("No result found for " + [id, req.session.passport.user.uid]);
+        winstonLogger.debug("No result found for " + [id, req.session.passport.user.uid]);
         return res.sendStatus(401);
     } else {
         return next();
@@ -138,7 +138,7 @@ export async function hasAccessToCollectionParams(req: Request, res: Response, n
     const id = req.params.collectionid;
     const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
     if (!result) {
-        console.log("No result found for " + [id, req.session.passport.user.uid]);
+        winstonLogger.debug("No result found for " + [id, req.session.passport.user.uid]);
         return res.sendStatus(401);
     } else {
         return next();
@@ -149,7 +149,7 @@ export async function hasAccessToCollectionId(id: string, username: string): Pro
     const query = "Select usersusername from userscollection where collectionid = $1 and usersusername = $2;";
     const result = await db.oneOrNone(query, [id, username]);
     if (!result) {
-        console.log("No result found for " + [id, username]);
+        winstonLogger.debug("No result found for " + [id, username]);
         return false;
     } else {
         return true;
@@ -181,7 +181,7 @@ export async function userInfo(req: Request, res: Response): Promise<any> {
         }
         const result = await hasAoeAccess(req.session.passport.user.uid);
         if (!result) {
-            console.log("No Aoe result found for " + [req.session.passport.user.uid]);
+            winstonLogger.debug("No Aoe result found for " + [req.session.passport.user.uid]);
             return res.sendStatus(404);
         } else {
             return res.sendStatus(200);

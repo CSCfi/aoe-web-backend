@@ -2,6 +2,7 @@ import promise from 'bluebird';
 import moment from 'moment';
 import pgPromise, { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
 import { IClient } from 'pg-promise/typescript/pg-subset';
+import { winstonLogger } from '../util';
 
 const PG_HOST: string = process.env.PG_HOST || '';
 const PG_PORT: string = process.env.PG_PORT || '';
@@ -40,7 +41,7 @@ db.connect()
         obj.done();
     })
     .catch((error: Error) => {
-        console.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
+        winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
     });
 
 export default {

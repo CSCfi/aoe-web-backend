@@ -26,10 +26,10 @@ export async function sendExpirationMail() {
       };
     try {
         const materials = await getExpiredMaterials();
-        console.log(materials);
+        winstonLogger.debug(materials);
         const emailArray = materials.filter(m => m.email != undefined).map(m => m.email);
         mailOptions.to = emailArray;
-        console.log(emailArray);
+        winstonLogger.debug(emailArray);
         if (!(process.env.SEND_EMAIL === "1")) {
             console.log("Email sending disabled");
         }
@@ -114,6 +114,7 @@ export async function updateVerifiedEmail(user: string) {
   }
 
 import { sign, verify } from "jsonwebtoken";
+import { winstonLogger } from '../util';
 
 export async function sendVerificationEmail(user: string, email: string) {
     const jwtSecret = process.env.JWT_SECRET;

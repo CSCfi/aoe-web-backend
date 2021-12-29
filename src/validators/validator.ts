@@ -144,7 +144,7 @@ export async function rulesValidate(req: Request, res: Response, next: NextFunct
     }
     const extractedErrors = [];
     errors.array().map(err => extractedErrors.push({[err.param]: err.msg}));
-    console.log("body: ", req.body, "validation errors: ", extractedErrors);
+    winstonLogger.debug("body: ", req.body, "validation errors: ", extractedErrors);
     return res.status(422).send({
         errors: extractedErrors,
     });

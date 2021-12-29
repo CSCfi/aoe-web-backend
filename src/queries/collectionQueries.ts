@@ -161,15 +161,15 @@ export async function collectionQuery(collectionId: string, username?: string) {
 
             query = "select educationalmaterialid as id, priority, publishedat from collectioneducationalmaterial as cem left join educationalmaterial as em on cem.educationalmaterialid = em.id where collectionid = $1;";
             const educationalmaterials = await Promise.all(await t.map(query, [collection.id], async (q: any) => {
-                console.log(query, [q.id]);
+                winstonLogger.debug(query, [q.id]);
                 query = "select authorname, organization, organizationkey from author where educationalmaterialid = $1;";
-                console.log(query, [q.id]);
+                winstonLogger.debug(query, [q.id]);
                 q.author = await t.any(query, [q.id]);
                 query = "select licensecode as key, l.license as value from educationalmaterial as m left join licensecode as l ON l.code = m.licensecode where id = $1;";
-                console.log(query, [q.id]);
+                winstonLogger.debug(query, [q.id]);
                 q.license = await t.oneOrNone(query, [q.id]);
                 query = "select * from materialname where educationalmaterialid = $1;";
-                console.log(query, [q.id]);
+                winstonLogger.debug(query, [q.id]);
                 const emname =  await t.any(query, [q.id]);
                 q.name = emname.reduce(function(map, obj) {
                     map[obj.language] = obj.materialname;
@@ -211,7 +211,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
         return data;
     }
     catch (err) {
-        console.log(err);
+        winstonLogger.error(err);
         throw new Error(err);
     }
 }
@@ -225,15 +225,14 @@ export async function insertCollectionMetadata(collection: Collection) {
         const collectionId = collection.collectionId;
         const data = await db.tx(async (t: any) => {
             const queries = [];
-            console.log("updateCollection: ");
             const description = (collection.description) ? collection.description : "";
-            console.log(description);
+            winstonLogger.debug(description);
             let query = "UPDATE collection SET description = $1, collectionname = $2, updatedat = now() where id = $3;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             let response  = await t.none(query, [description, collection.name, collectionId]);
 
             query = "DELETE FROM collectionkeyword where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             let arr;
@@ -241,47 +240,47 @@ export async function insertCollectionMetadata(collection: Collection) {
                 arr = collection.keywords;
                 for (const element of arr) {
                     query = "INSERT INTO collectionkeyword (collectionid, value, keywordkey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
 
             query = "DELETE FROM collectionlanguage where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.languages) {
                 arr = collection.languages;
                 for (const element of arr) {
                     query = "INSERT INTO collectionlanguage (collectionid, language) VALUES ($1,$2);";
-                    console.log(query, [collectionId, element]);
+                    winstonLogger.debug(query, [collectionId, element]);
                     response =  await t.none(query, [collectionId, element]);
                     queries.push(response);
                 }
             }
             query = "DELETE FROM collectioneducationalaudience where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.educationalRoles) {
                 arr = collection.educationalRoles;
                 for (const element of arr) {
                     query = "INSERT INTO collectioneducationalaudience (collectionid, educationalrole, educationalrolekey) VALUES ($1,$2,$3);";
-                    console.log(query, [collectionId, element.value, element.key]);
+                    winstonLogger.debug(query, [collectionId, element.value, element.key]);
                     response =  await t.none(query, [collectionId, element.value, element.key]);
                     queries.push(response);
                 }
             }
             query = "DELETE FROM collectionalignmentobject where collectionid = $1;";
-            console.log(query, [collectionId]);
+            winstonLogger.debug(query, [collectionId]);
             response  = await t.none(query, [collectionId]);
             queries.push(response);
             if (collection.alignmentObjects) {
                 arr = collection.alignmentObjects;
                 for (const element of arr) {
                     query = "INSERT INTO collectionalignmentobject (collectionid, alignmenttype, targetname, source, objectkey, educationalframework, targeturl) VALUES ($1,$2,$3,$4,$5,$6,$7);";
-                    console.log(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
+                    winstonLogger.debug(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
                     response =  await t.none(query, [collectionId, element.alignmentType, element.targetName, element.source, element.key, element.educationalFramework, element.targetUrl]);
                     queries.push(response);
                 }

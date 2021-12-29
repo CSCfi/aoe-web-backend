@@ -468,7 +468,7 @@ export async function insertDataToEducationalMaterialTable(req: Request, t: any)
     const query = "insert into educationalmaterial (Usersusername)" +
         " values ($1) returning id;";
     const data = await t.one(query, [req.session.passport.user.uid]);
-    console.log(data.id);
+    winstonLogger.debug(data.id);
     return data;
 }
 
@@ -540,7 +540,7 @@ export async function insertDataToAttachmentTable(files: any, materialID: any, f
             query = "INSERT INTO attachment (filePath, originalfilename, filesize, mimetype, format, fileKey, " +
                 "fileBucket, materialid, defaultfile, kind, label, srclang) " +
                 "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id";
-            console.log(query);
+            winstonLogger.debug(query);
             queries.push(await db.one(query, [location, files.originalname, files.size, files.mimetype,
                 files.encoding, fileKey, fileBucket, materialID, metadata.default, metadata.kind, metadata.label,
                 metadata.srclang]));
@@ -557,7 +557,7 @@ export async function updateAttachment(fileKey: any, fileBucket: any, location: 
     let query;
     await db.tx(async (t: any) => {
             query = "UPDATE attachment SET filePath = $1, fileKey = $2, fileBucket = $3 WHERE id = $4";
-            console.log(query);
+            winstonLogger.debug(query);
             queries.push(await db.none(query, [location, fileKey, fileBucket, attachmentId]));
             return t.batch(queries);
         }
@@ -570,7 +570,7 @@ export async function insertDataToTempAttachmentTable(files: any, metadata: any,
     const query = "INSERT INTO temporaryattachment (filename, filepath, originalfilename, filesize, mimetype, format, " +
         "defaultfile, kind, label, srclang, attachmentid) " +
         "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     const data = await db.any(query, [files.filename, files.path, files.originalname, files.size,
         files.mimetype, files.encoding, metadata.default, metadata.kind, metadata.label, metadata.srclang, attachmentId]);
     return data;
@@ -586,7 +586,7 @@ export async function insertDataToRecordTable(files: any, materialID: any, fileK
             await t.none(query, [materialID]);
             query = "INSERT INTO record (filePath, originalfilename, filesize, mimetype, format, fileKey, fileBucket, " +
                 "materialid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id";
-            console.log(query);
+            winstonLogger.debug(query);
             const record = await t.oneOrNone(query, [location, files.originalname, files.size, files.mimetype,
                 files.encoding, fileKey, fileBucket, materialID]);
             return {record};
@@ -600,7 +600,7 @@ export async function insertDataToRecordTable(files: any, materialID: any, fileK
 export async function insertDataToTempRecordTable(t: any, files: any, materialId: any): Promise<any> {
     const query = "INSERT INTO temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, " +
         "materialid) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id";
-    console.log(query);
+    winstonLogger.debug(query);
     const data = await t.any(query, [files.filename, files.path, files.originalname, files.size, files.mimetype,
         files.encoding, materialId]);
     return data;
@@ -608,7 +608,7 @@ export async function insertDataToTempRecordTable(t: any, files: any, materialId
 
 export async function deleteDataFromTempRecordTable(filename: any, materialId: any): Promise<any> {
     const query = "DELETE FROM temporaryrecord WHERE filename = $1 AND materialid = $2";
-    console.log(query);
+    winstonLogger.debug(query);
     return await db.any(query, [filename, materialId]);
 }
 

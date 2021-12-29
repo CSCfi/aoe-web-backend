@@ -1,4 +1,5 @@
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -8,17 +9,17 @@ export async function updateEducationalMaterial(emid: string) {
         const id = await db.tx(async (t: any) => {
             let query;
             query = "UPDATE educationalmaterial SET obsoleted = 1 WHERE id = $1;";
-            console.log("materialQueries removeEducationalMaterial: " + query, [emid]);
+            winstonLogger.debug("materialQueries removeEducationalMaterial: " + query, [emid]);
             await t.none(query, [emid]);
             query = "UPDATE material SET obsoleted = 1 WHERE educationalmaterialid = $1 returning id;";
-            console.log("materialQueries removeEducationalMaterial: " + query, [emid]);
+            winstonLogger.debug("materialQueries removeEducationalMaterial: " + query, [emid]);
             const id = await t.any(query, [emid]);
-            console.log("Materials set obsoleted: " + JSON.stringify(id));
+            winstonLogger.debug("Materials set obsoleted: " + JSON.stringify(id));
             query = "UPDATE attachment set obsoleted = 1 WHERE materialid = $1 returning id;";
             for (const element of id) {
-                console.log("materialQueries removeEducationalMaterial: " + query, [element.id]);
+                winstonLogger.debug("materialQueries removeEducationalMaterial: " + query, [element.id]);
                 const attachmentid = await t.any(query, [element.id]);
-                console.log("set obsoleted attachments: " + JSON.stringify(attachmentid));
+                winstonLogger.debug("set obsoleted attachments: " + JSON.stringify(attachmentid));
             }
             return {id};
         });
@@ -35,7 +36,7 @@ export async function changeEducationalMaterialUser(emid: string, id: string) {
         return await db.tx(async (t: any) => {
             query = "Select username from users where id = $1;";
             const username = await t.oneOrNone(query, [id]);
-            console.log(username);
+            winstonLogger.debug(username);
             if (!username || !username.username) {
                 return false;
             }
