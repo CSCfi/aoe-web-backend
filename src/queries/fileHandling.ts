@@ -920,7 +920,7 @@ export const downloadFromStorage = async (req: Request,
                     .pipe(res);
             }
         } catch (error) {
-            next(new ErrorHandler(500, 'downloadFromStorage() - Error in file download'));
+            next(new ErrorHandler(500, 'Error in downloadFromStorage():' + error));
         }
     });
 };
