@@ -45,14 +45,13 @@ export async function hasAccesstoPublication(id: number, req: Request): Promise<
             return false;
         }
     } catch (error) {
-        console.log(error);
-        throw new Error(error);
+        throw new Error('Error in hasAccesstoPublication(): ' + error);
     }
 }
 
 export async function InsertUserToDatabase(userinfo: any, acr: string): Promise<any> {
     try {
-        console.log("The userinfo in function at authservice: " + userinfo);
+        winstonLogger.debug("The userinfo in function at authservice: " + userinfo);
         let uid: string;
         if (acr == process.env.SUOMIACR) {
             uid = userinfo["sub"];
@@ -70,7 +69,7 @@ export async function InsertUserToDatabase(userinfo: any, acr: string): Promise<
             await db.none(query, [userinfo["given_name"], userinfo["family_name"], uid]);
         }
     } catch (e) {
-        console.log(e);
+        winstonLogger.error('Error in InsertUserToDatabase(): ' + e);
         return Promise.reject(e);
     }
 }

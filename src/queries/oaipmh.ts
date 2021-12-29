@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from "./../services/urlService";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -26,9 +27,9 @@ async function getMaterialMetaData(req: Request, res: Response) {
             let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
                 " from educationalmaterial as em where em.publishedat is not null order by em.id asc;"; // removed: "where ... and em.obsoleted = 0"
             if (req.body.dateMin !== undefined && req.body.dateMax !== undefined && req.body.materialPerPage !== undefined && req.body.pageNumber !== undefined) {
-                console.log(req.body.dateMin);
-                console.log(req.body.dateMax);
-                console.log(req.body.materialPerPage);
+                winstonLogger.debug(req.body.dateMin);
+                winstonLogger.debug(req.body.dateMax);
+                winstonLogger.debug(req.body.materialPerPage);
                 params.push(req.body.dateMin);
                 params.push(req.body.dateMax);
                 params.push(req.body.pageNumber * req.body.materialPerPage);
@@ -36,7 +37,7 @@ async function getMaterialMetaData(req: Request, res: Response) {
                 query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.licensecode, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
                     " from educationalmaterial as em where em.updatedat >= timestamp $1 and em.updatedat < timestamp $2 and em.publishedat is not null order by em.id asc OFFSET $3 LIMIT $4;"; // removed: "where ... and obsoleted = 0"
             }
-            console.log(query, params);
+            winstonLogger.debug(query, params);
             return t.map(query, params, async (q: any) => {
                 const m: any = [];
                 await Promise.all(await t.map("SELECT m.id, m.materiallanguagekey AS language, m.link, version.priority, originalfilename, filesize, mimetype, format, filekey, filebucket, m.obsoleted, pdfkey " +

@@ -9,7 +9,7 @@ import path from 'path';
 import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
-import { insertEducationalMaterialName } from './apiQueries';
+import { insertEducationalMaterialName, setLanguage } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
@@ -57,13 +57,13 @@ const db = connection.db;
  */
 export async function uploadAttachmentToMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-        console.log(req.body);
+        winstonLogger.debug(req.body);
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
             upload.single("attachment")(req, res, async function (err: any) {
                     try {
                         if (err) {
-                            console.log(err);
+                            winstonLogger.error(err);
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
                             } else {
@@ -72,23 +72,23 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                             }
                         }
                         const file = (<any>req).file;
-                        console.log("fil: " + file);
+                        winstonLogger.debug("fil: " + file);
                         if (!file) {
                             next(new ErrorHandler(400, "No file sent"));
                         }
-                        console.log("req.params.id: " + req.params.materialId);
+                        winstonLogger.debug("req.params.id: " + req.params.materialId);
                         // const emresp = await insertDataToEducationalMaterialTable(req);
                         const metadata = JSON.parse(req.body.attachmentDetails);
-                        console.log(metadata);
+                        winstonLogger.debug(metadata);
                         const material = [];
                         const materialid = [];
                         let attachmentId;
                         let result = [];
                         if (typeof file !== "undefined") {
                             attachmentId = await insertDataToAttachmentTable(file, req.params.materialId, undefined, undefined, undefined, metadata);
-                            console.log(JSON.stringify(attachmentId));
+                            winstonLogger.debug(JSON.stringify(attachmentId));
                             result = await insertDataToTempAttachmentTable(file, metadata, attachmentId);
-                            console.log("result: " + JSON.stringify(result[0]));
+                            winstonLogger.debug("result: " + JSON.stringify(result[0]));
                         }
                         // return 200 if success and continue sending files to pouta
                         const resp: any = {};
@@ -105,9 +105,9 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                                     }
                                 });
                             }
-                        } catch (ex) {
-                            console.log(ex);
-                            console.log("error while sending files to pouta: " + JSON.stringify((<any>req).file));
+                        } catch (error) {
+                            winstonLogger.error('error while sending files to pouta: ' + error + ' - ' +
+                                JSON.stringify((<any>req).file));
                         }
                     } catch (e) {
                         console.error(e);
@@ -135,13 +135,13 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
  */
 export async function uploadMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-        console.log(req.body);
+        winstonLogger.debug(req.body);
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
             upload.single("file")(req, res, async function (err: any) {
                     try {
                         if (err) {
-                            console.log(err);
+                            winstonLogger.debug(err);
                             if (err.code === "LIMIT_FILE_SIZE") {
                                 next(new ErrorHandler(413, err.message));
                             } else {
@@ -165,7 +165,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                     return res.status(200).json(resp);
                                 })
                                 .catch((err: Error) => {
-                                    console.log(err);
+                                    winstonLogger.debug(err);
                                     next(new ErrorHandler(500, "Error in upload"));
                                 });
                         } else {
@@ -193,20 +193,20 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                         res.status(200).json(resp);
                                         try {
                                             if (typeof file !== "undefined") {
-                                                console.log(materialid);
+                                                winstonLogger.debug(materialid);
                                                 const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
                                                 const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
                                                 // convert file to pdf if office document
                                                 try {
                                                     if (isOfficeMimeType(file.mimetype)) {
-                                                        console.log("Convert file and send to allas");
+                                                        winstonLogger.debug("Convert file and send to allas");
                                                         const path = await allasFileToPdf(obj.Key);
                                                         const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
                                                         const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                                                         await updatePdfKey(pdfobj.Key, recordid);
                                                     }
                                                 } catch (e) {
-                                                    console.log("ERROR converting office file to pdf");
+                                                    winstonLogger.debug("ERROR converting office file to pdf");
                                                     console.error(e);
                                                 }
                                                 await deleteDataFromTempRecordTable(file.filename, materialid);
@@ -217,31 +217,29 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                                 });
                                             }
                                         } catch (ex) {
-                                            console.log(ex);
-                                            console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
+                                            winstonLogger.debug(ex);
+                                            winstonLogger.debug("error while sending file to pouta: " + JSON.stringify((<any>req).file));
                                         }
 
                                     }
                                 )
                                 .catch((err: Error) => {
-                                    console.log(err);
                                     if (!res.headersSent) {
-                                        next(new ErrorHandler(500, "Error in upload"));
+                                        next(new ErrorHandler(500, "Error in upload: " + err));
                                     }
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
-                                            console.error(err);
+                                            winstonLogger.debug('Error in uploadMaterial(): ' + err);
                                         } else {
-                                            console.log("file removed");
+                                            winstonLogger.debug('file removed');
                                         }
                                     });
                                 });
                         }
 
                     } catch (e) {
-                        console.log(e);
                         if (!res.headersSent) {
-                            next(new ErrorHandler(500, "Error in upload"));
+                            next(new ErrorHandler(500, "Error in upload: " + e));
                         }
                     }
                 }
@@ -250,8 +248,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
             next(new ErrorHandler(400, "Not found"));
         }
     } catch (err) {
-        console.log(err);
-        next(new ErrorHandler(500, "Error in upload"));
+        next(new ErrorHandler(500, "Error in upload: " + err));
     }
 }
 
@@ -266,7 +263,6 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
     try {
         const contentType = req.headers["content-type"];
         if (contentType.startsWith("multipart/form-data")) {
-            console.log("uploadFileToMaterial starting");
             upload.single("file")(req, res, async function (err: any) {
                     try {
                         if (err) {
@@ -283,7 +279,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                         if (!file) {
                             next(new ErrorHandler(400, "No file sent"));
                         } else {
-                            console.log("uploadFileToMaterial details to database for: " + file.originalname);
+                            winstonLogger.debug("uploadFileToMaterial details to database for: " + file.originalname);
                             let materialid: string;
                             const fileDetails = JSON.parse(req.body.fileDetails);
                             const material: any = [];
@@ -301,26 +297,24 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                             })
                                 .then(async (data: any) => {
                                         // return 200 if success and continue sending files to pouta
-                                        console.log("uploadFileToMaterial sending to Pouta: " + file.filename);
+                                        winstonLogger.debug("uploadFileToMaterial sending to Pouta: " + file.filename);
                                         resp.id = req.params.edumaterialid;
                                         resp.material = material;
                                         res.status(200).json(resp);
                                         try {
                                             if (typeof file !== "undefined") {
-                                                console.log(materialid);
+                                                winstonLogger.debug(materialid);
                                                 const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
                                                 const recordid = await insertDataToRecordTable(file, materialid, obj.Key, obj.Bucket, obj.Location);
                                                 try {
                                                     if (await isOfficeMimeType(file.mimetype)) {
-                                                        console.log("Convert file and send to allas");
                                                         const path = await allasFileToPdf(obj.Key);
                                                         const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf(".")) + ".pdf";
                                                         const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                                                         await updatePdfKey(pdfobj.Key, recordid);
                                                     }
                                                 } catch (e) {
-                                                    console.log("ERROR converting office file to pdf");
-                                                    console.error(e);
+                                                    winstonLogger.error("ERROR converting office file to pdf: " + e);
                                                 }
                                                 await deleteDataFromTempRecordTable(file.filename, materialid);
                                                 fs.unlink("./" + file.path, (err: any) => {
@@ -330,30 +324,27 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                                 });
                                             }
                                         } catch (ex) {
-                                            console.log(ex);
-                                            console.log("error while sending file to pouta: " + JSON.stringify((<any>req).file));
+                                            winstonLogger.error("error while sending file to pouta: " + ex + ' - ' + JSON.stringify((<any>req).file));
                                         }
 
                                     }
-                                )
-                                .catch((err: Error) => {
-                                    console.log(err);
+                                ).catch((err: Error) => {
+                                    winstonLogger.error(err);
                                     if (!res.headersSent) {
                                         next(new ErrorHandler(500, "Error in upload"));
                                     }
                                     fs.unlink("./" + file.path, (err: any) => {
                                         if (err) {
-                                            console.error(err);
+                                            winstonLogger.error('Error in uploadFileToMaterial(): ' + err);
                                         } else {
-                                            console.log("file removed");
+                                            winstonLogger.debug("file removed");
                                         }
                                     });
                                 });
                         }
                     } catch (e) {
-                        console.log(e);
                         if (!res.headersSent) {
-                            next(new ErrorHandler(500, "Error in upload"));
+                            next(new ErrorHandler(500, "Error in upload: " + e));
                         }
                     }
                 }
@@ -412,7 +403,6 @@ export async function checkTemporaryRecordQueue(): Promise<any> {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
-        console.log("checkTemporaryRecordQueue");
         const query = "Select * From temporaryrecord where extract(epoch from createdat)*1000 < $1 limit 1000;";
         const data = await db.any(query, [ts]);
         for (const element of data) {
@@ -431,11 +421,11 @@ export async function checkTemporaryRecordQueue(): Promise<any> {
                 const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                 await updatePdfKey(pdfobj.Key, obj.recordid);
             } catch (error) {
-                console.log(error);
+                winstonLogger.error(error);
             }
         }
     } catch (error) {
-        console.log(error);
+        winstonLogger.error(error);
     }
 }
 
@@ -446,7 +436,6 @@ export async function checkTemporaryAttachmentQueue(): Promise<any> {
     try {
         // take hour of
         const ts = Date.now() - 1000 * 60 * 60;
-        console.log("checkTemporaryAttachmentQueue");
         const query = "Select * From temporaryattachment where extract(epoch from createdat)*1000 < $1 limit 1000;";
         const data = await db.any(query, [ts]);
         for (const element of data) {
@@ -467,11 +456,11 @@ export async function checkTemporaryAttachmentQueue(): Promise<any> {
             try {
                 await attachmentFileToStorage(file, metadata, element.id, element.attachmentid);
             } catch (error) {
-                console.log(error);
+                winstonLogger.error('Error in checkTemporaryAttachmentQueue(): ' + error);
             }
         }
     } catch (error) {
-        console.log(error);
+        winstonLogger.error('Error in checkTemporaryAttachmentQueue(): ' + error);
     }
 }
 

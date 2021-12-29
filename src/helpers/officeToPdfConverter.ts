@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
 import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const contentDisposition = require("content-disposition");
 const pgp = connection.pgp;
@@ -180,30 +181,28 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
  */
 export async function officeToPdf(filepath: string, filename: string) {
     try {
-        console.log("in officeToPdf");
         const extend = "pdf";
         const file = fs.readFileSync(filepath);
-        console.log(filepath);
-        console.log(filename);
+        winstonLogger.debug(filepath);
+        winstonLogger.debug(filename);
         // const outputPath = path.join(process.env.HTMLFOLDER + filename);
         const outputPath = process.env.HTMLFOLDER + "/" + filename;
-        console.log("Strating officeToPdf");
         const promise = new Promise<string>((resolve, reject) => {
             libre.convert(file, extend, undefined, (err, done) => {
                 if (err) {
                     console.error("Error converting file:" + err);
                     return reject(err);
                 }
-                console.log("officeToPdf write to file: " + outputPath);
+                winstonLogger.debug("officeToPdf write to file: " + outputPath);
                 fs.writeFileSync(outputPath, done);
-                console.log("officeToPdf writing to file done");
+                winstonLogger.debug("officeToPdf writing to file done");
                 return resolve(outputPath);
             });
         });
         return promise;
     }
     catch (error) {
-        console.log("officeToPdf error");
+        winstonLogger.debug("officeToPdf error");
         throw new Error(error);
     }
 }
@@ -217,11 +216,11 @@ export async function officeFilesToAllasAsPdf() {
         for (let index = 0; index < files.length; index++) {
             const element = files[index];
             if (await isOfficeMimeType(element.mimetype) && !element.pdfkey) {
-                console.log("Sending pdf to allas: " + element.id);
+                winstonLogger.debug("Sending pdf to allas: " + element.id);
                 try {
                     const path = await allasFileToPdf(element.filekey);
-                    console.log("pdf file in path: " + path);
-                    console.log("officeFilesToAllasAsPdf START SENDING PDF TO ALLAS");
+                    winstonLogger.debug("pdf file in path: " + path);
+                    winstonLogger.debug("officeFilesToAllasAsPdf START SENDING PDF TO ALLAS");
                     const pdfkey = element.filekey.substring(0, element.filekey.lastIndexOf(".")) + ".pdf";
                     const obj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
                     await updatePdfKey(obj.Key, element.id);
@@ -233,7 +232,7 @@ export async function officeFilesToAllasAsPdf() {
         }
     }
     catch (error) {
-        console.log(error);
+        winstonLogger.error(error);
     }
 }
 /**
@@ -243,7 +242,7 @@ export async function getOfficeFiles() {
     try {
         return await db.task(async (t: any) => {
             const query = "select id, filepath, mimetype, filekey, filebucket, pdfkey from record order by id;";
-            console.log(query, [ ]);
+            winstonLogger.debug(query, [ ]);
             return await t.any(query);
         });
 
@@ -261,46 +260,42 @@ export async function getOfficeFiles() {
 export async function allasFileToPdf(key: string) {
     try {
             return new Promise<string>(async (resolve, reject) => {
-            console.log("readstreamfrompouta");
             const params = {
                 "Bucket" : process.env.BUCKET_NAME,
                 "Key" : key
             };
             const folderpath = process.env.HTMLFOLDER + "/" + key;
             const filename = key.substring(0, key.lastIndexOf(".")) + ".pdf";
-            console.log("filename: " + filename);
+            winstonLogger.debug("filename: " + filename);
             const stream = await readStreamFromStorage(params);
             stream.on("error", function(e) {
-                console.log("Error in allasFileToPdf readstream");
+                winstonLogger.error("Error in allasFileToPdf readstream: " + e);
                 reject(e);
             });
 
             const ws = fs.createWriteStream(folderpath);
             stream.pipe(ws);
             ws.on("error", function(e) {
-                console.log("Error in allasFileToPdf writestream");
+                winstonLogger.error("Error in allasFileToPdf writestream: " + e);
                 reject(e);
             });
             ws.on("finish", async function() {
                 try {
-                    console.log("officeToPdf");
-                    console.log(folderpath);
-                    console.log(filename);
+                    winstonLogger.debug(folderpath);
+                    winstonLogger.debug(filename);
                     const path = await officeToPdf(folderpath, filename);
-                    console.log("PATH IS: " + path);
+                    winstonLogger.debug("PATH IS: " + path);
                     resolve(path);
                 }
                 catch (error) {
-                    console.log("allasFileToPdf error");
-                    console.log(error);
+                    winstonLogger.error("allasFileToPdf error: " + error);
                     reject(error);
                 }
             });
         });
     }
     catch (error) {
-        console.log("allasFileToPdf error");
-        console.log(error);
+        winstonLogger.error("allasFileToPdf error");
         throw new Error(error);
     }
 }
@@ -315,7 +310,7 @@ export async function updatePdfKey(key: string, id: string) {
     try {
         return await db.tx(async (t: any) => {
             const query = "UPDATE record SET pdfkey = $1 where id = $2;";
-            console.log(query, [key, id]);
+            winstonLogger.debug(query, [key, id]);
             return await t.any(query, [key, id]);
         });
 

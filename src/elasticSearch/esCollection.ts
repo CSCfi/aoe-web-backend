@@ -78,22 +78,19 @@ export async function aoeCollectionResponseMapper (response: ApiResponse<SearchR
         resp.results = source;
         }
       return resp;
-    }
-    catch (err) {
-      console.log(err);
-      throw new Error(err);
+    } catch (error) {
+      throw new Error(error);
     }
   }
 
 export async function getCollectionDataToEs(offset: number, limit: number) {
     try {
         const data = await db.tx(async (t: any) => {
-            console.log("recentCollectionQuery:");
             let query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description from collection WHERE publishedat IS NOT NULL order by collection.id asc OFFSET $1 LIMIT $2;";
             const params: any = [];
             params.push(offset * limit);
             params.push(limit);
-            console.log(query, params);
+            winstonLogger.debug(query, params);
             const collections = await Promise.all(
                 await t.map(query, params, async (q: any) => {
                     query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";
@@ -162,7 +159,7 @@ export async function collectionDataToEs(index: string, data: any) {
                 });
             }
             });
-            console.log(erroredDocuments);
+            winstonLogger.debug(erroredDocuments);
         }
         }
     }
@@ -174,11 +171,10 @@ export async function collectionDataToEs(index: string, data: any) {
 export async function getCollectionDataToUpdate(time: Date) {
     try {
         const data = await db.tx(async (t: any) => {
-            console.log("updateCollectionQuery:");
             let query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description from collection WHERE updatedat > $1 and publishedat IS NOT NULL;";
             const params: any = [];
             params.push(time);
-            console.log(query, params);
+            winstonLogger.debug(query, params);
             const collections = await Promise.all(
                 await t.map(query, params, async (q: any) => {
                     query = "SELECT value, keywordkey as key FROM collectionkeyword WHERE collectionid = $1;";

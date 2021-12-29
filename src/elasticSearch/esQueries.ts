@@ -60,7 +60,6 @@ export async function aoeResponseMapper (response: ApiResponse<SearchResponse<So
     return resp;
   }
   catch (err) {
-    console.log(err);
     throw new Error(err);
   }
 }
@@ -228,7 +227,6 @@ export function filterMapper(filters: AoeRequestFilter) {
       return filter;
     }
     catch (err) {
-      console.log(err);
       throw new Error(err);
     }
 }
@@ -281,7 +279,6 @@ export function createShouldObject(filter: Array<any>, key: string, valueList: A
     }
   }
   catch (err) {
-    console.log(err);
     throw new Error(err);
   }
 }
@@ -303,21 +300,17 @@ export function createMustMatchObject(key: string, type: string) {
                   return mustObj;
   }
   catch (err) {
-    console.log(err);
     throw new Error(err);
   }
 }
 
 export async function deleteDocument(index: string, id: string) {
   try {
-      console.log("start delete");
       const query = {"index": index, "id": id};
       const resp = await client.delete(query);
-      console.log(resp);
+      winstonLogger.debug(resp);
 
-  }
-  catch (error) {
-      console.log("elasticSearchQuery error");
+  } catch (error) {
       console.error(error);
   }
 }

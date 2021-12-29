@@ -5,6 +5,7 @@ import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
 import { getPopularityQuery } from "./../queries/analyticsQueries";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const index = process.env.ES_INDEX;
@@ -30,20 +31,15 @@ const mode = new TransactionMode({
 });
 
 export async function createEsIndex () {
-    console.log("Create Elasticsearch index");
     client.ping({
         // ping usually has a 3000ms timeout
         // requestTimeout: 1000
       }, async function (error: any) {
         if (error) {
-            console.trace("elasticsearch cluster is down!");
-            console.log(error);
+            winstonLogger.error('Elasticsearch cluster is down: ' + error);
         } else {
-            console.log("All is well");
             const result: boolean = await indexExists(index);
-            console.log("ES index exists: " + result);
             if (result) {
-                console.log("ES deleting index: " + index);
                 await deleteIndex(index);
             }
             const createIndexResult: boolean = await createIndex(index);
@@ -52,17 +48,14 @@ export async function createEsIndex () {
                     await addMapping(index, process.env.ES_MAPPING_FILE);
                     let i = 0;
                     let n;
-                    console.log(Es.ESupdated);
-                    console.log(new Date().toUTCString());
+                    winstonLogger.debug(Es.ESupdated + ' - ' + new Date().toUTCString());
                     Es.ESupdated.value = new Date();
                     do {
                         n = await metadataToEs(i, 1000);
                         i++;
                     } while (n);
-                    console.log("Elastic index is ready");
-                }
-                catch (e) {
-                    console.log(e);
+                } catch (error) {
+                    winstonLogger.error(error);
                 }
             }
         }
@@ -79,11 +72,10 @@ export async function deleteIndex (index: string) {
     }).then((data: any) => {
         return data.body;
     })
-    .catch((err: any) => {
-    console.log(err);
-    return false;
+    .catch((error: any) => {
+        winstonLogger.error('Error in deleteIndex(): ' + error);
+        return false;
     });
-    console.log(b);
     return b;
 }
 
@@ -97,12 +89,10 @@ export async function createIndex (index: string) {
         index: index
     }).then((data: any) => {
         return data.body;
-    })
-    .catch((err: any) => {
-    console.log(err);
-    return false;
+    }).catch((error: any) => {
+        winstonLogger.error(error);
+        return false;
     });
-    console.log(b);
     return b;
 }
 
@@ -116,9 +106,8 @@ export function indexExists (index: string): boolean {
         index: index
       }).then((data: any) => {
             return data.body;
-      })
-      .catch((err: any) => {
-          console.log(err);
+      }).catch((error: any) => {
+          winstonLogger.error(error);
           return false;
       });
       return b;
@@ -139,12 +128,10 @@ export async function addMapping(index: string, fileLocation) {
             body: data.mappings
         }, (err: any, resp: any) => {
             if (err) {
-            console.log(err);
-            reject(new Error(err));
-            }
-            else {
-            console.log("ES mapping created: ", index, resp.body);
-            resolve({"status" : "success"});
+                reject(new Error(err));
+            } else {
+                winstonLogger.debug("ES mapping created: ", index, resp.body);
+                resolve({"status" : "success"});
             }
         });
     });
@@ -165,7 +152,7 @@ export async function metadataToEs(offset: number, limit: number) {
         params.push(limit);
         let query = "select em.id, em.createdat, em.publishedat, em.updatedat, em.archivedat, em.timerequired, em.agerangemin, em.agerangemax, em.obsoleted, em.originalpublishedat, em.expires, em.suitsallearlychildhoodsubjects, em.suitsallpreprimarysubjects, em.suitsallbasicstudysubjects, em.suitsalluppersecondarysubjects, em.suitsalluppersecondarysubjectsnew, em.suitsallvocationaldegrees, em.suitsallselfmotivatedsubjects, em.suitsallbranches" +
         " from educationalmaterial as em where em.obsoleted = 0 and em.publishedat IS NOT NULL order by em.id asc OFFSET $1 LIMIT $2;";
-        console.log(query, params);
+        winstonLogger.debug(query, params);
         return t.map(query, params, async (q: any) => {
             const m: any = [];
             t.map("select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, obsoleted " +
@@ -263,9 +250,8 @@ export async function metadataToEs(offset: number, limit: number) {
                 console.error(error);
                 return error;
             }) ;
-        })
-        .then( async (data: any) => {
-            console.log("inserting data to elastic material number: " + (offset * limit + 1));
+        }).then(async (data: any) => {
+            winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
             if (data.length > 0) {
             const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
             // console.log("THIS IS BODY:");
@@ -290,17 +276,15 @@ export async function metadataToEs(offset: number, limit: number) {
                     });
                 }
                 });
-                console.log(erroredDocuments);
+                winstonLogger.debug(erroredDocuments);
             }
             resolve(data.length);
         }
         else {
             resolve(data.length);
         }
-
-    }
-    ).catch(err => {
-        console.log(err);
+    }).catch(error => {
+        winstonLogger.error(error);
         reject();
     });
 });
@@ -438,26 +422,22 @@ export async function updateEsDocument(updateCounters?: boolean) {
             const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
             const { body: bulkResponse } = await client.bulk({ refresh: true, body });
             if (bulkResponse.errors) {
-                console.log(bulkResponse.errors);
-            }
-            else {
-                console.log("Elasticsearch updated");
+                winstonLogger.debug(bulkResponse.errors);
+            } else {
                 if (updateCounters) {
                     Es.ESCounterUpdated.value = new Date();
-                }
-                else {
+                } else {
                     Es.ESupdated.value = new Date();
                 }
             }
             resolve(data.length);
-        }
-        else {
+        } else {
             resolve(data.length);
         }
 
     }
     ).catch(err => {
-        console.log(err);
+        winstonLogger.debug(err);
         reject(err);
     });
 });
@@ -467,16 +447,16 @@ export async function createEsCollectionIndex() {
     try {
         const collectionIndex = process.env.ES_COLLECTION_INDEX;
         const result: boolean = await indexExists(collectionIndex);
-        console.log("COLLECTION INDEX RESULT: " + result);
+        winstonLogger.debug("COLLECTION INDEX RESULT: " + result);
         if (result) {
             const deleteResult = await deleteIndex(collectionIndex);
-            console.log("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
+            winstonLogger.debug("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
         }
         const createIndexResult = await createIndex(collectionIndex);
-        console.log("createIndexResult: " + JSON.stringify(createIndexResult));
+        winstonLogger.debug("createIndexResult: " + JSON.stringify(createIndexResult));
         if (createIndexResult) {
         const mappingResult = await addMapping(collectionIndex, process.env.ES_COLLECTION_MAPPING_FILE);
-        console.log("mappingResult: " + JSON.stringify(mappingResult));
+        winstonLogger.debug("mappingResult: " + JSON.stringify(mappingResult));
         let i = 0;
         let dataToEs;
         do {
@@ -489,7 +469,7 @@ export async function createEsCollectionIndex() {
         }
     }
     catch (err) {
-        console.log("Error creating collection index");
+        winstonLogger.debug("Error creating collection index");
         console.error(err);
     }
 }
@@ -500,8 +480,8 @@ export async function getCollectionEsData(req: Request , res: Response , next: N
         res.status(200).json(responseBody);
     }
     catch (err) {
-        console.log("elasticSearchQuery error");
-        console.error(err);
+        winstonLogger.debug("elasticSearchQuery error");
+        winstonLogger.error(err);
         next(new ErrorHandler(500, "There was an issue prosessing your request"));
     }
 }
@@ -516,7 +496,7 @@ export async function updateEsCollectionIndex() {
         Es.CollectionEsUpdated.value = newDate;
     }
     catch (error) {
-        console.log(error);
+        winstonLogger.debug(error);
         throw new Error(error);
     }
 }

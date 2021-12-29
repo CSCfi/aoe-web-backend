@@ -1,4 +1,5 @@
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const pgp = connection.pgp;
 const db = connection.db;
@@ -10,8 +11,7 @@ export async function getEmptyUrns(limit: number) {
                 "WHERE urn IS NULL " +
                 "ORDER BY educationalmaterialid " +
                 "LIMIT $1";
-            console.log("getEmptyUrns");
-            console.log(query);
+            winstonLogger.debug(query);
             return await t.any(query, [limit]);
         });
     } catch (error) {

@@ -4,6 +4,7 @@ const pgp = connection.pgp;
 const db = connection.db;
 import { Collection } from "./../collection/collection";
 import { aoeThumbnailDownloadUrl, aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
+import { winstonLogger } from '../util';
 
 /**
  *
@@ -15,18 +16,20 @@ export async function insertCollection(username: string, collection: Collection)
     try {
         const id = await db.tx(async (t: any) => {
             let query;
-            query = "insert into collection (createdat, updatedat, createdby, collectionname) values (now(),now(),$1, $2) returning id;";
-            console.log("CollectionQueries insertCollection: " + query, [username, collection.name]);
+            query = "insert into collection (createdat, updatedat, createdby, collectionname) " +
+                "values (now(), now(), $1, $2) returning id";
+            winstonLogger.debug("CollectionQueries insertCollection: " + query, [username, collection.name]);
             const id = await t.oneOrNone(query, [username, collection.name]);
-            query = "INSERT INTO userscollection (usersusername, collectionid) VALUES ($1,$2) ON CONFLICT (usersusername, collectionid) DO NOTHING;";
-            console.log("CollectionQueries insertCollection: " + query, [username, id.id]);
+            query = "INSERT INTO userscollection (usersusername, collectionid) " +
+                "VALUES ($1,$2) " +
+                "ON CONFLICT (usersusername, collectionid) DO NOTHING";
+            winstonLogger.debug("CollectionQueries insertCollection: " + query, [username, id.id]);
             await t.none(query, [username, id.id]);
             return {id};
         });
         return id.id;
     }
     catch (err) {
-        console.log(err);
         throw new Error(err);
     }
 }
@@ -41,11 +44,10 @@ export async function insertEducationalMaterialToCollection(collection: Collecti
         collection.emId.map(id => values.push({collectionid : collection.collectionId, educationalmaterialid: id}));
         const cs = new pgp.helpers.ColumnSet(["collectionid", "educationalmaterialid"], {table: "collectioneducationalmaterial"});
         const query = pgp.helpers.insert(values, cs) + " ON CONFLICT (collectionid, educationalmaterialid) DO NOTHING;";
-        console.log(query);
+        winstonLogger.debug('Query in insertEducationalMaterialToCollection()' + query);
         await db.none(query);
     }
     catch (err) {
-        console.log(err);
         throw new Error(err);
     }
 }
@@ -59,11 +61,10 @@ export async function deleteEducationalMaterialFromCollection(collection: Collec
         const values: any[] = [];
         // collection.emId.map(id => values.push({collectionid : collection.collectionId, educationalmaterialid: id}));
         const query = "DELETE FROM collectioneducationalmaterial WHERE collectionid = $1 AND educationalmaterialid IN ($2:list);";
-        console.log(pgp.as.format(query), [ collection.collectionId, collection.emId]);
+        winstonLogger.debug(pgp.as.format(query), [collection.collectionId, collection.emId]);
         await db.none(query, [ collection.collectionId, collection.emId]);
     }
     catch (err) {
-        console.log(err);
         throw new Error(err);
     }
 }
@@ -75,9 +76,8 @@ export async function deleteEducationalMaterialFromCollection(collection: Collec
 export async function userCollections(username: string) {
     try {
         const data = await db.tx(async (t: any) => {
-            console.log("userCollections:");
             const query = "select collection.id, publishedat, updatedat, createdat, collectionname as name, description, ct.filekey as thumbnail from collection join userscollection as uc on collection.id = uc.collectionid left join collectionthumbnail as ct on collection.id = ct.collectionid and ct.obsoleted = 0 where usersusername = $1;";
-            console.log(query, [username]);
+            winstonLogger.debug(query, [username]);
             const collections = await Promise.all(
                 await t.map(query, [ username ], async (q: any) => {
                 const emIds = await t.any("select educationalmaterialid as id, priority from collectioneducationalmaterial where collectionid = $1;", [q.id]
@@ -94,7 +94,6 @@ export async function userCollections(username: string) {
         return data;
     }
     catch (err) {
-        console.log(err);
         throw new Error(err);
     }
 }
@@ -110,7 +109,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
     try {
         const data = await db.task(async (t: any) => {
             let query = "select id, publishedat, updatedat, createdat, collectionname as name, description from collection where id = $1;";
-            console.log(query, [ collectionId ]);
+            winstonLogger.debug(query, [ collectionId ]);
             const collection = await t.oneOrNone(query, [ collectionId ]);
             let owner = false;
             if (!collection) {
@@ -156,7 +155,7 @@ export async function collectionQuery(collectionId: string, username?: string) {
             const accessibilityHazards = await t.any(query, [ collectionId ]);
             query = "SELECT value, accessibilityfeaturekey as key FROM collectionaccessibilityfeature WHERE collectionid = $1;";
             const accessibilityFeatures = await t.any(query, [ collectionId ]);
-            console.log(query, [collection.id]);
+            winstonLogger.debug(query, [collection.id]);
             query = "SELECT value, educationallevelkey as key FROM collectioneducationallevel WHERE collectionid = $1;";
             const educationalLevels = await t.any(query, [ collectionId ]);
 

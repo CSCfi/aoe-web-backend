@@ -7,6 +7,7 @@ import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
 import connection from "../resources/pg-connect";
+import { winstonLogger } from '../util';
 
 const fh = require("./fileHandling");
 const pgp = connection.pgp;
@@ -162,13 +163,13 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         if (!isPublished) {
             query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, pdfkey from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
             response = await t.any(query, [eduMaterialId]);
-            console.log(query, [eduMaterialId]);
+            winstonLogger.debug(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
                 query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
                     "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
                     "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
-                console.log(query, [eduMaterialId, req.params.publishedat]);
+                winstonLogger.debug(query, [eduMaterialId, req.params.publishedat]);
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
             } else {
                 query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
@@ -194,17 +195,17 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         if (!isPublished) {
             query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
             response = await t.any(query, [eduMaterialId]);
-            console.log(query, [eduMaterialId]);
+            winstonLogger.debug(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
                 // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
-                console.log(query, [eduMaterialId, req.params.publishedat]);
+                winstonLogger.debug(query, [eduMaterialId, req.params.publishedat]);
             } else {
                 query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
-                console.log(query, [eduMaterialId]);
+                winstonLogger.debug(query, [eduMaterialId]);
             }
         }
         queries.push(response);
@@ -213,7 +214,7 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         // use raw date in version
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
         query = "select distinct publishedat from versioncomposition where educationalmaterialid = $1 order by publishedat desc;";
-        console.log(query, [eduMaterialId]);
+        winstonLogger.debug(query, [eduMaterialId]);
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
@@ -236,11 +237,11 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
                 return res.status(200).json(jsonObj);
             }
             let owner = false;
-            console.log(owner);
+            winstonLogger.debug(owner);
             if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
                 owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
             }
-            console.log(owner);
+            winstonLogger.debug(owner);
             // add displayname object to material object
             for (const element of data[14]) {
                 const nameobj = {
@@ -268,7 +269,6 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
                 let ext = "";
                 if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
                     ext = jsonObj.materials[i]["originalfilename"].substring(jsonObj.materials[i]["originalfilename"].lastIndexOf("."), jsonObj.materials[i]["originalfilename"].length);
-                    console.log("ext is: " + ext);
                     // if (ext === ".h5p") {
                     //     req.params.key = jsonObj.materials[i].filekey;
                     //     console.log("h5p file found !!!!!!");
@@ -280,13 +280,12 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
                     jsonObj.materials[i]["mimetype"] = "text/html";
                     jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
                 } else if (jsonObj.materials[i] && jsonObj.materials[i]["pdfkey"] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
-                    console.log("HAS PDFKEY");
                     jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["pdfkey"];
                 } else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                     req.params.key = jsonObj.materials[i].filekey;
-                    console.log("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
+                    winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
                     const result = await fh.downloadFileFromStorage(req, res, next, true);
-                    console.log("The result from fh.downloadFile with isZip True value: " + result);
+                    winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
                     if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                         /**
                          * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
@@ -295,7 +294,7 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
                          */
                         jsonObj.materials[i]["mimetype"] = "text/html";
                         jsonObj.materials[i]["filepath"] = process.env.HTML_BASE_URL + result;
-                        console.log("The jsonObj: " + JSON.stringify(jsonObj));
+                        winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
 
 
                     } else if (result != false) {
@@ -304,7 +303,7 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
                          * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
                          */
                         jsonObj.materials[i]["filepath"] = result;
-                        console.log("The jsonObj: " + JSON.stringify(jsonObj));
+                        winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
                     }
                 }
             }
@@ -361,12 +360,12 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
             if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
                 updateViewCounter(jsonObj.id)
                     .catch((error: any) => {
-                        console.error("update viewcounter failed: " + error);
+                        winstonLogger.error("update viewcounter failed: " + error);
                     });
             }
         })
         .catch((error: any) => {
-            console.log(error);
+            winstonLogger.error(error);
             next(new ErrorHandler(400, "Issue getting material data"));
         });
 }
@@ -409,7 +408,7 @@ export async function getUserMaterial(req: Request, res: Response, next: NextFun
                 return q;
             }).then(t.batch)
                 .catch((error: any) => {
-                    console.log(error);
+                    winstonLogger.error(error);
                     return error;
                 });
         })
@@ -459,7 +458,7 @@ export async function getRecentMaterial(req: Request, res: Response, next: NextF
                 return q;
             }).then(t.batch)
                 .catch((error: any) => {
-                    console.log(error);
+                    winstonLogger.error(error);
                     return error;
                 });
         })
@@ -498,11 +497,9 @@ export async function setEducationalMaterialObsoleted(req: Request, res: Respons
         res.status(204).send();
         elasticSearch.updateEsDocument()
             .catch((err: Error) => {
-                console.log("Es update error");
-                console.log(err);
+                winstonLogger.error(err);
             });
     } catch (err) {
-        console.log(err);
         next(new ErrorHandler(500, "Issue deleting material"));
     }
 }
@@ -525,12 +522,10 @@ export async function deleteRecord(req: Request, res: Response, next: NextFuncti
         res.status(200).json({"status": "deleted"});
         elasticSearch.updateEsDocument()
             .catch((err: Error) => {
-                console.log("Es update error");
-                console.log(err);
+                winstonLogger.error(err);
             });
     } catch (err) {
-        console.log(err);
-        next(new ErrorHandler(500, "Issue deleting record"));
+        next(new ErrorHandler(500, "Issue deleting record: " + err));
     }
 }
 
@@ -545,19 +540,17 @@ export async function deleteAttachment(req: Request, res: Response, next: NextFu
             queries.push(data);
             query = "update educationalmaterial set updatedat = now() where id = "
                 + "(select educationalmaterialid from material where id = (select materialid from attachment where id = $1));";
-            console.log(query);
+            winstonLogger.debug('Query in deleteAttachment(): ' + query);
             queries.push(await db.none(query, [req.params.attachmentid]));
             return t.batch(queries);
         });
         res.status(200).json({"status": "deleted"});
         elasticSearch.updateEsDocument()
             .catch((err: Error) => {
-                console.log("Es update error");
-                console.log(err);
+                winstonLogger.error("Es update error: " + err);
             });
     } catch (err) {
-        console.log(err);
-        next(new ErrorHandler(500, "Issue deleting attachment"));
+        next(new ErrorHandler(500, "Issue deleting attachment" + err));
         // res.sendStatus(500);
     }
 }
@@ -600,8 +593,7 @@ export async function setLanguage(obj: any) {
             }
         }
     } catch (err) {
-        console.log(err);
-        throw new Error(err);
+        throw new Error('Error in setLanguage(): ' + err);
     }
 }
 
@@ -610,7 +602,7 @@ export async function insertDataToDescription(t: any, educationalmaterialid: str
     // const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     const query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
         "UPDATE SET description = $1;";
-    console.log(query);
+    winstonLogger.debug('Query in insertDataToDescription(): ' + query);
     if (description && educationalmaterialid) {
         if (!description.fi || description.fi === "") {
             if (!description.sv || description.sv === "") {
@@ -669,9 +661,8 @@ export async function insertEducationalMaterialName(materialname: NameObject, id
         "ON CONFLICT (language,educationalmaterialid) DO " +
         "UPDATE SET materialname = $1, slug = $3";
     const queries = [];
-    console.log("inserting material name");
     await setLanguage(materialname);
-    console.log(query);
+    winstonLogger.debug('Query in insertEducationalMaterialName(): ' + query);
     if (materialname.fi === null) {
         queries.push(await t.any(query, ["", "fi", "", id]));
     } else {
@@ -698,10 +689,8 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         const materialname = metadata.name;
         const nameparams = [];
         let response;
-        console.log("updateMaterial request body:");
-        console.log(JSON.stringify(metadata));
+        winstonLogger.debug('Update metadata in updateMaterial(): ' + JSON.stringify(metadata));
         // let arr = metadata.name;
-        console.log("inserting material name");
         if (materialname == undefined) {
             // query = "DELETE FROM materialname where educationalmaterialid = $1;";
             // response  = await t.any(query, [req.params.id]);
@@ -711,21 +700,18 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         }
 
         // material
-        console.log("inserting educationalmaterial");
         const dnow = Date.now() / 1000.0;
         query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
-        console.log(query, [metadata.expires, dnow, metadata.timeRequired, ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license]);
+        winstonLogger.debug('Query in updateMaterial(): ' + query, [metadata.expires, dnow, metadata.timeRequired, ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license]);
         queries.push(await t.any(query, [metadata.expires, dnow, ((metadata.timeRequired == undefined) ? "" : metadata.timeRequired), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license, metadata.suitsAllEarlyChildhoodSubjects, metadata.suitsAllPrePrimarySubjects, metadata.suitsAllBasicStudySubjects, metadata.suitsAllUpperSecondarySubjects, metadata.suitsAllVocationalDegrees, metadata.suitsAllSelfMotivatedSubjects, metadata.suitsAllBranches, metadata.suitsAllUpperSecondarySubjectsNew]));
 // description
-        console.log("inserting description");
         const description = metadata.description;
         if (description == undefined) {
             // if not found do nothing
         } else {
             queries.push(await insertDataToDescription(t, emid, description));
         }
-// educationalRoles
-        console.log("inserting educationalRoles");
+        // educationalRoles
         const audienceparams = [];
         const audienceArr = metadata.educationalRoles;
         if (audienceArr == undefined || audienceArr.length < 1) {
@@ -742,13 +728,13 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
             queries.push(response);
             for (const element of response) {
                 query = "DELETE FROM educationalaudience where id = " + element.id + ";";
-                console.log(query);
+                winstonLogger.debug('Query in updateMaterial(): ' + query);
                 queries.push(await t.any(query));
             }
             for (const element of audienceArr) {
                 query = "INSERT INTO educationalaudience (educationalrole, educationalmaterialid, educationalrolekey) VALUES ($1,$2,$3) ON CONFLICT (educationalrolekey,educationalmaterialid) DO " +
                     "UPDATE SET educationalrole = $1;";
-                console.log(query);
+                winstonLogger.debug('Query in updateMaterial(): ' + query);
                 queries.push(await t.any(query, [element.value, emid, element.key]));
             }
         }

@@ -6,14 +6,13 @@ import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxR
 import { readStreamFromStorage } from "./../queries/fileHandling";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { resolve, reject } from "bluebird";
+import { winstonLogger } from '../util';
 // import { H5P } from "h5p-standalone";
 const fs = require("fs");
 
-console.log("This is H5P: " + H5P);
 const config = new H5P.H5PConfig();
 // const config = await new H5P.H5PConfig(new H5P.fsImplementations.InMemoryStorage());
 config.baseUrl = process.env.H5P_BASE_URL || "/h5p";
-console.log("This is config: " + JSON.stringify(config));
 // config.contentFilesUrl = "/opt/sources/h5p/content";
 export const h5pEditor: H5P.H5PEditor = H5P.fs(
     config,
@@ -30,11 +29,8 @@ export const h5pEditor: H5P.H5PEditor = H5P.fs(
  */
 export async function play(req: Request, res: Response, next: NextFunction) {
     try {
-        console.log("Starting startH5Pplayer");
         const page = await startH5Pplayer(req.params.contentid);
-        console.log("RETURNING PAGE ############################################");
         res.send(page);
-        console.log("RETURNING 200");
         res.status(200).end();
     }
     catch (error) {
@@ -47,8 +43,6 @@ export async function play(req: Request, res: Response, next: NextFunction) {
  */
 export async function getH5PContent(req: Request, res: Response) {
     try {
-        console.log(req.params.id);
-        console.log(req.params.file);
         const user = {
             canCreateRestricted: true,
             canInstallRecommended: true,
@@ -83,7 +77,6 @@ export async function getH5PContent(req: Request, res: Response) {
         readStream.pipe(res);
     }
     catch (error) {
-        console.log(error);
         res.status(404);
     }
 }
@@ -110,18 +103,15 @@ export async function startH5Pplayer(contentid: string) {
     const stream = await readStreamFromStorage(params);
     const filepath = process.env.HTMLFOLDER + "/" + contentid;
     let page;
-    stream.on("error", async (e) => {
-        console.log("Issue getting readstream from Allas. Try from backup data");
-        console.error(e);
+    stream.on('error', async (error) => {
+        winstonLogger.error('Issue getting readstream from Allas. Try from backup data: ' + error);
         try {
             const path = process.env.BACK_UP_PATH + contentid;
             page = await renderH5Ppage(contentid, path);
             resolve(page);
-        }
-        catch (e) {
-            console.log("Issue reading file from backup");
-            console.error(e);
-            reject(e);
+        } catch (error) {
+            winstonLogger.error('Issue reading file from backup: ' + error);
+            reject(error);
         }
     });
     stream.pipe(fs.createWriteStream(filepath));
@@ -189,14 +179,12 @@ export async function renderH5Ppage(contentid: string, filepath: string) {
             name: "aoe robot",
             type: "local"
         };
-        console.log("We finished the zipstream!");
+        winstonLogger.debug('Download of the zip stream completed');
         const data = await fs.readFileSync(filepath);
-        console.log("uploading h5p package #####################################");
         const options = {
             "onlyInstallLibraries": false
         };
         const result = await h5pEditor.uploadPackage(data, user, options);
-        console.log("saving h5p package");
         let mainlib;
         for (const lib of result.metadata.preloadedDependencies) {
             if (lib.machineName == result.metadata.mainLibrary) {
@@ -217,7 +205,7 @@ export async function renderH5Ppage(contentid: string, filepath: string) {
             config
         );
         // const content = result.parameters;
-        console.log("rendering h5p page: " + contentid);
+        winstonLogger.debug("rendering h5p page: " + contentid);
         // page = await h5pPlayer.render(contentid, content);
         const page = await h5pPlayer.render(contentid);
         return page;
