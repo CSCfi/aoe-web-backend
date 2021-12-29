@@ -6,6 +6,7 @@ import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResu
 import { createMatchAllObject } from "./esQueries";
 import { ApiResponse } from "@elastic/elasticsearch";
 import connection from '../resources/pg-connect';
+import { winstonLogger } from '../util';
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
@@ -50,14 +51,12 @@ export async function collectionFromEs(obj: any) {
                     "from" : from,
                     "size" : size,
                     "body" : body};
-        console.log("Elasticsearch query: " + JSON.stringify(query));
+        winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
         const result: ApiResponse<SearchResponse<AoeCollectionResult>> = await client.search(query);
         const responseBody: AoeBody<AoeCollectionResult> = await aoeCollectionResponseMapper(result);
         return responseBody;
-        }
-        catch (err) {
-        console.log(err);
-        throw new Error(err);
+        } catch (error) {
+            throw new Error(error);
         }
 }
 /**

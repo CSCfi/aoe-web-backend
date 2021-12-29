@@ -10,6 +10,7 @@ const client = new Client({node: process.env.ES_NODE});
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { SearchResponse, Source, AoeBody, AoeResult, AoeRequestFilter, MultiMatchSeachBody, MatchObject, FilterTerm, expiresFilterObject } from "./esTypes";
+import { winstonLogger } from '../util';
 
 export async function aoeResponseMapper (response: ApiResponse<SearchResponse<Source>> ) {
   try {
@@ -170,15 +171,12 @@ export async function elasticSearchQuery(req: Request, res: Response, next: Next
                   "from" : from,
                   "size" : size,
                   "body" : body};
-    console.log("Elasticsearch query: " + JSON.stringify(query));
+    winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
     const result: ApiResponse<SearchResponse<Source>> = await client.search(query);
     const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
     res.status(200).json(responseBody);
-    }
-    catch (err) {
-      console.log("elasticSearchQuery error");
-      console.error(err);
-      next(new ErrorHandler(500, "There was an issue prosessing your request"));
+    } catch (error) {
+      next(new ErrorHandler(500, 'Error in elasticSearchQuery(): ' + error));
     }
 }
 
