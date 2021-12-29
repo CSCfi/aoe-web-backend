@@ -61,7 +61,7 @@ router.get('/h5p/play/:contentid', h5p.play);
 router.post('/logout', ah.logout);
 
 // TODO: Unused endpoint?
-// router.get('/material', db.getMaterial);
+router.get('/material', db.getMaterial);
 
 router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
