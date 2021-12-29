@@ -914,7 +914,6 @@ export const downloadFromStorage = async (req: Request,
             }
         } catch (error) {
             next(new ErrorHandler(500, 'downloadFromStorage() - Error in file download'));
-            reject();
         }
     });
 };
