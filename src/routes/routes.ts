@@ -54,10 +54,6 @@ apiV1(router);
  */
 router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
 router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
-
-// Download a single file from the cloud object storage
-router.get('/download/:key', fh.downloadFile);
-
 router.post('/elasticSearch/collection/search', esCollection.getCollectionEsData);
 router.post('/elasticSearch/search', es.elasticSearchQuery);
 router.get('/h5p/content/:id/:file(*)', getH5PContent);
@@ -65,7 +61,7 @@ router.get('/h5p/play/:contentid', h5p.play);
 router.post('/logout', ah.logout);
 
 // TODO: Unused endpoint?
-router.get('/material', db.getMaterial);
+// router.get('/material', db.getMaterial);
 
 router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
 router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
