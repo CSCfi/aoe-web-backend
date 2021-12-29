@@ -770,7 +770,7 @@ const requestRedirected = (fileDetails: { originalfilename: string, filesize: nu
 export const downloadFileFromStorage = async (req: Request, res: Response, next: NextFunction, isZip?: boolean): Promise<any> => {
     winstonLogger.debug('downloadFileFromStorage(): req.params.filename=' + req.params.filename + ', isZip=' + isZip);
 
-    // TODO: Remove req.params.key refrence from apiQueries.ts:286 (and below)
+    // TODO: Remove req.params.key refrence from apiQueries.ts:286 (and below :774 and :801)
     const fileName: string = req.params.filename as string || req.params.key as string;
     return new Promise(async (resolve) => {
         try {
@@ -797,8 +797,8 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                     return resolve();
                 }
                 const params = {
-                    Bucket: process.env.BUCKET_NAME,
-                    Key: req.params.filename
+                    Bucket: process.env.BUCKET_NAME as string,
+                    Key: req.params.filename as string || req.params.key as string
                 };
                 const resp = await downloadFromStorage(req, res, next, params, fileDetails.originalfilename, isZip);
                 resolve(resp);
