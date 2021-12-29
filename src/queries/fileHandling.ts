@@ -871,19 +871,22 @@ export const downloadFromStorage = async (req: Request,
                 const folderpath: string = process.env.HTMLFOLDER + '/' + origFilename;
                 const zipStream: WriteStream = fileStream
                     .on('error', (error: Error) => {
-                        winstonLogger.error('downloadFromStorage() - Error in zip file download stream ' +
-                            '(trying backup): ' + error);
-                        const path: string = process.env.BACK_UP_PATH + key;
-                        const backupfs: ReadStream = fs.createReadStream(path);
-                        const backupws: WriteStream = backupfs
-                            .on('error', (error: Error) => {
-                                next(new ErrorHandler(500, 'downloadFromStorage() - Error in ' +
-                                    'backup file stream: ' + error));
-                            })
-                            .pipe(fs.createWriteStream(folderpath));
-                        backupws.once('finish', async () => {
-                            resolve(await unZipAndExtract(folderpath));
-                        });
+                        winstonLogger.error('Error in zip file download in downloadFromStorage(): ' + error);
+                        reject();
+                        // const path: string = process.env.BACK_UP_PATH + key;
+                        // const backupfs: ReadStream = fs.createReadStream(path);
+                        // const backupws: WriteStream = backupfs
+                        //     .on('error', (error: Error) => {
+                        //         next(new ErrorHandler(500, 'downloadFromStorage() - Error in ' +
+                        //             'backup file stream: ' + error));
+                        //     })
+                        //     .pipe(fs.createWriteStream(folderpath));
+                        // backupws.once('finish', async () => {
+                        //     resolve(await unZipAndExtract(folderpath));
+                        // });
+                    })
+                    .once('end', () => {
+                        winstonLogger.error('Download of %s completed in downloadFromStorage()', key);
                     })
                     .pipe(fs.createWriteStream(folderpath));
                 zipStream.once('finish', async () => {
