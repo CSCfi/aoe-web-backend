@@ -907,8 +907,11 @@ export const downloadFromStorage = async (req: Request,
                         //     })
                         //     .pipe(res);
                     })
+                    .once('end', () => {
+                        winstonLogger.debug('Download of %s completed in downloadFromStorage()', key);
+                        resolve();
+                    })
                     .pipe(res);
-                resolve();
             }
         } catch (error) {
             next(new ErrorHandler(500, 'downloadFromStorage() - Error in file download'));
