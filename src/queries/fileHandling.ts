@@ -3,7 +3,7 @@ import AWS, { S3 } from 'aws-sdk';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import contentDisposition from 'content-disposition';
 import { Request, Response, NextFunction } from 'express';
-import fs from 'fs';
+import fs, { ReadStream, WriteStream } from 'fs';
 import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
@@ -679,7 +679,7 @@ export const uploadFileToStorage = async (filePath: string, filename: string, bu
             reject(new Error(err));
         }
     });
-}
+};
 
 /**
  * Upload a file from the local file system to the cloud object storage.
@@ -727,14 +727,18 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
     });
 }
 
-
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ */
 export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const data = await downloadFileFromStorage(req, res, next);
         if (!data) return res.end();
         res.status(200).send(data);
     } catch (err) {
-        console.error(err);
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
         }
@@ -747,26 +751,25 @@ const STREAM_REDIRECT_CRITERIA = {
     ] as string[],
     minFileSize: parseInt(process.env.STREAM_FILESIZE_MIN, 10) as number,
     redirectUri: process.env.STREAM_REDIRECT_URI as string
-}
+};
 
 const requestRedirected = (fileDetails: { originalfilename: string, filesize: number, mimetype: string }): boolean => {
     return fileDetails.filesize >= STREAM_REDIRECT_CRITERIA.minFileSize &&
         STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
-}
+};
 
 /**
+ * Get file details from the database before proceeding to the file download from the cloud object storage.
+ * TODO: Function chain and related leagcy code should be refactored and simplified.
  *
- * @param req
- * @param res
- * @param next
- * @param isZip
- * download file from allas bucket
- * optional parameter isZip to html files
+ * @param req   express.Request
+ * @param res   express.Response
+ * @param next  express.NextFunction
+ * @param isZip boolean Indicator for the need of decompression
  */
-export const downloadFileFromStorage = async (req: Request, res: Response, next: NextFunction, isZip?: any): Promise<any> => {
-    winstonLogger.debug('downloadFileFromStorage(): req.params.key=' + req.params.key + ', isZip=' + isZip);
-
-    const fileName: string = req.params.key as string;
+export const downloadFileFromStorage = async (req: Request, res: Response, next: NextFunction, isZip?: boolean): Promise<any> => {
+    winstonLogger.debug('downloadFileFromStorage(): req.params.filename=' + req.params.filename + ', isZip=' + isZip);
+    const fileName: string = req.params.filename as string;
     return new Promise(async (resolve) => {
         try {
             const query =
@@ -776,7 +779,6 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 "UNION " +
                 "SELECT originalfilename, filesize, mimetype FROM attachment " +
                 "WHERE filekey = $1 AND obsoleted = 0";
-            winstonLogger.debug('downloadFileFromStorage() Query: ' + query, [fileName]);
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
@@ -788,13 +790,13 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 // Check if the criteria for streaming service redirect are fulfilled
                 if (requestRedirected(fileDetails)) {
                     res.status(302).set({
-                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.key
+                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
                     });
                     return resolve();
                 }
                 const params = {
                     Bucket: process.env.BUCKET_NAME,
-                    Key: req.params.key
+                    Key: req.params.filename
                 };
                 const resp = await downloadFromStorage(req, res, next, params, fileDetails.originalfilename, isZip);
                 resolve(resp);
@@ -803,7 +805,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             next(new ErrorHandler(500, 'Downloading a single file failed in downloadFileFromStorage()'));
         }
     });
-}
+};
 
 /**
  *
@@ -829,94 +831,93 @@ export async function readStreamFromStorage(params: { Bucket: string; Key: strin
 }
 
 /**
+ * Download an original or compressed (zip) file from the cloud object storage.
+ * In case of a download error try to download from the local backup directory.
+ * TODO: Refactoring in progress for the function chain and related legacy code.
  *
- * @param req
- * @param res
- * @param next
- * @param params
- * @param filename
- * @param isZip
- * function to download file from Pouta
+ * @param req          express.Request
+ * @param res          express.Response
+ * @param next         express.NextFunction
+ * @param s3params     GetRequestObject (aws-sdk/clients/s3)
+ * @param origFilename string Original file name without storage ID
+ * @param isZip        boolean Indicator for the need of decompression
  */
-export async function downloadFromStorage(req: Request, res: Response, next: NextFunction, params: { Bucket: string; Key: string; }, filename: string, isZip?: any): Promise<any> {
-    return new Promise(async (resolve) => {
+export const downloadFromStorage = async (req: Request,
+                                          res: Response,
+                                          next: NextFunction,
+                                          s3params: { Bucket: string, Key: string },
+                                          origFilename: string,
+                                          isZip?: boolean): Promise<any> => {
+    winstonLogger.debug('s3params.Bucket=' + s3params.Bucket + ', s3params.Key=' + s3params.Key + ', origFilename=' +
+        origFilename + ', isZip=' + isZip);
+
+    // TODO: Move to global variables
+    const configAWS: ServiceConfigurationOptions = {
+        accessKeyId: process.env.USER_KEY,
+        secretAccessKey: process.env.USER_SECRET,
+        endpoint: process.env.POUTA_END_POINT,
+        region: process.env.REGION
+    };
+    AWS.config.update(configAWS);
+    const s3: S3 = new AWS.S3();
+    const key = s3params.Key;
+
+    return new Promise(async (resolve, reject) => {
         try {
-            const config = {
-                accessKeyId: process.env.USER_KEY,
-                secretAccessKey: process.env.USER_SECRET,
-                endpoint: process.env.POUTA_END_POINT,
-                region: process.env.REGION
-            };
-            AWS.config.update(config);
-            const s3 = new AWS.S3();
-            const key = params.Key;
-            try {
-                const fileStream = s3.getObject(params).createReadStream();
-                if (isZip === true) {
-                    console.log("We came to the if-statement in downloadFileFromStorage!");
-                    const folderpath = process.env.HTMLFOLDER + "/" + filename;
-                    const zipStream = fileStream.on("error", function (e) {
-                        console.error(e);
-                        console.log("TRY BACK UP DATA HERE FOR ZIP");
-                        const path = process.env.BACK_UP_PATH + key;
-                        const backupfs = fs.createReadStream(path);
-                        const backupws = backupfs.on("error", function (e) {
-                            console.error("Error in createReadStream " + path);
-                            console.error(e);
-                            next(new ErrorHandler(500, e.message || "Error in download"));
-                        }).pipe(fs.createWriteStream(folderpath)).on("error", function (e) {
-                            console.error("Error in createWriteStream " + folderpath);
-                            console.error(e);
-                            next(new ErrorHandler(500, e.message || "Error in download"));
-                        });
-                        backupws.on("finish", async function () {
-                            console.log("We finished the backupfs!");
+            const fileStream = s3.getObject(s3params).createReadStream();
+            if (isZip) { // replaced: isZip === true
+                const folderpath: string = process.env.HTMLFOLDER + '/' + origFilename;
+                const zipStream: WriteStream = fileStream
+                    .once('error', (error: Error) => {
+                        winstonLogger.error('downloadFromStorage() - Error in zip file download stream ' +
+                            '(trying backup): ' + error);
+                        const path: string = process.env.BACK_UP_PATH + key;
+                        const backupfs: ReadStream = fs.createReadStream(path);
+                        const backupws: WriteStream = backupfs
+                            .once('error', (error: Error) => {
+                                next(new ErrorHandler(500, 'downloadFromStorage() - Error in ' +
+                                    'backup file stream: ' + error));
+                                reject();
+                            })
+                            .pipe(fs.createWriteStream(folderpath));
+                        backupws.once('finish', async () => {
                             resolve(await unZipAndExtract(folderpath));
                         });
-                    }).pipe(fs.createWriteStream(folderpath));
-                    zipStream.on("finish", async function () {
-                        console.log("We finished the zipstream!");
-                        resolve(await unZipAndExtract(folderpath));
-                    });
-                } else {
-                    res.attachment(key);
-                    res.header("Content-Disposition", contentDisposition(filename));
-                    console.log("The response.originalfilename is: " + filename);
-                    fileStream.on("error", function (e) {
-                        console.error(e);
-                        console.log("TRY BACK UP DATA HERE");
+                    })
+                    .pipe(fs.createWriteStream(folderpath));
+                zipStream.once('finish', async () => {
+                    resolve(await unZipAndExtract(folderpath));
+                });
+            } else {
+                res.attachment(key);
+                res.header('Content-Disposition', contentDisposition(origFilename));
+                fileStream
+                    .once('error', (error: Error) => {
+                        winstonLogger.error('downloadFromStorage() - Error in single file download stream ' +
+                            '(trying backup): ' + error);
                         // const backupfs = await readStreamFromBackup(key);
                         let path = process.env.BACK_UP_PATH + key;
-                        // if thumbnail bucket try thumbnail back up
-                        if (params.Bucket == process.env.THUMBNAIL_BUCKET_NAME) {
+                        if (s3params.Bucket == process.env.THUMBNAIL_BUCKET_NAME) { // In case of a thumbnail
                             path = process.env.THUMBNAIL_BACK_UP_PATH + key;
                         }
                         const backupfs = fs.createReadStream(path);
-                        backupfs.on("error", function (e) {
-                            console.error(e);
-                            next(new ErrorHandler(500, e.message || "Error in download"));
-                        }).pipe(res).on("error", function (e) {
-                            console.error(e);
-                            next(new ErrorHandler(500, e.message || "Error in download"));
-                        });
-
+                        backupfs
+                            .once('error', (error: Error) => {
+                                next(new ErrorHandler(500, 'downloadFromStorage() - Error in ' +
+                                    'backup file stream: ' + error));
+                                reject();
+                            })
+                            .pipe(res);
                     })
-                        .pipe(res).on("error", function (e) {
-                        console.error(e);
-                        next(new ErrorHandler(500, e.message || "Error in download"));
-                    });
-                }
-
-            } catch (err) {
-                console.error("The error in downloadFileFromStorage function (nested try) : " + err);
-                next(new ErrorHandler(500, "Error in download"));
+                    .pipe(res);
+                resolve();
             }
-        } catch (err) {
-            console.error("The error in downloadFileFromStorage function (upper try catch) : " + err);
-            next(new ErrorHandler(500, "Error in download"));
+        } catch (error) {
+            next(new ErrorHandler(500, 'downloadFromStorage() - Error in file download'));
+            reject();
         }
     });
-}
+};
 
 /**
  * Download all files related to an educational material as a bundled zip file.
