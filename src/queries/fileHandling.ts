@@ -793,15 +793,15 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             winstonLogger.debug('Response for file metadata request in downloadFileFromStorage(): ' + JSON.stringify(fileDetails));
 
             if (!fileDetails) {
-                next(new ErrorHandler(400, 'Requested file ' + fileName + ' not found in database'));
+                next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
             } else {
                 // Check if the criteria for streaming service redirect are fulfilled
-                if (await requestRedirected(fileDetails)) {
-                    res.status(302).set({
-                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
-                    });
-                    return resolve();
-                }
+                // if (await requestRedirected(fileDetails)) {
+                //     res.status(302).set({
+                //         'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
+                //     });
+                //     return resolve();
+                // }
                 const params = {
                     Bucket: process.env.BUCKET_NAME as string,
                     Key: req.params.filename as string || req.params.key as string
