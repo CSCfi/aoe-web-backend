@@ -755,7 +755,7 @@ const streamingStatusCheck = (): Promise<boolean> => {
         host: process.env.STREAM_STATUS_HOST as string,
         method: 'GET',
         path: process.env.STREAM_STATUS_PATH as string,
-        protocol: 'https'
+        protocol: 'https:'
     }).then(({ statusCode, data }) => {
         return statusCode >= 200 && statusCode < 300 && data.operable;
     }, (error) => {
