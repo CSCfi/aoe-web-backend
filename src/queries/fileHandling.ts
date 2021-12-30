@@ -752,14 +752,14 @@ const requestRedirected = async (fileDetails: { originalfilename: string, filesi
 
 const streamingStatusCheck = (): Promise<boolean> => {
     return httpsClient({
-        host: 'stream.demo.aoe.fi', // STREAM_REDIRECT_CRITERIA.redirectUri,
+        host: process.env.STREAM_STATUS_HOST as string,
         method: 'GET',
-        path: '/api/v1/status',
+        path: process.env.STREAM_STATUS_PATH as string,
         protocol: 'https'
     }).then(({ statusCode, data }) => {
         return statusCode >= 200 && statusCode < 300 && data.operable;
     }, (error) => {
-        winstonLogger.error('Request failed in streamingStatusCheck(): ' + error);
+        winstonLogger.error('Streaming status check not passed: ' + error);
         return false;
     });
 }
