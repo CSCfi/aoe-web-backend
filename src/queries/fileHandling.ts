@@ -756,6 +756,7 @@ const streamingStatusCheck = (): Promise<boolean> => {
         method: 'GET',
         path: process.env.STREAM_STATUS_PATH as string,
     }).then(({ statusCode, data }) => {
+        winstonLogger.debug('Streaming status: ' + statusCode + ' ' + JSON.stringify(data));
         return statusCode >= 200 && statusCode < 300 && data.operable;
     }, (error) => {
         winstonLogger.error('Streaming status check not passed: ' + error);
@@ -789,7 +790,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
-            winstonLogger.debug('downloadFileFromStorage() Response: ' + JSON.stringify(fileDetails));
+            winstonLogger.debug('Response for file metadata request in downloadFileFromStorage(): ' + JSON.stringify(fileDetails));
 
             if (!fileDetails) {
                 next(new ErrorHandler(400, 'Requested file ' + fileName + ' not found in database'));
