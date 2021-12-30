@@ -1,9 +1,10 @@
 import ADMzip from 'adm-zip';
 import AWS, { S3 } from 'aws-sdk';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
-import contentDisposition from 'content-disposition';
 import { Request, Response, NextFunction } from 'express';
-import fs, { ReadStream, WriteStream } from 'fs';
+import fs, { WriteStream } from 'fs';
+import httpsClient from '../resources/https-client';
+
 import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
@@ -742,10 +743,26 @@ const STREAM_REDIRECT_CRITERIA = {
     redirectUri: process.env.STREAM_REDIRECT_URI as string
 };
 
-const requestRedirected = (fileDetails: { originalfilename: string, filesize: number, mimetype: string }): boolean => {
-    return fileDetails.filesize >= STREAM_REDIRECT_CRITERIA.minFileSize &&
+const requestRedirected = async (fileDetails: { originalfilename: string, filesize: number, mimetype: string }): Promise<boolean> => {
+    const criteriaFulfilled: boolean = fileDetails.filesize >= STREAM_REDIRECT_CRITERIA.minFileSize &&
         STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
+    const streamingOperable: boolean = await streamingStatusCheck();
+    return criteriaFulfilled && streamingOperable;
 };
+
+const streamingStatusCheck = (): Promise<boolean> => {
+    return httpsClient({
+        host: 'stream.demo.aoe.fi', // STREAM_REDIRECT_CRITERIA.redirectUri,
+        method: 'GET',
+        path: '/api/v1/status',
+        protocol: 'https'
+    }).then(({ statusCode, data }) => {
+        return statusCode >= 200 && statusCode < 300 && data.operable;
+    }, (error) => {
+        winstonLogger.error('Request failed in streamingStatusCheck(): ' + error);
+        return false;
+    });
+}
 
 /**
  * Get file details from the database before proceeding to the file download from the cloud object storage.
@@ -779,7 +796,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 next(new ErrorHandler(400, 'Requested file ' + fileName + ' not found in database'));
             } else {
                 // Check if the criteria for streaming service redirect are fulfilled
-                if (requestRedirected(fileDetails)) {
+                if (await requestRedirected(fileDetails)) {
                     res.status(302).set({
                         'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
                     });
