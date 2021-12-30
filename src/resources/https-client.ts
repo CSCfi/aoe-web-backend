@@ -1,11 +1,10 @@
-import http, { IncomingMessage, RequestOptions } from 'http';
+import { IncomingMessage, RequestOptions } from 'http';
 import https from 'https';
 import { winstonLogger } from '../util';
 
 export default (options: RequestOptions): Promise<any> => {
-    let requestHandler = options.protocol === 'https' ? https : http;
     return new Promise((resolve, reject) => {
-        let request = requestHandler.request(options, (response: IncomingMessage) => {
+        let request = https.request(options, (response: IncomingMessage) => {
             let output = '';
             response
                 .setEncoding('utf8')
