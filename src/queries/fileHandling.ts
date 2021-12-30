@@ -752,12 +752,16 @@ const requestRedirected = async (fileDetails: { originalfilename: string, filesi
 
 const streamingStatusCheck = (): Promise<boolean> => {
     return httpsClient({
-        host: process.env.STREAM_STATUS_HOST as string,
+        headers: {
+            'Accept': 'application/json',
+        },
+        hostname: process.env.STREAM_STATUS_HOSTNAME as string,
         method: 'GET',
         path: process.env.STREAM_STATUS_PATH as string,
+        port: 443
     }).then(({ statusCode, data }) => {
-        winstonLogger.debug('Streaming status: ' + statusCode + ' ' + JSON.stringify(data));
-        return statusCode >= 200 && statusCode < 300 && data.operable;
+        winstonLogger.debug('Streaming status: %s %s', statusCode, JSON.stringify(data));
+        return statusCode === 200 && data.operable;
     }, (error) => {
         winstonLogger.error('Streaming status check not passed: ' + error);
         return false;
@@ -790,18 +794,19 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
+                // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
             winstonLogger.debug('Response for file metadata request in downloadFileFromStorage(): ' + JSON.stringify(fileDetails));
 
             if (!fileDetails) {
                 next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
             } else {
                 // Check if the criteria for streaming service redirect are fulfilled
-                // if (await requestRedirected(fileDetails)) {
-                //     res.status(302).set({
-                //         'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
-                //     });
-                //     return resolve();
-                // }
+                if (await requestRedirected(fileDetails)) {
+                    res.status(302).set({
+                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
+                    });
+                    return resolve();
+                }
                 const params = {
                     Bucket: process.env.BUCKET_NAME as string,
                     Key: req.params.filename as string || req.params.key as string
