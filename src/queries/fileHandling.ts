@@ -753,7 +753,8 @@ const requestRedirected = async (fileDetails: { originalfilename: string, filesi
 const streamingStatusCheck = (): Promise<boolean> => {
     return httpsClient({
         headers: {
-            'accept': 'application/json'
+            'accept': 'application/json',
+            'cache-control': 'no-cache'
         },
         host: process.env.STREAM_STATUS_HOST as string,
         method: 'GET',
