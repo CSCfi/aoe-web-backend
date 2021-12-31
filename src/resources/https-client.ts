@@ -13,21 +13,34 @@ export default (options: RequestOptions): Promise<any> => {
                 })
                 .on('end', () => {
                     try {
-                        let obj = JSON.parse(output);
+                        let obj;
+                        if (response.headers['content-type'].includes('json')) {
+                            obj = JSON.parse(output);
+                        } else {
+                            obj = output;
+                        }
                         resolve({
                             statusCode: response.statusCode,
                             data: obj
                         });
                     } catch (error) {
-                        winstonLogger.error('Response failed in HTTPS client: ' + error);
                         reject(error);
                     }
+                })
+                .on('error', () => {
+                    response.destroy();
                 });
         });
-        request.on('error', (error: Error) => {
-            winstonLogger.error('Request failed in HTTPS client: ' + error);
-            reject(error);
-        });
-        request.end();
+        request
+            .on('error', (error: Error) => {
+                request.abort();
+                winstonLogger.error('Request handling failed in HTTPS client: ' + error);
+                reject(error);
+            })
+            .on('timeout', () => {
+                request.abort();
+                winstonLogger.debug('Request timeout in HTTPS client: %s ms', options.timeout);
+            })
+            .end();
     });
 }

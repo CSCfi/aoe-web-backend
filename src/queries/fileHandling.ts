@@ -3,18 +3,19 @@ import AWS, { S3 } from 'aws-sdk';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { Request, Response, NextFunction } from 'express';
 import fs, { WriteStream } from 'fs';
-import httpsClient from '../resources/https-client';
 
 import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
-import { insertEducationalMaterialName, setLanguage } from './apiQueries';
+import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
+import env from '../configuration/environments';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import connection from '../resources/pg-connect';
+import { requestRedirected } from '../services/streaming-service';
 import { winstonLogger } from '../util';
 
 // TODO: Remove legacy dependencies
@@ -152,7 +153,8 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                         }
                         const file = (<any>req).file;
                         const resp: any = {};
-// send educationalmaterialid if no file send for link material creation.
+
+                        // Send educationalmaterialid if no file send for link material creation.
                         if (!file) {
                             await db.tx(async (t: any) => {
                                 const id = await insertDataToEducationalMaterialTable(req, t);
@@ -735,39 +737,6 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
     }
 }
 
-const STREAM_REDIRECT_CRITERIA = {
-    mimeTypeArr: [
-        'video/mp4'
-    ] as string[],
-    minFileSize: parseInt(process.env.STREAM_FILESIZE_MIN, 10) as number,
-    redirectUri: process.env.STREAM_REDIRECT_URI as string
-};
-
-const requestRedirected = async (fileDetails: { originalfilename: string, filesize: number, mimetype: string }): Promise<boolean> => {
-    const criteriaFulfilled: boolean = fileDetails.filesize >= STREAM_REDIRECT_CRITERIA.minFileSize &&
-        STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
-    const streamingOperable: boolean = await streamingStatusCheck();
-    return criteriaFulfilled && streamingOperable;
-};
-
-const streamingStatusCheck = (): Promise<boolean> => {
-    return httpsClient({
-        headers: {
-            'accept': 'application/json',
-            'cache-control': 'no-cache'
-        },
-        host: process.env.STREAM_STATUS_HOST as string,
-        method: 'GET',
-        path: process.env.STREAM_STATUS_PATH as string
-    }).then(({ statusCode, data }) => {
-        winstonLogger.debug('Streaming status: %s %s', statusCode, JSON.stringify(data));
-        return statusCode === 200 && data.operable;
-    }, (error) => {
-        winstonLogger.error('Streaming status check not passed: ' + error);
-        return false;
-    });
-}
-
 /**
  * Get file details from the database before proceeding to the file download from the cloud object storage.
  * TODO: Function chain and related leagcy code should be refactored and simplified.
@@ -795,15 +764,15 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
                 // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
-            winstonLogger.debug('Response for file metadata request in downloadFileFromStorage(): ' + JSON.stringify(fileDetails));
 
             if (!fileDetails) {
                 next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
             } else {
                 // Check if the criteria for streaming service redirect are fulfilled
+                // src/services/streaming-service: requestRedirected()
                 if (await requestRedirected(fileDetails)) {
                     res.status(302).set({
-                        'Location': STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
+                        'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
                     });
                     return resolve();
                 }
