@@ -31,7 +31,7 @@ export const streamingStatusCheck = (fileStorageId: string): Promise<boolean> =>
         host: process.env.STREAM_STATUS_HOST as string,
         method: 'HEAD',
         path: process.env.STREAM_STATUS_PATH as string + fileStorageId,
-        timeout: 2000
+        timeout: 1000
     }).then(({ statusCode }) => {
         winstonLogger.debug('Streaming service status: %s', statusCode);
         return statusCode === 200;
