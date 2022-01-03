@@ -762,17 +762,17 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 "WHERE filekey = $1 AND obsoleted = 0";
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
-                await db.oneOrNone(query, [fileName]);
-                // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
+                // await db.oneOrNone(query, [fileName]);
+                { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
 
             if (!fileDetails) {
                 next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
             } else {
                 // Check if the criteria for streaming service redirect are fulfilled
                 // src/services/streaming-service: requestRedirected()
-                if (await requestRedirected(fileDetails)) {
+                if (await requestRedirected(fileDetails, fileName)) {
                     res.status(302).set({
-                        'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + req.params.filename
+                        'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName
                     });
                     return resolve();
                 }
