@@ -768,9 +768,8 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             if (!fileDetails) {
                 next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
             } else {
-                // Check if the criteria for streaming service redirect are fulfilled
-                // src/services/streaming-service: requestRedirected()
-                if (await requestRedirected(fileDetails, fileName)) {
+                // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
+                if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
                     res.status(302).set({
                         'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName
                     });
