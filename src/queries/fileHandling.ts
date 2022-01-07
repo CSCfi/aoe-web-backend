@@ -739,7 +739,9 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
 
 /**
  * Get file details from the database before proceeding to the file download from the cloud object storage.
- * TODO: Function chain and related leagcy code should be refactored and simplified.
+ * In case of video streaming request can be redirected to the streaming service when all criteria are fulfilled.
+ *
+ * TODO: Function chain and related leagcy code should be refactored and simplified in both directions.
  *
  * @param req   express.Request
  * @param res   express.Response

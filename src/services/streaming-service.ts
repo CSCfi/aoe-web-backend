@@ -26,11 +26,11 @@ export const requestRedirected = async (fileDetails: { originalfilename: string,
 export const streamingStatusCheck = (fileStorageId: string): Promise<boolean> => {
     return httpsClient({
         headers: {
-            'cache-control': 'no-cache'
+            'Cache-Control': 'no-cache'
         },
-        host: process.env.STREAM_STATUS_HOST as string,
+        host: env.STREAM_STATUS_REQUEST.host as string,
         method: 'HEAD',
-        path: process.env.STREAM_STATUS_PATH as string + fileStorageId,
+        path: env.STREAM_STATUS_REQUEST.path as string + fileStorageId,
         timeout: 1000
     }).then(({ statusCode }) => {
         winstonLogger.debug('Streaming service status: %s', statusCode);

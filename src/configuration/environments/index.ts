@@ -9,5 +9,11 @@ export default {
         ] as string[],
         minFileSize: parseInt(process.env.STREAM_FILESIZE_MIN, 10) as number,
         redirectUri: process.env.STREAM_REDIRECT_URI as string
+    },
+
+    // Streaming status request
+    STREAM_STATUS_REQUEST: {
+        host: process.env.STREAM_STATUS_HOST as string,
+        path: process.env.STREAM_STATUS_PATH as string
     }
 }
