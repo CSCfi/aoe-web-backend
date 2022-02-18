@@ -215,7 +215,12 @@ export const elasticSearchQuery = async (req: Request, res: Response, next: Next
             "size": size,
             "body": body
         };
-        winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
+
+        // Temporarily kept console logging for deprecated implementation of search request statistics collection.
+        // TODO: To be removed
+        console.log('Elasticsearch query: ' + JSON.stringify(query));
+        // winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
+
         const result: ApiResponse<SearchResponse<Source>> = await client.search(query);
         const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
         res.status(200).json(responseBody);
