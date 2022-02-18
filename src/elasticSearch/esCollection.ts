@@ -52,10 +52,7 @@ export async function collectionFromEs(obj: any) {
                     "size" : size,
                     "body" : body};
 
-        // Temporarily kept console logging for deprecated implementation of search request statistics collection.
-        // TODO: To be removed
-        console.log('Elasticsearch query: ' + JSON.stringify(query));
-        // winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
+        winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
 
         const result: ApiResponse<SearchResponse<AoeCollectionResult>> = await client.search(query);
         const responseBody: AoeBody<AoeCollectionResult> = await aoeCollectionResponseMapper(result);
