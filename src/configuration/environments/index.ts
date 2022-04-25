@@ -5,6 +5,9 @@ export default {
     // Streaming redirect criteria
     STREAM_REDIRECT_CRITERIA: {
         mimeTypeArr: [
+            'audio/mp4',
+            'audio/mpeg',
+            'audio/x-m4a',
             'video/mp4'
         ] as string[],
         minFileSize: parseInt(process.env.STREAM_FILESIZE_MIN, 10) as number,
