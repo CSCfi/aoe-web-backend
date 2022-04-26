@@ -55,7 +55,10 @@ apiV1(router);
 router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
 router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
 router.post('/elasticSearch/collection/search', esCollection.getCollectionEsData);
+
+// TODO: To be removed
 router.post('/elasticSearch/search', es.elasticSearchQuery);
+
 router.get('/h5p/content/:id/:file(*)', getH5PContent);
 router.get('/h5p/play/:contentid', h5p.play);
 router.post('/logout', ah.logout);
