@@ -14,6 +14,6 @@ import { elasticSearchQuery } from '../../elasticSearch/esQueries';
 export default (router: Router) => {
 
     // Search for educational materials with criteria in the request body.
-    router.get('/search', elasticSearchQuery);
+    router.post('/search', elasticSearchQuery);
 
 }
