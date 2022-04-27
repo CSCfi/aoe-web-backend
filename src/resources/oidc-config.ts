@@ -85,6 +85,7 @@ export const authInit = (app: Express): void => {
         // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
     }
     custom.setHttpOptionsDefaults(httpOptions);
+
     app.use(passport.initialize());
     app.use(passport.session());
 
