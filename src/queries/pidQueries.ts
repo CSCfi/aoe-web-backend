@@ -1,8 +1,8 @@
-import connection from '../resources/pg-connect';
+import { rdbms } from '../resources';
 import { winstonLogger } from '../util';
 
-const pgp = connection.pgp;
-const db = connection.db;
+// const pgp = connection.pgp;
+const db = rdbms.db;
 
 export async function getEmptyUrns(limit: number) {
     try {

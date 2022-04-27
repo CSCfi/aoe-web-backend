@@ -1,8 +1,7 @@
-import connection from "../resources/pg-connect";
-import { IDatabase } from 'pg-promise';
+import { rdbms } from '../resources';
 
-const pgp = connection.pgp;
-const db = connection.db;
+// const pgp = rdbms.pgp;
+const db = rdbms.db;
 
 export async function updateViewCounter(id: string) {
     try {

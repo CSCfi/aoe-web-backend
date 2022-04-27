@@ -1,5 +1,5 @@
 import env from '../configuration/environments';
-import httpsClient from '../resources/https-client';
+import { httpsClient } from '../resources';
 import { winstonLogger } from '../util';
 
 /**

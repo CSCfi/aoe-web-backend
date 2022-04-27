@@ -1,10 +1,10 @@
+import { getPopularityQuery } from "./../queries/analyticsQueries";
 import { aoeThumbnailDownloadUrl } from "./../services/urlService";
 import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollectionDataToUpdate } from "./esCollection";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { Request, Response, NextFunction } from "express";
 import { AoeBody, AoeCollectionResult } from "./esTypes";
-import { getPopularityQuery } from "./../queries/analyticsQueries";
-import connection from "../resources/pg-connect";
+import { rdbms } from '../resources';
 import { winstonLogger } from '../util';
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
@@ -18,8 +18,8 @@ export namespace Es {
     export const ESCounterUpdated = {value : new Date()};
     export const CollectionEsUpdated = {value : new Date()};
 }
-const pgp = connection.pgp;
-const db = connection.db;
+const pgp = rdbms.pgp;
+const db = rdbms.db;
 const TransactionMode = pgp.txMode.TransactionMode;
 const isolationLevel = pgp.txMode.isolationLevel;
 

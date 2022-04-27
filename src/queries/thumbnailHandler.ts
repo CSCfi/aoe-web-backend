@@ -2,12 +2,12 @@ import { ErrorHandler } from '../helpers/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import fh, { downloadFromStorage } from './fileHandling';
 import mime from 'mime';
-import connection from '../resources/pg-connect';
 import { IDatabase } from 'pg-promise';
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
 // Database connection
-const db: IDatabase<any> = connection.db;
+const db: IDatabase<any> = rdbms.db;
 
 /**
  * @param req

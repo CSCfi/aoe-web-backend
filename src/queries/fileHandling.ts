@@ -14,9 +14,9 @@ import { hasAccesstoPublication } from '../services/authService';
 import env from '../configuration/environments';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
-import connection from '../resources/pg-connect';
 import { requestRedirected } from '../services/streaming-service';
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -48,7 +48,7 @@ const upload = multer({
     "preservePath": true
 }); // provide the return value from
 // Database connection
-const db = connection.db;
+const db = rdbms.db;
 
 /**
  *

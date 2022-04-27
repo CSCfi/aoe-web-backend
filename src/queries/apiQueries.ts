@@ -6,12 +6,12 @@ import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
-import connection from "../resources/pg-connect";
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
 const fh = require("./fileHandling");
-const pgp = connection.pgp;
-const db = connection.db;
+const pgp = rdbms.pgp;
+const db = rdbms.db;
 const elasticSearch = require("./../elasticSearch/es");
 
 export async function addLinkToMaterial(req: Request, res: Response, next: NextFunction) {
