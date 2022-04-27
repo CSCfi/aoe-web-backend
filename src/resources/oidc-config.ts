@@ -19,7 +19,7 @@ const Strategy = openidClient.Strategy;
 passport.serializeUser((user, done) => {
     done(undefined, user);
 });
-passport.deserializeUser((userinfo: any, done) => {
+passport.deserializeUser((userinfo: Record<string, unknown>, done) => {
     done(undefined, {user: userinfo.id});
 });
 Issuer.discover(process.env.PROXY_URI || '')
@@ -32,7 +32,7 @@ Issuer.discover(process.env.PROXY_URI || '')
         });
         passport.use(
             'oidc',
-            new Strategy({client}, (tokenset: any, userinfo: any, done: any) => {
+            new Strategy({client}, (tokenset: any, userinfo: Record<string, unknown>, done: any) => {
                 if (tokenset.claims().acr == process.env.SUOMIACR) {
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
@@ -47,7 +47,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
                             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.eppn, name: nameparsed});
+                            return done(undefined, {uid: userinfo.sub, name: nameparsed}); // userinfo.eppn
                         })
                         .catch((err: Error) => {
                             winstonLogger.error(err);
@@ -57,7 +57,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
                             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
+                            return done(undefined, {uid: userinfo.sub, name: nameparsed}); // userinfo.mpass_uid
                         })
                         .catch((err: Error) => {
                             winstonLogger.error(err);

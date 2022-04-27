@@ -63,8 +63,8 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-app.use(bodyParser.json({limit: '1mb'}));
-app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
 app.use('/', [apiRouterV1, apiRouterRoot]);
 app.use('/v2/', apiRouterV2);

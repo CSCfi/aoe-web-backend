@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 import { winstonLogger } from '../util';
 import { rdbms } from '../resources';
 
@@ -49,24 +49,26 @@ export async function hasAccesstoPublication(id: number, req: Request): Promise<
     }
 }
 
-export async function InsertUserToDatabase(userinfo: any, acr: string): Promise<any> {
+export const InsertUserToDatabase = async (userinfo: Record<string, unknown>, acr: string): Promise<any> => {
+    winstonLogger.debug('Userinfo at InsertUserToDatabase(): %s', JSON.stringify(userinfo));
     try {
-        winstonLogger.debug("The userinfo in function at authservice: " + userinfo);
         let uid: string;
         if (acr == process.env.SUOMIACR) {
-            uid = userinfo["sub"];
+            uid = userinfo['sub'] as string;
         } else if (acr == process.env.HAKAACR) {
-            uid = userinfo["eppn"];
+            uid = userinfo['sub'] as string; // userinfo['eppn']
         } else if (acr == process.env.MPASSACR) {
-            uid = userinfo["mpass_uid"];
+            uid = userinfo['sub'] as string; // userinfo['mpass_uid']
         } else {
             throw new Error("Unknown authentication method");
         }
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
         const data = await db.oneOrNone(query, [uid]);
         if (!data.exists) {
-            const query = "insert into users (firstname , lastname, username, preferredlanguage,preferredtargetname,preferredalignmenttype )values ($1,$2,$3,'fi','','');";
-            await db.none(query, [userinfo["given_name"], userinfo["family_name"], uid]);
+            const query = "INSERT INTO users " +
+                "(firstname, lastname, username, preferredlanguage, preferredtargetname, preferredalignmenttype) " +
+                "VALUES ($1, $2, $3, 'fi', '', '')";
+            await db.none(query, [userinfo['given_name'], userinfo['family_name'], uid]);
         }
     } catch (e) {
         winstonLogger.error('Error in InsertUserToDatabase(): ' + e);

@@ -1,9 +1,12 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import app from './app';
 import consoleStamp from 'console-stamp';
 import errorHandler from 'errorhandler';
-import app from './app';
+import fs from 'fs';
+import https from 'https';
+import { Server } from 'net';
 import { winstonLogger } from './util';
 
 /**
@@ -21,9 +24,24 @@ app.use(errorHandler());
 /**
  * Start Express server.
  */
-const server = app.listen(process.env.PORT || 3000, () => {
-    winstonLogger.debug('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
-});
+let server: Server;
+
+/**
+ * HTTPS server for the localhost develeopment.
+ */
+if (process.env.NODE_ENV === 'localhost') {
+    const options = {
+        key: fs.readFileSync('./cert/cert.key'),
+        cert: fs.readFileSync('./cert/cert.crt'),
+    };
+    server = https.createServer(options, app).listen(3000, () => {
+        winstonLogger.info('App is running at https://localhost:%d in %s mode', app.get('port'), app.get('env'));
+    });
+} else {
+    server = app.listen(process.env.PORT || 3000, () => {
+        winstonLogger.info('App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
+    });
+}
 
 /**
  * Socket timeout and event handler logging (disabled)
