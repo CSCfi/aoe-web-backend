@@ -1,6 +1,9 @@
 // const nodemailer = require("nodemailer");
 import { Request, Response, NextFunction } from "express";
-import { createTransport, createTestAccount } from "nodemailer";
+import { createTransport } from "nodemailer";
+import { rdbms } from '../resources';
+import { sign, verify } from "jsonwebtoken";
+import { winstonLogger } from '../util';
 
 // import { ErrorHandler } from "./../helpers/errorHandler";
 // const pgp = rdbms.pgp;
@@ -13,8 +16,6 @@ const transporter = createTransport({
         user: process.env.EMAIL_USER
     }
     });
-
-
 
 export async function sendExpirationMail() {
     const mailOptions = {
@@ -111,10 +112,6 @@ export async function updateVerifiedEmail(user: string) {
         throw new Error(error);
     }
   }
-
-import { sign, verify } from "jsonwebtoken";
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
 
 export async function sendVerificationEmail(user: string, email: string) {
     const jwtSecret = process.env.JWT_SECRET;

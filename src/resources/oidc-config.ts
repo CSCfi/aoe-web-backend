@@ -10,17 +10,6 @@ import { isLoginEnabled } from '../services/routeEnablerService';
 import { winstonLogger } from '../util';
 import uuid from 'uuid/v4';
 
-/**
- * Configuration for OpenID Connect Session Managament
- */
-const RedisStore = connectRedis(session);
-const httpOptions: HttpOptions = {
-    timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
-    retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
-    // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
-}
-custom.setHttpOptionsDefaults(httpOptions);
-
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
 
@@ -90,6 +79,12 @@ Issuer.discover(process.env.PROXY_URI || '')
  * @param app Express
  */
 export const authInit = (app: Express): void => {
+    const httpOptions: HttpOptions = {
+        timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
+        retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
+        // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
+    }
+    custom.setHttpOptionsDefaults(httpOptions);
     app.use(passport.initialize());
     app.use(passport.session());
 
@@ -119,6 +114,8 @@ export const authInit = (app: Express): void => {
  * @param app Express
  */
 export const sessionInit = (app: Express): void => {
+    const RedisStore = connectRedis(session);
+
     app.use(
         session({
             genid: () => {
