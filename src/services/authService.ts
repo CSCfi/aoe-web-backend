@@ -52,13 +52,14 @@ export async function hasAccesstoPublication(id: number, req: Request): Promise<
 export const InsertUserToDatabase = async (userinfo: Record<string, unknown>, acr: string): Promise<any> => {
     winstonLogger.debug('Userinfo at InsertUserToDatabase(): %s', JSON.stringify(userinfo));
     try {
+        // const uid: string = userinfo['uid'] as string;
         let uid: string;
         if (acr == process.env.SUOMIACR) {
             uid = userinfo['sub'] as string;
         } else if (acr == process.env.HAKAACR) {
-            uid = userinfo['sub'] as string; // userinfo['eppn']
+            uid = userinfo['eppn'] as string; // userinfo['eppn']
         } else if (acr == process.env.MPASSACR) {
-            uid = userinfo['sub'] as string; // userinfo['mpass_uid']
+            uid = userinfo['mpass_uid'] as string; // userinfo['mpass_uid']
         } else {
             throw new Error("Unknown authentication method");
         }
