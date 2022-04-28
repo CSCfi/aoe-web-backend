@@ -19,25 +19,25 @@ const Strategy = openidClient.Strategy;
 passport.serializeUser((user, done) => {
     done(undefined, user);
 });
-passport.deserializeUser((userinfo: any, done) => {
-    done(undefined, {user: userinfo.id});
+passport.deserializeUser((userinfo: Record<string, unknown>, done) => {
+    done(undefined, { user: userinfo.id });
 });
 Issuer.discover(process.env.PROXY_URI || '')
-    .then((testIssuer: InstanceType<typeof Issuer>) => {
-        const client = new testIssuer.Client({
-            client_id: process.env.CLIENT_ID || '',
+    .then((oidcIssuer: InstanceType<typeof Issuer>) => {
+        const client = new oidcIssuer.Client({
+            client_id: process.env.CLIENT_ID,
             client_secret: process.env.CLIENT_SECRET,
             redirect_uri: process.env.REDIRECT_URI,
             response_type: 'code',
         });
         passport.use(
             'oidc',
-            new Strategy({client}, (tokenset: any, userinfo: any, done: any) => {
+            new Strategy({ client }, (tokenset: any, userinfo: Record<string, unknown>, done: any) => {
                 if (tokenset.claims().acr == process.env.SUOMIACR) {
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
                             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.sub, name: nameparsed});
+                            return done(undefined, { uid: userinfo.sub, name: nameparsed }); // userinfo.sub
                         })
                         .catch((err: Error) => {
                             winstonLogger.error(err);
@@ -47,7 +47,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
                             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.eppn, name: nameparsed});
+                            return done(undefined, { uid: userinfo.eppn, name: nameparsed }); // userinfo.eppn
                         })
                         .catch((err: Error) => {
                             winstonLogger.error(err);
@@ -57,7 +57,7 @@ Issuer.discover(process.env.PROXY_URI || '')
                     ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
                         .then(() => {
                             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
+                            return done(undefined, { uid: userinfo.mpass_uid, name: nameparsed }); // userinfo.mpass_uid
                         })
                         .catch((err: Error) => {
                             winstonLogger.error(err);
@@ -83,7 +83,7 @@ export const authInit = (app: Express): void => {
         timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
         retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
         // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
-    }
+    };
     custom.setHttpOptionsDefaults(httpOptions);
 
     app.use(passport.initialize());
@@ -108,7 +108,7 @@ export const authInit = (app: Express): void => {
             successRedirect: process.env.SUCCESS_REDIRECT_URI,
         }),
     );
-}
+};
 
 /**
  * Initialize session management and attach to Express application.
@@ -122,7 +122,7 @@ export const sessionInit = (app: Express): void => {
             genid: () => {
                 return uuid(); // use UUIDs for session IDs
             },
-            store: new RedisStore({client: redisClient}),
+            store: new RedisStore({ client: redisClient }),
             resave: false,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
@@ -132,9 +132,9 @@ export const sessionInit = (app: Express): void => {
             },
         }),
     );
-}
+};
 
 export default {
     authInit,
     sessionInit
-}
+};
