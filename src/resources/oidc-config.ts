@@ -1,6 +1,5 @@
 import ah from '../services/authService';
 import connectRedis from 'connect-redis';
-import { ErrorHandler } from '../helpers/errorHandler';
 import { Express, NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import openidClient, { custom, HttpOptions } from 'openid-client';
@@ -33,40 +32,15 @@ Issuer.discover(process.env.PROXY_URI || '')
         passport.use(
             'oidc',
             new Strategy({ client }, (tokenset: any, userinfo: Record<string, unknown>, done: any) => {
-                if (tokenset.claims().acr == process.env.SUOMIACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, { uid: userinfo.sub, name: nameparsed }); // userinfo.sub
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error when inserting suomi.fi information to database ', undefined);
-                        });
-                } else if (tokenset.claims().acr == process.env.HAKAACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, { uid: userinfo.eppn, name: nameparsed }); // userinfo.eppn
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error', undefined);
-                        });
-                } else if (tokenset.claims().acr == process.env.MPASSACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, { uid: userinfo.mpass_uid, name: nameparsed }); // userinfo.mpass_uid
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error', undefined);
-                        });
-                } else {
-                    winstonLogger.error('Unknown authentication method: ' + tokenset.claims().acr);
-                    throw new ErrorHandler(400, 'Unknown authentication method');
-                }
+                ah.InsertUserToDatabase(userinfo)
+                    .then(() => {
+                        const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
+                        return done(undefined, { uid: userinfo.uid, name: nameparsed });
+                    })
+                    .catch((err: Error) => {
+                        winstonLogger.error('Saving user information failed: %s', err);
+                        return done('Saving user information failed', undefined);
+                    });
             }),
         );
     })
