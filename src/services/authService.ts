@@ -49,20 +49,10 @@ export async function hasAccesstoPublication(id: number, req: Request): Promise<
     }
 }
 
-export const InsertUserToDatabase = async (userinfo: Record<string, unknown>, acr: string): Promise<any> => {
+export const InsertUserToDatabase = async (userinfo: Record<string, unknown>): Promise<any> => {
     winstonLogger.debug('Userinfo at InsertUserToDatabase(): %s', JSON.stringify(userinfo));
     try {
-        // const uid: string = userinfo['uid'] as string;
-        let uid: string;
-        if (acr == process.env.SUOMIACR) {
-            uid = userinfo['sub'] as string;
-        } else if (acr == process.env.HAKAACR) {
-            uid = userinfo['eppn'] as string; // userinfo['eppn']
-        } else if (acr == process.env.MPASSACR) {
-            uid = userinfo['mpass_uid'] as string; // userinfo['mpass_uid']
-        } else {
-            throw new Error("Unknown authentication method");
-        }
+        const uid: string = userinfo['uid'] as string;
         const query = "SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)";
         const data = await db.oneOrNone(query, [uid]);
         if (!data.exists) {
