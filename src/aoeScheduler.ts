@@ -1,53 +1,89 @@
 import { winstonLogger } from './util';
+import fh from './queries/fileHandling';
+import { scheduleJob } from 'node-schedule';
+import { rmDir } from './helpers/fileRemover';
+import { updateEsDocument } from './elasticSearch/es';
+import { sendExpirationMail, sendRatingNotificationMail } from './services/mailService';
+import { officeFilesToAllasAsPdf } from './helpers/officeToPdfConverter';
+import { pidResolutionService } from './services';
 
-const fh = require("./queries/fileHandling");
-import { scheduleJob } from "node-schedule";
-import { rmDir } from "./helpers/fileRemover";
-import { updateEsDocument } from "./elasticSearch/es";
-import { sendExpirationMail, sendRatingNotificationMail } from "./services/mailService";
-import { officeFilesToAllasAsPdf } from "./helpers/officeToPdfConverter";
-import { getEmPids } from "./pid/pidService";
+// 4:00 AM: scheduled directory cleaning tasks.
+export const startScheduledCleaning = (): void => {
+    const dirCleaningScheduler = scheduleJob('0 0 4 * * *', async () => {
 
-
-// schedule job to start 4.00 server time
-scheduleJob("0 0 4 * * *", function() {
-    winstonLogger.debug("Removing files from html folder: " + process.env.HTMLFOLDER);
-    rmDir(process.env.HTMLFOLDER, false);
-    rmDir(process.env.H5PFOLDER + "/content", false);
-    rmDir(process.env.H5PFOLDER + "/libraries", false);
-    rmDir(process.env.H5PFOLDER + "/temporary-storage", false);
-    updateEsDocument(true);
-// get pids for educational material where pid is null
-    try {
-        if (Number(process.env.PID_SERVICE_ENABLED) === 1 && Number(process.env.PID_SERVICE_RUN_SCHEDULED) === 1) {
-            winstonLogger.debug("START GET EM URN");
-            getEmPids();
+        // Remove temporary content from the resource directories (H5P, HTML).
+        try {
+            rmDir(process.env.HTMLFOLDER, false);
+            rmDir(process.env.H5PFOLDER + '/content', false);
+            rmDir(process.env.H5PFOLDER + '/libraries', false);
+            rmDir(process.env.H5PFOLDER + '/temporary-storage', false);
+            winstonLogger.debug('Scheduled removal for temporary H5P and HTML content completed.');
+        } catch (error) {
+            winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: ' + error);
+            dirCleaningScheduler.cancel();
         }
-    }
-    catch (error) {
-        winstonLogger.error(error);
-    }
-});
-scheduleJob("0 0 10 * * *", function() {
-    try {
-        sendRatingNotificationMail();
-        sendExpirationMail();
-    }
-    catch (error) {
-        winstonLogger.error(error);
-    }
-});
+    });
+    winstonLogger.info('Scheduled job active for directory cleaning at 4:00 AM [%o]', dirCleaningScheduler);
+}
 
+// 4:15 AM: scheduled PID (Permanent Identifiers) registration for recently published educational materials.
+export const startScheduledRegistrationForPIDs = (): void => {
+    const pidRegisterScheduler = scheduleJob('0 14 4 * * *', async () => {
+        try {
+            if (parseInt(process.env.PID_SERVICE_ENABLED, 10) as number === 1 &&
+                parseInt(process.env.PID_SERVICE_RUN_SCHEDULED, 10) as number === 1) {
+                await pidResolutionService.processEntriesWithoutPID();
+                winstonLogger.debug('Scheduled PID registration for recently published educational materials completed.');
+            }
+        } catch (error) {
+            winstonLogger.error('Scheduled PID registration for recently published educational materials failed: ' + error);
+            pidRegisterScheduler.cancel();
+        }
+    });
+    winstonLogger.info('Scheduled job active for PID registration at 4:15 AM [%o]', pidRegisterScheduler);
+}
+
+// 4:30 AM: scheduled search index update.
+export const startScheduledSearchIndexUpdate = (): void => {
+    const searchUpdateScheduler = scheduleJob('0 29 4 * * *', async () => {
+
+        // Update search engine index with recent changes.
+        await updateEsDocument(true);
+        winstonLogger.debug('Scheduled index update for the search engine completed.');
+    });
+    winstonLogger.info('Scheduled job active for search index update at 4:30 AM [%o]', searchUpdateScheduler);
+}
+
+
+/**
+ * TODO: To be refactored
+ */
+scheduleJob('0 0 10 * * *', async () => {
+    try {
+        await sendRatingNotificationMail();
+        await sendExpirationMail();
+    } catch (error) {
+        winstonLogger.error(error);
+    }
+});
 setInterval(() => fh.checkTemporaryRecordQueue(), 3600000);
 setInterval(() => fh.checkTemporaryAttachmentQueue(), 3600000);
 const officeToPdf = Number(process.env.RUN_OFFICE_TO_PDF);
 if (officeToPdf === 1) {
+
     // wait 10 seconds before start
     const sleep = ms => {
         return new Promise(resolve => setTimeout(resolve, ms));
     };
     sleep(10000).then(() => {
-        winstonLogger.debug("Start officeFilesToAllasAsPdf");
-        officeFilesToAllasAsPdf();
+        winstonLogger.debug('Start officeFilesToAllasAsPdf');
+        officeFilesToAllasAsPdf().then();
     });
+}
+
+
+export default {
+    startScheduledCleaning,
+    startScheduledRegistrationForPIDs,
+    startScheduledSearchIndexUpdate,
 }

@@ -1,10 +1,9 @@
-import { Request, Response, NextFunction } from "express";
-import { ErrorHandler } from "./../helpers/errorHandler";
-import { updateMaterial, insertUrn } from "./../queries/apiQueries";
-import { updateEsDocument } from "./../elasticSearch/es";
-import { aoeMaterialVersionUrl } from "./../services/urlService";
-import { getPid } from "./../pid/pidService";
-import { EnumStringMember } from "@babel/types";
+import { Request, Response, NextFunction } from 'express';
+import { ErrorHandler } from '../helpers/errorHandler';
+import { updateMaterial, updateEduMaterialVersionURN } from '../queries/apiQueries';
+import { updateEsDocument } from '../elasticSearch/es';
+import { getEduMaterialVersionURL } from '../services/urlService';
+import { pidResolutionService } from '../services';
 import { winstonLogger } from '../util';
 
 export interface EducationalMaterialMetadata {
@@ -156,9 +155,9 @@ export async function updateEducationalMaterialMetadata(req: Request, res: Respo
             if (Number(process.env.PID_SERVICE_ENABLED) === 1 && eduMaterial[1] && eduMaterial[1].publishedat) {
                 // try to get pid if new version
                 try {
-                    const aoeurl = await aoeMaterialVersionUrl(emid, eduMaterial[1].publishedat);
-                    const pidurn = await getPid(aoeurl);
-                    await insertUrn(emid, eduMaterial[1].publishedat, pidurn);
+                    const aoeurl = await getEduMaterialVersionURL(emid, eduMaterial[1].publishedat);
+                    const pidurn = await pidResolutionService.registerPID(aoeurl);
+                    await updateEduMaterialVersionURN(emid, eduMaterial[1].publishedat, pidurn);
                 } catch (error) {
                     winstonLogger.debug("Cannot get Pid from " + emid, eduMaterial[1].publishedat);
                     winstonLogger.error(error);

@@ -1,4 +1,9 @@
 import bodyParser from 'body-parser';
+import {
+    startScheduledCleaning,
+    startScheduledRegistrationForPIDs,
+    startScheduledSearchIndexUpdate
+} from './aoeScheduler';
 import apiRoot from './api/routes-root';
 import apiV2 from './api/routes-v2';
 import express, { Router } from 'express';
@@ -27,7 +32,6 @@ apiV2(apiRouterV2);
 
 // Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
 app.set('trust proxy', '127.0.0.1');
-
 app.use(cookieParser());
 app.use(compression());
 app.use(flash());
@@ -79,6 +83,13 @@ app.set('views', './views');
 app.set('view engine', 'pug');
 
 app.set('port', 3000);
+
+// TODO: To be removed
 require('./aoeScheduler');
+
+// Start scheduled maintenance processes
+startScheduledCleaning();
+startScheduledRegistrationForPIDs();
+startScheduledSearchIndexUpdate();
 
 export default app;

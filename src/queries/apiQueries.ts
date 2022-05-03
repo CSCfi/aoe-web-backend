@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { aoeThumbnailDownloadUrl, aoeMaterialVersionUrl } from "./../services/urlService";
+import { aoeThumbnailDownloadUrl, getEduMaterialVersionURL } from "./../services/urlService";
 import { hasDownloadableFiles } from "./../elasticSearch/esQueries";
 import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter";
 import { hasAccesstoPublication } from "./../services/authService";
@@ -1136,13 +1136,14 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         });
 }
 
-export async function insertUrn(id: string, publishedat: string, urn: string) {
+export const updateEduMaterialVersionURN = async (id: string, publishedat: string, urn: string): Promise<void> => {
     try {
-        const query = "UPDATE educationalmaterialversion SET urn = $3 " +
+        const query = "UPDATE educationalmaterialversion " +
+            "SET urn = $3 " +
             "WHERE educationalmaterialid = $1 AND publishedat = $2";
         await db.none(query, [id, publishedat, urn]);
     } catch (error) {
-        winstonLogger.error(error);
+        winstonLogger.error('Update for educational material version failed in updateEduMaterialVersionURN(): ' + error);
         throw new Error(error);
     }
 }
@@ -1482,7 +1483,7 @@ export default {
     insertDataToDescription,
     insertEducationalMaterialName,
     updateMaterial,
-    insertUrn,
+    insertUrn: updateEduMaterialVersionURN,
     createUser,
     updateUser,
     updateTermsOfUsage,
