@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import rdbms from '../resources/pg-connect';
 
 const db = rdbms.db;
 
