@@ -23,7 +23,7 @@ export const startScheduledCleaning = (): void => {
             dirCleaningScheduler.cancel();
         }
     });
-    winstonLogger.info('Scheduled job active for directory cleaning at 4:00 AM [%o]', dirCleaningScheduler);
+    winstonLogger.info('Scheduled job active for directory cleaning at 4:00 AM');
 }
 
 // 4:15 AM: scheduled PID (Permanent Identifiers) registration for recently published educational materials.
@@ -40,7 +40,7 @@ export const startScheduledRegistrationForPIDs = (): void => {
             pidRegisterScheduler.cancel();
         }
     });
-    winstonLogger.info('Scheduled job active for PID registration at 4:15 AM [%o]', pidRegisterScheduler);
+    winstonLogger.info('Scheduled job active for PID registration at 4:15 AM');
 }
 
 // 4:30 AM: scheduled search index update.
@@ -51,7 +51,7 @@ export const startScheduledSearchIndexUpdate = (): void => {
         await updateEsDocument(true);
         winstonLogger.debug('Scheduled index update for the search engine completed.');
     });
-    winstonLogger.info('Scheduled job active for search index update at 4:30 AM [%o]', searchUpdateScheduler);
+    winstonLogger.info('Scheduled job active for search index update at 4:30 AM');
 }
 
 
