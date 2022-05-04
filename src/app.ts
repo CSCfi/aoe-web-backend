@@ -13,7 +13,7 @@ import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxR
 import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
 import apiRouterV1 from './routes/routes';
-import { aoeScheduler, morganHttpLogger } from './util';
+import { aoeScheduler, morganLogger } from './util';
 
 const app = express();
 
@@ -30,7 +30,7 @@ app.set('trust proxy', '127.0.0.1');
 app.use(cookieParser());
 app.use(compression());
 app.use(flash());
-app.use(morganHttpLogger);
+app.use(morganLogger);
 
 // Initialize session management and OIDC authorization
 oidc.sessionInit(app);
