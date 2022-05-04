@@ -31,7 +31,8 @@ export const registerPID = async (url: string): Promise<any> => {
 }
 
 /**
- *
+ * Fetch recently published educational materials without a PID identifier and run the registration process to
+ * attach a permanent URN typed resource PID identifier (URL).
  */
 export const processEntriesWithoutPID = async (): Promise<void> => {
     try {
