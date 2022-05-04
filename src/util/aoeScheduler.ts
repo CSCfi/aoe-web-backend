@@ -19,7 +19,7 @@ export const startScheduledCleaning = (): void => {
             rmDir(process.env.H5PFOLDER + '/temporary-storage', false);
             winstonLogger.debug('Scheduled removal for temporary H5P and HTML content completed.');
         } catch (error) {
-            winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: ' + error);
+            winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: %o', error);
             await sendSystemNotification('Scheduled directory cleaning at 4:00 AM has failed and interrupted.');
             dirCleaningScheduler.cancel();
         }
@@ -37,7 +37,7 @@ export const startScheduledRegistrationForPIDs = (): void => {
                 winstonLogger.debug('Scheduled PID registration for recently published educational materials completed.');
             }
         } catch (error) {
-            winstonLogger.error('Scheduled PID registration for recently published educational materials failed: ' + error);
+            winstonLogger.error('Scheduled PID registration for recently published educational materials failed: %o', error);
             await sendSystemNotification('Scheduled PID registration at 4:15 AM has failed and interrupted.');
             pidRegisterScheduler.cancel();
         }
@@ -54,7 +54,7 @@ export const startScheduledSearchIndexUpdate = (): void => {
             await updateEsDocument(true);
             winstonLogger.debug('Scheduled index update for the search engine completed.');
         } catch (error) {
-            winstonLogger.error('Scheduled index update for the search engine failed: ' + error);
+            winstonLogger.error('Scheduled index update for the search engine failed: %o', error);
             await sendSystemNotification('Scheduled search index update at 4:30 AM has failed and interrupted.');
             searchUpdateScheduler.cancel();
         }
