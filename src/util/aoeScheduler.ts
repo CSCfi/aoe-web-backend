@@ -48,8 +48,13 @@ export const startScheduledSearchIndexUpdate = (): void => {
     const searchUpdateScheduler = scheduleJob('0 29 4 * * *', async () => {
 
         // Update search engine index with recent changes.
-        await updateEsDocument(true);
-        winstonLogger.debug('Scheduled index update for the search engine completed.');
+        try {
+            await updateEsDocument(true);
+            winstonLogger.debug('Scheduled index update for the search engine completed.');
+        } catch (error) {
+            winstonLogger.error('Scheduled index update for the search engine failed: ' + error);
+            searchUpdateScheduler.cancel();
+        }
     });
     winstonLogger.info('Scheduled job active for search index update at 4:30 AM');
 }
