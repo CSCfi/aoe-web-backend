@@ -1,21 +1,52 @@
-// const nodemailer = require("nodemailer");
-import { Request, Response, NextFunction } from "express";
-import { createTransport } from "nodemailer";
+import { Request, Response, NextFunction } from 'express';
+import { sign, verify } from 'jsonwebtoken';
+import Mail from 'nodemailer/lib/mailer';
+import { createTransport, Transporter } from 'nodemailer';
 import { rdbms } from '../resources';
-import { sign, verify } from "jsonwebtoken";
 import { winstonLogger } from '../util';
 
-// import { ErrorHandler } from "./../helpers/errorHandler";
-// const pgp = rdbms.pgp;
 const db = rdbms.db;
-const transporter = createTransport({
-    host: process.env.TRANSPORT_AUTH_HOST,
-    port: Number(process.env.TRANSPORT_PORT),
+
+/**
+ * Initialize Nodemailer Transporter
+ */
+const transporter: Transporter = createTransport({
+    host: process.env.TRANSPORT_AUTH_HOST as string,
+    port: parseInt(process.env.TRANSPORT_PORT, 10) as number,
     secure: false,
     auth: {
-        user: process.env.EMAIL_USER
+        user: process.env.TRANSPORT_AUTH_USER as string,
+    },
+});
+
+/**
+ * Send system notifications like state and error messages to the service mainteiners.
+ * @param content string Message to be sent as a system notification.
+ */
+export const sendSystemNotification = async (content: string): Promise<void> => {
+    const sender = 'oppimateriaalivaranto@csc.fi';
+    const recipient = 'oppimateriaalivaranto@csc.fi';
+    const subject = 'AOE System Notification';
+
+    // Plain text message to the 'text' field - HTML message to the 'html' field.
+    const mailOptions: Mail.Options = {
+        from: sender as string,
+        to: recipient as string,
+        subject: subject as string,
+        text: content as string,
+    };
+    try {
+        // If environment variable SEND_MAIL is true (1), not false (0).
+        if (parseInt(process.env.SEND_EMAIL, 10)) {
+            const info: Record<string, unknown> = await transporter.sendMail(mailOptions);
+            winstonLogger.debug('System email notification delivery completed: ' + info);
+        } else {
+            winstonLogger.info('System email notification not sent while email service is currently disabled');
+        }
+    } catch (error) {
+        winstonLogger.error('System email notification delivery failed: ' + error);
     }
-    });
+}
 
 export async function sendExpirationMail() {
     const mailOptions = {

@@ -3,7 +3,7 @@ import fh from '../queries/fileHandling';
 import { scheduleJob } from 'node-schedule';
 import { rmDir } from '../helpers/fileRemover';
 import { updateEsDocument } from '../elasticSearch/es';
-import { sendExpirationMail, sendRatingNotificationMail } from '../services/mailService';
+import { sendExpirationMail, sendRatingNotificationMail, sendSystemNotification } from '../services/mailService';
 import { officeFilesToAllasAsPdf } from '../helpers/officeToPdfConverter';
 import { pidResolutionService } from '../services';
 
@@ -20,6 +20,7 @@ export const startScheduledCleaning = (): void => {
             winstonLogger.debug('Scheduled removal for temporary H5P and HTML content completed.');
         } catch (error) {
             winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: ' + error);
+            await sendSystemNotification('Scheduled directory cleaning at 4:00 AM has failed and interrupted.');
             dirCleaningScheduler.cancel();
         }
     });
@@ -37,6 +38,7 @@ export const startScheduledRegistrationForPIDs = (): void => {
             }
         } catch (error) {
             winstonLogger.error('Scheduled PID registration for recently published educational materials failed: ' + error);
+            await sendSystemNotification('Scheduled PID registration at 4:15 AM has failed and interrupted.');
             pidRegisterScheduler.cancel();
         }
     });
@@ -53,6 +55,7 @@ export const startScheduledSearchIndexUpdate = (): void => {
             winstonLogger.debug('Scheduled index update for the search engine completed.');
         } catch (error) {
             winstonLogger.error('Scheduled index update for the search engine failed: ' + error);
+            await sendSystemNotification('Scheduled search index update at 4:30 AM has failed and interrupted.');
             searchUpdateScheduler.cancel();
         }
     });
