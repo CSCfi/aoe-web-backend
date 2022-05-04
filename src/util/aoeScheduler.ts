@@ -1,11 +1,11 @@
-import { winstonLogger } from './util';
-import fh from './queries/fileHandling';
+import { winstonLogger } from './index';
+import fh from '../queries/fileHandling';
 import { scheduleJob } from 'node-schedule';
-import { rmDir } from './helpers/fileRemover';
-import { updateEsDocument } from './elasticSearch/es';
-import { sendExpirationMail, sendRatingNotificationMail } from './services/mailService';
-import { officeFilesToAllasAsPdf } from './helpers/officeToPdfConverter';
-import { pidResolutionService } from './services';
+import { rmDir } from '../helpers/fileRemover';
+import { updateEsDocument } from '../elasticSearch/es';
+import { sendExpirationMail, sendRatingNotificationMail } from '../services/mailService';
+import { officeFilesToAllasAsPdf } from '../helpers/officeToPdfConverter';
+import { pidResolutionService } from '../services';
 
 // 4:00 AM: scheduled directory cleaning tasks.
 export const startScheduledCleaning = (): void => {

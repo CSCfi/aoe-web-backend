@@ -1,9 +1,4 @@
 import bodyParser from 'body-parser';
-import {
-    startScheduledCleaning,
-    startScheduledRegistrationForPIDs,
-    startScheduledSearchIndexUpdate
-} from './aoeScheduler';
 import apiRoot from './api/routes-root';
 import apiV2 from './api/routes-v2';
 import express, { Router } from 'express';
@@ -18,7 +13,7 @@ import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxR
 import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
 import apiRouterV1 from './routes/routes';
-import { morganHttpLogger } from './util';
+import { aoeScheduler, morganHttpLogger } from './util';
 
 const app = express();
 
@@ -84,12 +79,12 @@ app.set('view engine', 'pug');
 
 app.set('port', 3000);
 
-// TODO: To be removed
-require('./aoeScheduler');
+// TODO: To be removed after full refectoring of aoeScheduler.ts
+require('./util/aoeScheduler');
 
 // Start scheduled maintenance processes
-startScheduledCleaning();
-startScheduledRegistrationForPIDs();
-startScheduledSearchIndexUpdate();
+aoeScheduler.startScheduledCleaning();
+aoeScheduler.startScheduledRegistrationForPIDs();
+aoeScheduler.startScheduledSearchIndexUpdate();
 
 export default app;
