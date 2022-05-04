@@ -12,13 +12,13 @@ import { IRegisterPID } from './dto/IRegisterPID';
 export const registerPID = async (url: string): Promise<any> => {
     try {
         const pidRegistrationParams: IRegisterPID = {
-            apikey: process.env.PID_KEY as string,
             url: url as string,
             pid_type: 'URN',
             persist: '0',
         };
         const requestHeaders: Record<string, string> = {
             'Content-Type': 'application/json',
+            'apikey': process.env.PID_KEY as string,
         };
         const response: Record<string, unknown> = await axios.post(
             process.env.PID_SERVICE_URL as string,
