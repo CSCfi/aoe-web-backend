@@ -84,7 +84,7 @@ if (officeToPdf === 1) {
         return new Promise(resolve => setTimeout(resolve, ms));
     };
     sleep(10000).then(() => {
-        winstonLogger.debug('Start officeFilesToAllasAsPdf');
+        // winstonLogger.debug('Start officeFilesToAllasAsPdf');
         officeFilesToAllasAsPdf().then();
     });
 }

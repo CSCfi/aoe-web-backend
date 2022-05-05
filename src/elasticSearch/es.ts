@@ -135,7 +135,7 @@ export async function addMapping(index: string, fileLocation) {
             if (err) {
                 reject(new Error(err));
             } else {
-                winstonLogger.debug("ES mapping created: ", index, resp.body);
+                // winstonLogger.debug("ES mapping created: ", index, resp.body);
                 resolve({ "status": "success" });
             }
         });
@@ -250,13 +250,15 @@ export async function metadataToEs(offset: number, limit: number) {
                     q.popularity = response.popularity;
                 }
                 return q;
-            }).then(t.batch)
-                .catch((error: any) => {
-                    winstonLogger.error(error);
-                    return error;
-                });
-        }).then(async (data: any) => {
-            winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
+            })
+            .then(t.batch)
+            .catch((error: any) => {
+                winstonLogger.error(error);
+                return error;
+            });
+        })
+        .then(async (data: any) => {
+            // winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
             if (data.length > 0) {
                 const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
                 // winstonLogger.debug("THIS IS BODY:");
@@ -287,7 +289,8 @@ export async function metadataToEs(offset: number, limit: number) {
             } else {
                 resolve(data.length);
             }
-        }).catch(error => {
+        })
+        .catch(error => {
             winstonLogger.error(error);
             reject();
         });
@@ -472,17 +475,17 @@ export const updateEsDocument = (updateCounters?: boolean): Promise<any> => {
 export async function createEsCollectionIndex() {
     try {
         const collectionIndex = process.env.ES_COLLECTION_INDEX;
-        const result: boolean = await indexExists(collectionIndex);
-        winstonLogger.debug("COLLECTION INDEX RESULT: " + result);
+        const result: boolean = indexExists(collectionIndex);
+        // winstonLogger.debug("COLLECTION INDEX RESULT: " + result);
         if (result) {
             const deleteResult = await deleteIndex(collectionIndex);
-            winstonLogger.debug("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
+            // winstonLogger.debug("COLLECTION DELETE INDEX RESULT: " + JSON.stringify(deleteResult));
         }
         const createIndexResult = await createIndex(collectionIndex);
-        winstonLogger.debug("createIndexResult: " + JSON.stringify(createIndexResult));
+        // winstonLogger.debug("createIndexResult: " + JSON.stringify(createIndexResult));
         if (createIndexResult) {
             const mappingResult = await addMapping(collectionIndex, process.env.ES_COLLECTION_MAPPING_FILE);
-            winstonLogger.debug("mappingResult: " + JSON.stringify(mappingResult));
+            // winstonLogger.debug("mappingResult: " + JSON.stringify(mappingResult));
             let i = 0;
             let dataToEs;
             do {
@@ -525,15 +528,13 @@ export async function updateEsCollectionIndex() {
 }
 
 if (process.env.CREATE_ES_INDEX) {
-    createEsIndex();
-
-    createEsCollectionIndex();
+    createEsIndex().then();
+    createEsCollectionIndex().then();
 }
 
-
-// module.exports = {
-//     createEsIndex : createEsIndex,
-//     updateEsDocument : updateEsDocument,
-//     getCollectionEsData,
-//     updateEsCollectionIndex
-// };
+export default {
+    createEsIndex,
+    getCollectionEsData,
+    updateEsCollectionIndex,
+    updateEsDocument,
+};
