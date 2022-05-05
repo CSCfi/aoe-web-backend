@@ -1,5 +1,5 @@
 export interface IRegisterPID {
     url: string;
-    pid_type: string;
+    type: string;
     persist: string;
 }

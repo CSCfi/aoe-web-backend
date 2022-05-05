@@ -13,7 +13,7 @@ export const registerPID = async (url: string): Promise<any> => {
     try {
         const pidRegistrationParams: IRegisterPID = {
             url: url as string,
-            pid_type: 'URN',
+            type: 'URN',
             persist: '0',
         };
         const requestHeaders: Record<string, string> = {
@@ -28,7 +28,7 @@ export const registerPID = async (url: string): Promise<any> => {
     } catch (error) {
         winstonLogger.error('PID registration failed in registerPID(): ' + error);
     }
-}
+};
 
 /**
  * Fetch recently published educational materials without a PID identifier and run the registration process to
@@ -42,29 +42,29 @@ export const processEntriesWithoutPID = async (): Promise<void> => {
 
         let eduMaterialVersionURL: string;
         let registeredURN: string;
+
         for (const eduMaterialVersion of eduMaterialVersions) {
-            try {
-                eduMaterialVersionURL = await getEduMaterialVersionURL(eduMaterialVersion.educationalmaterialid, eduMaterialVersion.publishedat);
-                registeredURN = await registerPID(eduMaterialVersionURL);
-                if (typeof registeredURN === 'string' && registeredURN.length > 0) {
-                    await updateEduMaterialVersionURN(eduMaterialVersion.educationalmaterialid, eduMaterialVersion.publishedat, registeredURN);
-                } else {
-                    throw new Error('PID registration failed for invalid URN');
-                }
-                winstonLogger.debug('URN registration completed: eduMaterialVersionURL=%s => registeredURN=%s', eduMaterialVersionURL, registeredURN);
-            } catch (error) {
-                winstonLogger.error('PID registration for an educational material version failed in processEntriesWithoutPID() ' +
-                    '[educationalmaterialid=%s, eduMaterialVersionURL=%s, registeredURN=%s]: ' + error,
-                    eduMaterialVersion.educationalmaterialid, eduMaterialVersionURL, registeredURN);
-                break;
+            eduMaterialVersionURL = await getEduMaterialVersionURL(eduMaterialVersion.educationalmaterialid,
+                eduMaterialVersion.publishedat);
+            registeredURN = await registerPID(eduMaterialVersionURL);
+
+            if (typeof registeredURN === 'string' && registeredURN.length > 0) {
+                await updateEduMaterialVersionURN(eduMaterialVersion.educationalmaterialid,
+                    eduMaterialVersion.publishedat, registeredURN);
+            } else {
+                return Promise.reject(Error(`PID registration for an educational material version failed in ` +
+                    `processEntriesWithoutPID() [educationalmaterialid=${eduMaterialVersion.educationalmaterialid}, ` +
+                    `eduMaterialVersionURL=${eduMaterialVersionURL}, registeredURN=${registeredURN}]`));
             }
+            winstonLogger.debug('URN registration completed: eduMaterialVersionURL=%s => registeredURN=%s',
+                eduMaterialVersionURL, registeredURN);
         }
     } catch (error) {
-        winstonLogger.error('PID registration for educational materials without PID failed in processEntriesWithoutPID(): ' + error);
+        throw Error('PID registration for educational materials without PID failed in processEntriesWithoutPID(): ' + error);
     }
-}
+};
 
 export default {
     processEntriesWithoutPID,
     registerPID
-}
+};
