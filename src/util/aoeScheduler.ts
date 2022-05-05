@@ -29,7 +29,7 @@ export const startScheduledCleaning = (): void => {
 
 // 4:15 AM: scheduled PID (Permanent Identifiers) registration for recently published educational materials.
 export const startScheduledRegistrationForPIDs = (): void => {
-    const pidRegisterScheduler = scheduleJob('0 14 4 * * *', async () => {
+    const pidRegisterScheduler = scheduleJob('0 15 4 * * *', async () => {
         try {
             if (parseInt(process.env.PID_SERVICE_ENABLED, 10) as number === 1 &&
                 parseInt(process.env.PID_SERVICE_RUN_SCHEDULED, 10) as number === 1) {
@@ -47,7 +47,7 @@ export const startScheduledRegistrationForPIDs = (): void => {
 
 // 4:30 AM: scheduled search index update.
 export const startScheduledSearchIndexUpdate = (): void => {
-    const searchUpdateScheduler = scheduleJob('0 29 4 * * *', async () => {
+    const searchUpdateScheduler = scheduleJob('0 30 4 * * *', async () => {
 
         // Update search engine index with recent changes.
         try {
