@@ -9,5 +9,5 @@ export { default as winstonLogger } from './winstonLogger';
 export default {
     aoeScheduler,
     morganHttpLogger,
-    winstonLogger
+    winstonLogger,
 }

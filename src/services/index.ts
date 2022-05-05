@@ -6,5 +6,5 @@ export { default as streamingService } from './streamingService';
 
 export default {
     pidResolutionService,
-    streamingService
+    streamingService,
 }
