@@ -3,9 +3,9 @@ import { NextFunction, Request, Response } from 'express';
 
 export default (req: Request, res: Response, next: NextFunction): void => {
     try {
-        winstonLogger.log('dw', '%s %s', req.method, req.originalUrl);
+        winstonLogger.log('digi', '%s %s %o', req.method, req.originalUrl, req.headers);
     } catch (error) {
-        winstonLogger.error(`DW logging failed: ${error}`);
+        winstonLogger.error(`Digivisio logging failed: ${error}`);
     }
     next();
 };

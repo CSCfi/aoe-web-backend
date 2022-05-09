@@ -4,7 +4,7 @@ import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 // Custom logging levels
 const loggingLevels = {
     levels: {
-        dw: 0,
+        digi: 0,
         info: 1,
         http: 2,
         error: 3,
@@ -36,7 +36,7 @@ const logger = winston.createLogger({
         new winston.transports.Console(consoleOptions),
         new winston.transports.File({
             filename: `${digivisioLogPath}/digivisio.log`,
-            level: 'dw'
+            level: 'digi'
         }),
     ],
 });
