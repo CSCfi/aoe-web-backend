@@ -3,6 +3,7 @@ import { checkAuthenticated, hasAccessToPublicatication } from '../../services/a
 import { downloadFile } from '../../queries/fileHandling';
 import { isAllasEnabled } from '../../services/routeEnablerService';
 import { uploadbase64Image } from '../../queries/thumbnailHandler';
+import digivisioLogger from '../../util/digivisioLogger';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
@@ -20,6 +21,6 @@ export default (router: Router) => {
     router.post('/material/:edumaterialid([0-9]{1,6})/thumbnail', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadbase64Image);
 
     // TODO: Add regex validation
-    router.get('/material/download/:filename', downloadFile);
+    router.get('/material/download/:filename', digivisioLogger, downloadFile);
 
 }

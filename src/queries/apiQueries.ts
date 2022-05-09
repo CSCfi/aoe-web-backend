@@ -83,7 +83,11 @@ const mode = new TransactionMode({
     deferrable: true
 });
 
-export async function getEducationalMaterialMetadata(req: Request, res: Response, next: NextFunction): Promise<void> {
+export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+    // Dedicated logging for the Digivisio test requests (production only).
+    winstonLogger.log('dw', 'Request: %s', JSON.stringify(req));
+
     const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
 
     db.tx({mode}, async (t: any) => {
@@ -103,107 +107,149 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         const isPublished = !!(response[0] && response[0].publishedat);
         queries.push(response);
 
-        query = "select * from materialname where educationalmaterialid = $1;";
+        query = "SELECT * FROM materialname " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from materialdescription where educationalmaterialid = $1;";
+        query = "SELECT * FROM materialdescription " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from educationalaudience where educationalmaterialid = $1;";
+        query = "SELECT * FROM educationalaudience " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from learningresourcetype where educationalmaterialid = $1;";
+        query = "SELECT * FROM learningresourcetype " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from accessibilityfeature where educationalmaterialid = $1;";
+        query = "SELECT * FROM accessibilityfeature " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from accessibilityhazard where educationalmaterialid = $1;";
+        query = "SELECT * FROM accessibilityhazard " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from keyword where educationalmaterialid = $1;";
+        query = "SELECT * FROM keyword " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from educationallevel where educationalmaterialid = $1;";
+        query = "SELECT * FROM educationallevel " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from educationaluse where educationalmaterialid = $1;";
+        query = "SELECT * FROM educationaluse " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from publisher where educationalmaterialid = $1;";
+        query = "SELECT * FROM publisher " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from author where educationalmaterialid = $1;";
+        query = "SELECT * FROM author " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from isbasedon where educationalmaterialid = $1;";
+        query = "SELECT * FROM isbasedon " +
+            "WHERE educationalmaterialid = $1";
         response = await t.map(query, [eduMaterialId], (q: any) => {
-            t.any("select * from isbasedonauthor where isbasedonid = $1;", q.id)
+            t.any("SELECT * FROM isbasedonauthor " +
+                "WHERE isbasedonid = $1", q.id)
                 .then((data: any) => {
                     q.author = data;
                 });
             return q;
         });
         queries.push(response);
-        query = "select * from alignmentobject where educationalmaterialid = $1;";
+        query = "SELECT * FROM alignmentobject " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
-        // get all materials from material table if not published else get from version table
+
+        // Get all materials from material table if not published else get from version table.
         if (!isPublished) {
-            query = "select m.id, m.materiallanguagekey as language, link, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, pdfkey from material m left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+            query = "SELECT m.id, m.materiallanguagekey AS language, link, filepath, originalfilename, filesize, " +
+                "mimetype, format, filekey, filebucket, pdfkey FROM material AS m " +
+                "LEFT JOIN record AS r ON m.id = r.materialid " +
+                "WHERE m.educationalmaterialid = $1 AND m.obsoleted = 0";
             response = await t.any(query, [eduMaterialId]);
             winstonLogger.debug(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
-                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
-                    "from (select materialid, publishedat, priority from versioncomposition where publishedat = $2) as version " +
-                    "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                query = "SELECT m.id, m.materiallanguagekey AS language, link, version.priority, filepath, " +
+                    "originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
+                    "FROM (SELECT materialid, publishedat, priority FROM versioncomposition " +
+                    "WHERE publishedat = $2) AS version " +
+                    "LEFT JOIN material AS m ON m.id = version.materialid " +
+                    "LEFT JOIN record AS r ON m.id = r.materialid " +
+                    "WHERE m.educationalmaterialid = $1 AND m.obsoleted = 0 " +
+                    "ORDER BY priority";
                 winstonLogger.debug(query, [eduMaterialId, req.params.publishedat]);
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
             } else {
-                query = "select m.id, m.materiallanguagekey as language, link, version.priority, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
-                    "from (select materialid, publishedat, priority from versioncomposition where publishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1)) as version " +
-                    "left join material m on m.id = version.materialid left join record r on m.id = r.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0 order by priority;";
+                query = "SELECT m.id, m.materiallanguagekey AS language, link, version.priority, filepath, " +
+                    "originalfilename, filesize, mimetype, format, filekey, filebucket, version.publishedat, pdfkey " +
+                    "FROM (SELECT materialid, publishedat, priority FROM versioncomposition WHERE publishedat = " +
+                    "(SELECT MAX(publishedat) FROM versioncomposition WHERE educationalmaterialid = $1)) AS version " +
+                    "LEFT JOIN material AS m ON m.id = version.materialid " +
+                    "LEFT JOIN record AS r ON m.id = r.materialid " +
+                    "WHERE m.educationalmaterialid = $1 AND m.obsoleted = 0 " +
+                    "ORDER BY priority";
                 response = await t.any(query, [eduMaterialId]);
             }
         }
         queries.push(response);
 
-        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material m right join materialdisplayname dn on m.id = dn.materialid where m.educationalmaterialid = $1 and m.obsoleted = 0;";
+        query = "SELECT dn.id, dn.displayname, dn.language, dn.materialid FROM material AS m " +
+            "RIGHT JOIN materialdisplayname AS dn ON m.id = dn.materialid " +
+            "WHERE m.educationalmaterialid = $1 AND m.obsoleted = 0";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from educationalaudience where educationalmaterialid = $1;";
+        query = "SELECT * FROM educationalaudience " +
+            "WHERE educationalmaterialid = $1";
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
 
-        query = "select * from thumbnail where educationalmaterialid = $1 and obsoleted = 0 limit 1;";
+        query = "SELECT * FROM thumbnail " +
+            "WHERE educationalmaterialid = $1 AND obsoleted = 0 LIMIT 1";
         response = await t.oneOrNone(query, [eduMaterialId]);
         queries.push(response);
         // get all attachments from attachment table if not published else get from version table
         if (!isPublished) {
-            query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+            query = "SELECT attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, " +
+                "defaultfile, kind, label, srclang, materialid FROM material " +
+                "INNER JOIN attachment ON material.id = attachment.materialid " +
+                "WHERE material.educationalmaterialid = $1 AND material.obsoleted = 0 AND attachment.obsoleted = 0";
             response = await t.any(query, [eduMaterialId]);
             winstonLogger.debug(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
                 // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
-                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = $2;";
+                query = "SELECT attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, " +
+                    "filebucket, defaultfile, kind, label, srclang, materialid FROM attachmentversioncomposition AS v " +
+                    "INNER JOIN attachment ON v.attachmentid = attachment.id " +
+                    "WHERE versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND versionpublishedat = $2";
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
                 winstonLogger.debug(query, [eduMaterialId, req.params.publishedat]);
             } else {
-                query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from attachmentversioncomposition as v inner join attachment on v.attachmentid = attachment.id where versioneducationalmaterialid = $1 and attachment.obsoleted = 0 and versionpublishedat = (select max(publishedat) from versioncomposition where educationalmaterialid = $1);";
+                query = "SELECT attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, " +
+                    "filebucket, defaultfile, kind, label, srclang, materialid FROM attachmentversioncomposition AS v " +
+                    "INNER JOIN attachment ON v.attachmentid = attachment.id " +
+                    "WHERE versioneducationalmaterialid = $1 AND attachment.obsoleted = 0 AND versionpublishedat = " +
+                    "(SELECT MAX(publishedat) FROM versioncomposition WHERE educationalmaterialid = $1)";
                 response = await t.any(query, [eduMaterialId, req.params.publishedat]);
                 winstonLogger.debug(query, [eduMaterialId]);
             }
@@ -213,7 +259,10 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         // const TYPE_TIMESTAMPTZ = 1184;
         // use raw date in version
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, str => str);
-        query = "select distinct publishedat from versioncomposition where educationalmaterialid = $1 order by publishedat desc;";
+        query = "SELECT DISTINCT publishedat " +
+            "FROM versioncomposition " +
+            "WHERE educationalmaterialid = $1 " +
+            "ORDER BY publishedat DESC";
         winstonLogger.debug(query, [eduMaterialId]);
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
@@ -221,153 +270,157 @@ export async function getEducationalMaterialMetadata(req: Request, res: Response
         // const popularity = await t.one(getPopularityQuery, [eduMaterialId]);
         // queries.push(popularity);
         if (req.params.publishedat) {
-            query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = $2;";
+            query = "SELECT urn " +
+                "FROM educationalmaterialversion " +
+                "WHERE educationalmaterialid = $1 AND publishedat = $2";
             response = await t.oneOrNone(query, [eduMaterialId, req.params.publishedat]);
             queries.push(response);
         } else {
-            query = "select urn from educationalmaterialversion where educationalmaterialid = $1 and publishedat = (select max(publishedat) from educationalmaterialversion where educationalmaterialid = $1);";
+            query = "SELECT urn " +
+                "FROM educationalmaterialversion " +
+                "WHERE educationalmaterialid = $1 AND publishedat = " +
+                "(SELECT MAX(publishedat) FROM educationalmaterialversion WHERE educationalmaterialid = $1)";
             response = await t.oneOrNone(query, [eduMaterialId]);
             queries.push(response);
         }
         return t.batch(queries);
     })
-        .then(async (data: any) => {
-            const jsonObj: any = {};
-            if (data[0][0] === undefined) {
-                return res.status(200).json(jsonObj);
-            }
-            let owner = false;
-            winstonLogger.debug(owner);
-            if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
-                owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
-            }
-            winstonLogger.debug(owner);
-            // add displayname object to material object
-            for (const element of data[14]) {
-                const nameobj = {
-                    "fi": "",
-                    "sv": "",
-                    "en": ""
-                };
-                for (const element2 of data[15]) {
-                    if (element2.materialid === element.id) {
-                        if (element2.language === "fi") {
-                            nameobj.fi = element2.displayname;
-                        } else if (element2.language === "sv") {
-                            nameobj.sv = element2.displayname;
-                        } else if (element2.language === "en") {
-                            nameobj.en = element2.displayname;
-                        }
+    .then(async (data: any) => {
+        const jsonObj: any = {};
+        if (data[0][0] === undefined) {
+            return res.status(200).json(jsonObj);
+        }
+        let owner = false;
+        winstonLogger.debug(owner);
+        if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
+            owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
+        }
+        winstonLogger.debug(owner);
+        // add displayname object to material object
+        for (const element of data[14]) {
+            const nameobj = {
+                "fi": "",
+                "sv": "",
+                "en": ""
+            };
+            for (const element2 of data[15]) {
+                if (element2.materialid === element.id) {
+                    if (element2.language === "fi") {
+                        nameobj.fi = element2.displayname;
+                    } else if (element2.language === "sv") {
+                        nameobj.sv = element2.displayname;
+                    } else if (element2.language === "en") {
+                        nameobj.en = element2.displayname;
                     }
                 }
-                element.displayName = nameobj;
             }
-            jsonObj.id = data[0][0].id;
-            jsonObj.materials = data[14];
-            // winstonLogger.debug("The jsonObj before first check: " + JSON.stringify(jsonObj));
-            for (const i in jsonObj.materials) {
-                let ext = "";
-                if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
-                    ext = jsonObj.materials[i]["originalfilename"].substring(jsonObj.materials[i]["originalfilename"].lastIndexOf("."), jsonObj.materials[i]["originalfilename"].length);
-                    // if (ext === ".h5p") {
-                    //     req.params.key = jsonObj.materials[i].filekey;
-                    //     winstonLogger.debug("h5p file found !!!!!!");
-                    //     const result = await fh.downloadFileFromStorage(req, res, next, true);
-                    //     winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
-                    // }
-                }
-                if (ext === ".h5p") {
+            element.displayName = nameobj;
+        }
+        jsonObj.id = data[0][0].id;
+        jsonObj.materials = data[14];
+        // winstonLogger.debug("The jsonObj before first check: " + JSON.stringify(jsonObj));
+        for (const i in jsonObj.materials) {
+            let ext = "";
+            if (jsonObj.materials[i] && jsonObj.materials[i]["originalfilename"]) {
+                ext = jsonObj.materials[i]["originalfilename"].substring(jsonObj.materials[i]["originalfilename"].lastIndexOf("."), jsonObj.materials[i]["originalfilename"].length);
+                // if (ext === ".h5p") {
+                //     req.params.key = jsonObj.materials[i].filekey;
+                //     winstonLogger.debug("h5p file found !!!!!!");
+                //     const result = await fh.downloadFileFromStorage(req, res, next, true);
+                //     winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
+                // }
+            }
+            if (ext === ".h5p") {
+                jsonObj.materials[i]["mimetype"] = "text/html";
+                jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
+            } else if (jsonObj.materials[i] && jsonObj.materials[i]["pdfkey"] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
+                jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["pdfkey"];
+            } else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
+                req.params.key = jsonObj.materials[i].filekey;
+                winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
+                const result = await fh.downloadFileFromStorage(req, res, next, true);
+                winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
+                if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
+                    /**
+                     * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
+                     * Write db code to replace application/zip with text/html for this specific file
+                     * mimetype = text/html + result
+                     */
                     jsonObj.materials[i]["mimetype"] = "text/html";
-                    jsonObj.materials[i]["filepath"] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]["filekey"];
-                } else if (jsonObj.materials[i] && jsonObj.materials[i]["pdfkey"] && await isOfficeMimeType(jsonObj.materials[i]["mimetype"])) {
-                    jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["pdfkey"];
-                } else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
-                    req.params.key = jsonObj.materials[i].filekey;
-                    winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
-                    const result = await fh.downloadFileFromStorage(req, res, next, true);
-                    winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
-                    if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
-                        /**
-                         * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
-                         * Write db code to replace application/zip with text/html for this specific file
-                         * mimetype = text/html + result
-                         */
-                        jsonObj.materials[i]["mimetype"] = "text/html";
-                        jsonObj.materials[i]["filepath"] = process.env.HTML_BASE_URL + result;
-                        winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
+                    jsonObj.materials[i]["filepath"] = process.env.HTML_BASE_URL + result;
+                    winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
 
 
-                    } else if (result != false) {
-                        /**
-                         * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
-                         * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
-                         */
-                        jsonObj.materials[i]["filepath"] = result;
-                        winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
-                    }
+                } else if (result != false) {
+                    /**
+                     * This means the function the returned true, but the mimetype was already text/html so we dont have to change it
+                     * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
+                     */
+                    jsonObj.materials[i]["filepath"] = result;
+                    winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
                 }
             }
-            jsonObj.owner = owner;
-            jsonObj.name = data[1];
-            jsonObj.createdAt = data[0][0].createdat;
-            jsonObj.updatedAt = data[0][0].updatedat;
-            jsonObj.publishedAt = data[0][0].publishedat;
-            jsonObj.archivedAt = data[0][0].archivedat;
-            jsonObj.suitsAllEarlyChildhoodSubjects = data[0][0].suitsallearlychildhoodsubjects;
-            jsonObj.suitsAllPrePrimarySubjects = data[0][0].suitsallpreprimarysubjects;
-            jsonObj.suitsAllBasicStudySubjects = data[0][0].suitsallbasicstudysubjects;
-            jsonObj.suitsAllUpperSecondarySubjects = data[0][0].suitsalluppersecondarysubjects;
-            jsonObj.suitsAllVocationalDegrees = data[0][0].suitsallvocationaldegrees;
-            jsonObj.suitsAllSelfMotivatedSubjects = data[0][0].suitsallselfmotivatedsubjects;
-            jsonObj.suitsAllBranches = data[0][0].suitsallbranches;
-            jsonObj.suitsAllUpperSecondarySubjectsNew = data[0][0].suitsalluppersecondarysubjectsnew;
-            jsonObj.ratingContentAverage = data[0][0].ratingcontentaverage;
-            jsonObj.ratingVisualAverage = data[0][0].ratingvisualaverage;
-            jsonObj.viewCounter = data[0][0].viewcounter;
-            jsonObj.downloadCounter = data[0][0].downloadcounter;
-            jsonObj.author = data[11];
-            jsonObj.publisher = data[10];
-            jsonObj.description = data[2];
-            jsonObj.keywords = data[7];
-            jsonObj.learningResourceTypes = data[4];
-            jsonObj.timeRequired = data[0][0].timerequired;
-            const typicalAgeRange: any = {};
-            typicalAgeRange.typicalAgeRangeMin = data[0][0].agerangemin;
-            typicalAgeRange.typicalAgeRangeMax = data[0][0].agerangemax;
-            jsonObj.expires = data[0][0].expires;
-            jsonObj.typicalAgeRange = typicalAgeRange;
-            jsonObj.educationalAlignment = data[13];
-            jsonObj.educationalLevels = data[8];
-            jsonObj.educationalUses = data[9];
-            // jsonObj.inLanguage = data[13];
-            jsonObj.accessibilityFeatures = data[5];
-            jsonObj.accessibilityHazards = data[6];
-            const license: any = {};
-            license.value = data[0][0].license;
-            license.key = data[0][0].licensecode;
-            jsonObj.license = license;
-            jsonObj.isBasedOn = data[12];
-            jsonObj.educationalRoles = data[16];
-            jsonObj.thumbnail = data[17];
-            if (jsonObj.thumbnail) {
-                jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.thumbnail.filekey);
-            }
-            jsonObj.attachments = data[18];
-            jsonObj.versions = data[19];
-            jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
-            jsonObj.urn = (data[20]) ? data[20].urn : data[20];
-            res.status(200).json(jsonObj);
-            if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
-                updateViewCounter(jsonObj.id)
-                    .catch((error: any) => {
-                        winstonLogger.error("update viewcounter failed: " + error);
-                    });
-            }
-        })
-        .catch((error: any) => {
-            winstonLogger.error(error);
-            next(new ErrorHandler(400, "Issue getting material data"));
-        });
+        }
+        jsonObj.owner = owner;
+        jsonObj.name = data[1];
+        jsonObj.createdAt = data[0][0].createdat;
+        jsonObj.updatedAt = data[0][0].updatedat;
+        jsonObj.publishedAt = data[0][0].publishedat;
+        jsonObj.archivedAt = data[0][0].archivedat;
+        jsonObj.suitsAllEarlyChildhoodSubjects = data[0][0].suitsallearlychildhoodsubjects;
+        jsonObj.suitsAllPrePrimarySubjects = data[0][0].suitsallpreprimarysubjects;
+        jsonObj.suitsAllBasicStudySubjects = data[0][0].suitsallbasicstudysubjects;
+        jsonObj.suitsAllUpperSecondarySubjects = data[0][0].suitsalluppersecondarysubjects;
+        jsonObj.suitsAllVocationalDegrees = data[0][0].suitsallvocationaldegrees;
+        jsonObj.suitsAllSelfMotivatedSubjects = data[0][0].suitsallselfmotivatedsubjects;
+        jsonObj.suitsAllBranches = data[0][0].suitsallbranches;
+        jsonObj.suitsAllUpperSecondarySubjectsNew = data[0][0].suitsalluppersecondarysubjectsnew;
+        jsonObj.ratingContentAverage = data[0][0].ratingcontentaverage;
+        jsonObj.ratingVisualAverage = data[0][0].ratingvisualaverage;
+        jsonObj.viewCounter = data[0][0].viewcounter;
+        jsonObj.downloadCounter = data[0][0].downloadcounter;
+        jsonObj.author = data[11];
+        jsonObj.publisher = data[10];
+        jsonObj.description = data[2];
+        jsonObj.keywords = data[7];
+        jsonObj.learningResourceTypes = data[4];
+        jsonObj.timeRequired = data[0][0].timerequired;
+        const typicalAgeRange: any = {};
+        typicalAgeRange.typicalAgeRangeMin = data[0][0].agerangemin;
+        typicalAgeRange.typicalAgeRangeMax = data[0][0].agerangemax;
+        jsonObj.expires = data[0][0].expires;
+        jsonObj.typicalAgeRange = typicalAgeRange;
+        jsonObj.educationalAlignment = data[13];
+        jsonObj.educationalLevels = data[8];
+        jsonObj.educationalUses = data[9];
+        // jsonObj.inLanguage = data[13];
+        jsonObj.accessibilityFeatures = data[5];
+        jsonObj.accessibilityHazards = data[6];
+        const license: any = {};
+        license.value = data[0][0].license;
+        license.key = data[0][0].licensecode;
+        jsonObj.license = license;
+        jsonObj.isBasedOn = data[12];
+        jsonObj.educationalRoles = data[16];
+        jsonObj.thumbnail = data[17];
+        if (jsonObj.thumbnail) {
+            jsonObj.thumbnail.filepath = await aoeThumbnailDownloadUrl(jsonObj.thumbnail.filekey);
+        }
+        jsonObj.attachments = data[18];
+        jsonObj.versions = data[19];
+        jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
+        jsonObj.urn = (data[20]) ? data[20].urn : data[20];
+        res.status(200).json(jsonObj);
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
+            updateViewCounter(jsonObj.id).catch((error) => {
+                winstonLogger.error(`View counter update failed: ${error}`);
+            });
+        }
+    })
+    .catch((error: any) => {
+        winstonLogger.error(error);
+        next(new ErrorHandler(400, 'Issue getting material data'));
+    });
 }
 
 export async function getUserMaterial(req: Request, res: Response, next: NextFunction) {

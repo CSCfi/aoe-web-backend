@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { elasticSearchQuery } from '../../elasticSearch/esQueries';
+import digivisioLogger from '../../util/digivisioLogger';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
@@ -14,6 +15,6 @@ import { elasticSearchQuery } from '../../elasticSearch/esQueries';
 export default (router: Router) => {
 
     // Search for educational materials with criteria provided in the request body.
-    router.post('/search', elasticSearchQuery);
+    router.post('/search', digivisioLogger, elasticSearchQuery);
 
 }
