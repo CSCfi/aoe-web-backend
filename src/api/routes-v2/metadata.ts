@@ -1,5 +1,6 @@
 import { getEducationalMaterialMetadata } from '../../queries/apiQueries';
 import { Router } from 'express';
+import digivisioLogger from '../../util/digivisioLogger';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational materials.
@@ -8,10 +9,13 @@ import { Router } from 'express';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // Replaces the route /material/:edumaterialid([0-9]{1,6})/:publishedat? in API version 1.0
-    router.get('/metadata/:edumaterialid([0-9]{1,6})', getEducationalMaterialMetadata);
-    router.get('/metadata/:edumaterialid([0-9]{1,6})/version/:publishedat([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z)', getEducationalMaterialMetadata);
+    router.get('/metadata/:edumaterialid([0-9]{1,6})', digivisioLogger, getEducationalMaterialMetadata);
 
+    router.get('/metadata/:edumaterialid([0-9]{1,6})/version/' +
+        ':publishedat([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z)',
+        digivisioLogger,
+        getEducationalMaterialMetadata);
 }
