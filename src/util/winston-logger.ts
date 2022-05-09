@@ -4,11 +4,12 @@ import { ConsoleTransportOptions } from "winston/lib/winston/transports";
 // Custom logging levels
 const loggingLevels = {
     levels: {
-        info: 0,
-        error: 1,
-        warn: 2,
-        http: 3,
-        debug: 4
+        digi: 0,
+        info: 1,
+        http: 2,
+        error: 3,
+        warn: 4,
+        debug: 5,
     }
 };
 
@@ -18,6 +19,9 @@ const consoleOptions: ConsoleTransportOptions = {
     level: process.env.NODE_ENV === 'production' ? logLevel || 'error' : logLevel || 'debug',
     handleExceptions: true
 };
+
+// Dedicated file logging and rotation for the Digivisio HTTP requests.
+const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
 
 // Configuration for logging format and transports
 export default winston.createLogger({
@@ -29,6 +33,10 @@ export default winston.createLogger({
     ),
     levels: loggingLevels.levels,
     transports: [
-        new (winston.transports.Console)(consoleOptions)
+        new winston.transports.Console(consoleOptions),
+        new winston.transports.File({
+            filename: `${digivisioLogPath}/digivisio.log`,
+            level: 'digi'
+        }),
     ]
 });
