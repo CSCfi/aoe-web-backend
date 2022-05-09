@@ -36,7 +36,7 @@ const logger = winston.createLogger({
 
 // Dedicated logging for the Digivisio test requests (production only).
 const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
-if (digivisioLogPath && process.env.NODE_ENV === 'production') {
+if (digivisioLogPath) {
     logger.add(new winston.transports.File({ filename: `${digivisioLogPath}/digivisio.log`, level: 'dw' }));
 }
 

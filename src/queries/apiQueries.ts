@@ -233,7 +233,10 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
             winstonLogger.debug(query, [eduMaterialId]);
         } else {
             if (req.params.publishedat) {
-                // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, filebucket, defaultfile, kind, label, srclang, materialid from material inner join attachment on material.id = attachment.materialid where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
+                // query = "select attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey,
+                // filebucket, defaultfile, kind, label, srclang, materialid from material
+                // inner join attachment on material.id = attachment.materialid
+                // where material.educationalmaterialid = $1 and material.obsoleted = 0 and attachment.obsoleted = 0;";
                 query = "SELECT attachment.id, filepath, originalfilename, filesize, mimetype, format, filekey, " +
                     "filebucket, defaultfile, kind, label, srclang, materialid FROM attachmentversioncomposition AS v " +
                     "INNER JOIN attachment ON v.attachmentid = attachment.id " +
@@ -287,11 +290,11 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
             return res.status(200).json(jsonObj);
         }
         let owner = false;
-        winstonLogger.debug(owner);
+        // winstonLogger.debug(owner);
         if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
             owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
         }
-        winstonLogger.debug(owner);
+        // winstonLogger.debug(owner);
         // add displayname object to material object
         for (const element of data[14]) {
             const nameobj = {
