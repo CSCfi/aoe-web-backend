@@ -20,6 +20,9 @@ const consoleOptions: ConsoleTransportOptions = {
     handleExceptions: true,
 };
 
+// Dedicated file logging and rotation for the Digivisio HTTP requests.
+const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
+
 // Configuration for logging format and transports
 const logger = winston.createLogger({
     exitOnError: false,
@@ -30,14 +33,12 @@ const logger = winston.createLogger({
     ),
     levels: loggingLevels.levels,
     transports: [
-        new (winston.transports.Console)(consoleOptions),
+        new winston.transports.Console(consoleOptions),
+        new winston.transports.File({
+            filename: `${digivisioLogPath}/digivisio.log`,
+            level: 'dw'
+        }),
     ],
 });
-
-// Dedicated logging for the Digivisio test requests (production only).
-const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
-if (digivisioLogPath) {
-    logger.add(new winston.transports.File({ filename: `${digivisioLogPath}/digivisio.log`, level: 'dw' }));
-}
 
 export default logger;
