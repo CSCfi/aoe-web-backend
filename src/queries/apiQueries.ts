@@ -84,10 +84,6 @@ const mode = new TransactionMode({
 });
 
 export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-
-    // Dedicated logging for the Digivisio test requests (production only).
-    winstonLogger.log('dw', 'Request: %s', JSON.stringify(req));
-
     const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
 
     db.tx({mode}, async (t: any) => {
