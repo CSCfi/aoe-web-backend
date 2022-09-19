@@ -8,7 +8,7 @@ import Notification from './dto/notification';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     let notification: Notification = new Notification('');
 

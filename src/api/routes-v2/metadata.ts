@@ -9,7 +9,7 @@ import digivisioLogger from '../../util/digivisioLogger';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // Replaces the route /material/:edumaterialid([0-9]{1,6})/:publishedat? in API version 1.0
     router.get('/metadata/:edumaterialid([0-9]{1,6})', digivisioLogger, getEducationalMaterialMetadata);
