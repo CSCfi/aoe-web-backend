@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from "./../services/urlService";
-import connection from '../resources/pg-connect';
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
-const pgp = connection.pgp;
-const db = connection.db;
+// const pgp = rdbms.pgp;
+const db = rdbms.db;
 
 async function getMaterialMetaData(req: Request, res: Response) {
     try {

@@ -17,26 +17,29 @@ const loggingLevels = {
 const logLevel: string | undefined = process.env.LOG_LEVEL;
 const consoleOptions: ConsoleTransportOptions = {
     level: process.env.NODE_ENV === 'production' ? logLevel || 'error' : logLevel || 'debug',
-    handleExceptions: true
+    handleExceptions: true,
 };
 
 // Dedicated file logging and rotation for the Digivisio HTTP requests.
-const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
+// const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
 
 // Configuration for logging format and transports
-export default winston.createLogger({
+const logger = winston.createLogger({
     exitOnError: false,
     format: format.combine(
         format.splat(), // Use also printf format with argument specifiers %d %s %o etc.
         format.timestamp({format: 'YYYY-MM-DD HH:mm:ss'}),
-        format.printf((log: Logform.TransformableInfo) => `[${log.level.toUpperCase()}] ${log.timestamp} ${log.message}`)
+        format.printf((log: Logform.TransformableInfo) => `[${log.level.toUpperCase()}] ${log.timestamp} ${log.message}`),
     ),
     levels: loggingLevels.levels,
     transports: [
-        new winston.transports.Console(consoleOptions),
         new winston.transports.File({
-            filename: `${digivisioLogPath}/digivisio.log`,
+            filename: 'digivisio/digivisio.log',
+            handleExceptions: true,
             level: 'digi'
         }),
-    ]
+        new winston.transports.Console(consoleOptions),
+    ],
 });
+
+export default logger;

@@ -14,9 +14,9 @@ import { hasAccesstoPublication } from '../services/authService';
 import env from '../configuration/environments';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
-import connection from '../resources/pg-connect';
-import { requestRedirected } from '../services/streaming-service';
+import { requestRedirected } from '../services/streamingService';
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -48,7 +48,7 @@ const upload = multer({
     "preservePath": true
 }); // provide the return value from
 // Database connection
-const db = connection.db;
+const db = rdbms.db;
 
 /**
  *
@@ -1063,12 +1063,12 @@ export async function unZipAndExtract(zipFolder: any): Promise<any> {
 
         const pathToReturn = zipFolder + "/index.html";
         winstonLogger.debug("The pathtoreturn: " + pathToReturn);
-        const results = await searchRecursive(filenameParsedNicely, "index.html");
+        const results = searchRecursive(filenameParsedNicely, "index.html");
         if (Array.isArray(results) && results.length) {
             winstonLogger.debug("The results: " + results);
             return results[0];
         }
-        const resultshtm = await searchRecursive(filenameParsedNicely, "index.htm");
+        const resultshtm = searchRecursive(filenameParsedNicely, "index.htm");
         if (Array.isArray(resultshtm) && resultshtm.length) {
             winstonLogger.debug("The resultshtm: " + resultshtm);
             return resultshtm[0];

@@ -5,15 +5,15 @@ const elasticsearch = require("@elastic/elasticsearch");
 import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResult } from "./esTypes";
 import { createMatchAllObject } from "./esQueries";
 import { ApiResponse } from "@elastic/elasticsearch";
-import connection from '../resources/pg-connect';
-import { winstonLogger } from '../util';
+import { rdbms } from "../resources";
+import { winstonLogger } from "../util";
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true});
 // const client = new Client({ node: process.env.ES_NODE});
-const pgp = connection.pgp;
-const db = connection.db;
+const pgp = rdbms.pgp;
+const db = rdbms.db;
 
 /**
  *

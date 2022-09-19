@@ -1,10 +1,10 @@
-import connection from '../resources/pg-connect';
-
-const pgp = connection.pgp;
-const db = connection.db;
 import { Collection } from "./../collection/collection";
 import { aoeThumbnailDownloadUrl, aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
+
+const pgp = rdbms.pgp;
+const db = rdbms.db;
 
 /**
  *

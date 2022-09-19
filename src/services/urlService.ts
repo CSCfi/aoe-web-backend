@@ -14,6 +14,6 @@ export async function aoePdfDownloadUrl(key: string) {
     return (!key) ? undefined : process.env.OFFICE_TO_PDF_URL + key;
 }
 
-export async function aoeMaterialVersionUrl(id: string, date: string) {
+export const getEduMaterialVersionURL = async (id: string, date: string): Promise<string | undefined> => {
     return (!id || !date || !process.env.MATERIAL_VERSION_URL) ? undefined : process.env.MATERIAL_VERSION_URL + id + "/" + date;
 }

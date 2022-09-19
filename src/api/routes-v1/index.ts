@@ -17,7 +17,7 @@ export { default as upload } from './upload';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
     collection(router);
     download(router);
     elasticSearch(router);

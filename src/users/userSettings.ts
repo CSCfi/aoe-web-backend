@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { sendVerificationEmail } from "./../services/mailService";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import connection from '../resources/pg-connect';
 import { winstonLogger } from '../util';
+import { rdbms } from '../resources';
 
-const pgp = connection.pgp;
-const db = connection.db;
+// const pgp = rdbms.pgp;
+const db = rdbms.db;
 export interface UserSettings {
     notifications: {
       newRatings: boolean;

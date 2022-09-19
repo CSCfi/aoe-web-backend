@@ -1,26 +1,19 @@
+import bodyParser from 'body-parser';
 import apiRoot from './api/routes-root';
 import apiV2 from './api/routes-v2';
-import express, { Response, Request, NextFunction, Router } from 'express';
+import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-import { isLoginEnabled } from './services/routeEnablerService';
-import session from 'express-session';
-import passport from 'passport';
-import uuid from 'uuid/v4';
 import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
-import { ErrorHandler, handleError } from './helpers/errorHandler';
+import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { h5pEditor } from './h5p/h5p';
+import { oidc } from './resources';
 import apiRouterV1 from './routes/routes';
-import ah from './services/authService';
-import bodyParser from 'body-parser';
-import redisClient from './resources/redis-client';
-import connectRedis from 'connect-redis';
-import openidClient, { custom, HttpOptions } from 'openid-client';
-import { morganHttpLogger, winstonLogger } from './util';
+import { aoeScheduler, morganLogger } from './util';
 
 const app = express();
 
@@ -28,133 +21,22 @@ const app = express();
 const apiRouterRoot: Router = Router();
 apiRoot(apiRouterRoot);
 
-// Load API version 2.0 and stack on version 1.0
+// Load API version 2.0
 const apiRouterV2: Router = Router();
 apiV2(apiRouterV2);
 
-/**
- * OpenID Connect Session Managament
- */
-const RedisStore = connectRedis(session);
-const httpOptions: HttpOptions = {
-    timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
-    retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
-    // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
-};
-custom.setHttpOptionsDefaults(httpOptions);
-const Issuer = openidClient.Issuer;
-const Strategy = openidClient.Strategy;
-app.set('trust proxy', 1);
-app.use(
-    session({
-        genid: () => {
-            return uuid(); // use UUIDs for session IDs
-        },
-        store: new RedisStore({client: redisClient}),
-        resave: false,
-        saveUninitialized: true,
-        secret: process.env.SESSION_SECRET || 'xyz',
-        cookie: {
-            httpOnly: true,
-            maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-        },
-    }),
-);
-
-/**
- * OpenID Connect Authorization Management
- */
-passport.serializeUser((user, done) => {
-    done(undefined, user);
-});
-passport.deserializeUser((userinfo: any, done) => {
-    done(undefined, {user: userinfo.id});
-});
-Issuer.discover(process.env.PROXY_URI || '')
-    .then((testIssuer: InstanceType<typeof Issuer>) => {
-        const client = new testIssuer.Client({
-            client_id: process.env.CLIENT_ID || '',
-            client_secret: process.env.CLIENT_SECRET,
-            redirect_uri: process.env.REDIRECT_URI,
-            response_type: 'code',
-        });
-        passport.use(
-            'oidc',
-            new Strategy({client}, (tokenset: any, userinfo: any, done: any) => {
-                if (tokenset.claims().acr == process.env.SUOMIACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.sub, name: nameparsed});
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error when inserting suomi.fi information to database ', undefined);
-                        });
-                } else if (tokenset.claims().acr == process.env.HAKAACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.eppn, name: nameparsed});
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error', undefined);
-                        });
-                } else if (tokenset.claims().acr == process.env.MPASSACR) {
-                    ah.InsertUserToDatabase(userinfo, tokenset.claims().acr)
-                        .then(() => {
-                            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
-                            return done(undefined, {uid: userinfo.mpass_uid, name: nameparsed});
-                        })
-                        .catch((err: Error) => {
-                            winstonLogger.error(err);
-                            return done('Login error', undefined);
-                        });
-                } else {
-                    winstonLogger.error('Unknown authentication method: ' + tokenset.claims().acr);
-                    throw new ErrorHandler(400, 'Unknown authentication method');
-                }
-            }),
-        );
-    })
-    .catch((error: any) => {
-        winstonLogger.error(error);
-    });
-
-app.use(passport.initialize());
-app.use(passport.session());
+// Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
+app.set('trust proxy', '127.0.0.1');
 app.use(cookieParser());
 app.use(compression());
 app.use(flash());
-app.use(morganHttpLogger);
+app.use(morganLogger);
 
-app.get(
-    '/login',
-    isLoginEnabled,
-    passport.authenticate('oidc', {
-        successRedirect: '/',
-        failureRedirect: '/login',
-        failureFlash: true,
-        scope: 'openid profile offline_access',
-    }),
-);
+// Initialize session management and OIDC authorization
+oidc.sessionInit(app);
+oidc.authInit(app);
 
-app.get(
-    '/secure/redirect',
-    (req: Request, res: Response, next: NextFunction) => {
-        // winstonLogger.debug("here");
-        next();
-    },
-    passport.authenticate('oidc', {
-        // "callback": true,
-        failureRedirect: process.env.FAILURE_REDIRECT_URI,
-        failureFlash: true,
-        successRedirect: process.env.SUCCESS_REDIRECT_URI,
-    }),
-);
-
-// Handle H5P ajax request
+// Handle H5P Ajax requests
 const h5pRouteOptions = {
     handleErrors: false,
     routeGetContentFile: true,
@@ -180,8 +62,8 @@ const corsOptions = {
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
-app.use(bodyParser.json({limit: '1mb'}));
-app.use(bodyParser.urlencoded({extended: true, limit: '1mb'}));
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
 app.use('/', [apiRouterV1, apiRouterRoot]);
 app.use('/v2/', apiRouterV2);
@@ -196,6 +78,13 @@ app.set('views', './views');
 app.set('view engine', 'pug');
 
 app.set('port', 3000);
-require('./aoeScheduler');
+
+// TODO: To be removed after full refectoring of aoeScheduler.ts
+require('./util/aoeScheduler');
+
+// Start scheduled maintenance processes
+aoeScheduler.startScheduledCleaning();
+aoeScheduler.startScheduledRegistrationForPIDs();
+aoeScheduler.startScheduledSearchIndexUpdate();
 
 export default app;
