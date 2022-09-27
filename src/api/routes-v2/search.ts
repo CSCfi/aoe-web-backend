@@ -12,9 +12,9 @@ import digivisioLogger from '../../util/digivisioLogger';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
-    // Search for educational materials with criteria provided in the request body.
+    // Search for educational materials with criteria in the request body.
     router.post('/search', digivisioLogger, elasticSearchQuery);
 
 }
