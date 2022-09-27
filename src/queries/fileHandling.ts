@@ -8,7 +8,7 @@ import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
 
-import { updateDownloadCounter, checkCounter } from './analyticsQueries';
+import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
 import env from '../configuration/environments';
@@ -17,7 +17,6 @@ import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/offic
 import { requestRedirected } from '../services/streamingService';
 import { winstonLogger } from '../util';
 import { rdbms } from '../resources';
-import { id } from 'aws-sdk/clients/datapipeline';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -880,7 +879,6 @@ export const downloadFromStorage = async (req: Request,
                     })
                     .once('end', () => {
                         winstonLogger.error('Download of %s completed in downloadFromStorage()', key);
-                        
                     })
                     .pipe(fs.createWriteStream(folderpath));
                 zipStream.once('finish', async () => {
