@@ -8,7 +8,7 @@ import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
 
-import { updateDownloadCounter } from './analyticsQueries';
+import { updateDownloadCounter, checkCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
 import env from '../configuration/environments';
@@ -17,6 +17,7 @@ import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/offic
 import { requestRedirected } from '../services/streamingService';
 import { winstonLogger } from '../util';
 import { rdbms } from '../resources';
+import { id } from 'aws-sdk/clients/datapipeline';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -729,7 +730,18 @@ export async function downloadFile(req: Request, res: Response, next: NextFuncti
     try {
         const data = await downloadFileFromStorage(req, res, next);
         if (!data) return res.end();
+
+        const educationalMaterialId: number = parseInt(req.params.edumaterialid, 10);
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
+            try {
+                await updateDownloadCounter(educationalMaterialId.toString());
+            } catch (error) {
+                winstonLogger.error('Updating download counter failed: ' + error);
+            }
+        }
+
         res.status(200).send(data);
+        
     } catch (err) {
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
@@ -868,6 +880,7 @@ export const downloadFromStorage = async (req: Request,
                     })
                     .once('end', () => {
                         winstonLogger.error('Download of %s completed in downloadFromStorage()', key);
+                        
                     })
                     .pipe(fs.createWriteStream(folderpath));
                 zipStream.once('finish', async () => {
@@ -896,7 +909,7 @@ export const downloadFromStorage = async (req: Request,
                     })
                     .once('end', () => {
                         winstonLogger.debug('Download of %s completed in downloadFromStorage()', key);
-                        resolve();
+                        resolve('Download of ' + key + ' completed in downloadFromStorage()');
                     })
                     .pipe(res);
             }

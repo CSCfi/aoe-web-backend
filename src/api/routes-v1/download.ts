@@ -12,6 +12,6 @@ import { downloadFile } from '../../queries/fileHandling';
  */
 export default (router: Router) => {
 
-    router.get('/download/:filename', downloadFile);
+    router.get('/download/:edumaterialid([0-9]{1,6})/:filename', downloadFile);
 
 }
