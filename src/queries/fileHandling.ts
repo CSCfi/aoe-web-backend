@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import fs, { WriteStream } from 'fs';
 
 import multer from 'multer';
-import path, { resolve } from 'path';
+import path from 'path';
 import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
