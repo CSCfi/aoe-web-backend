@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
 import fs, { WriteStream } from 'fs';
 
 import multer from 'multer';
-import path from 'path';
+import path, { resolve } from 'path';
 import s3Zip from 's3-zip';
 
 import { updateDownloadCounter } from './analyticsQueries';
@@ -727,19 +727,35 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  */
 export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
-        const data = await downloadFileFromStorage(req, res, next);
-        if (!data) return res.end();
+        const filename = req.params.filename;
+        const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
+        const materialid = await db.oneOrNone(materialidQuery, [filename]);
 
-        const educationalMaterialId: number = parseInt(req.params.edumaterialid, 10);
-        if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalMaterialId, req))) {
+        if (!materialid) return res.end();
+
+        const educationalmaterialidQuery = "SELECT educationalmaterialid FROM versioncomposition WHERE materialid = $1";
+        const originalmaterialid = await db.oneOrNone(educationalmaterialidQuery, [materialid.materialid]);
+        
+        let educationalmaterialId: number;
+        if (originalmaterialid) {
+            educationalmaterialId = parseInt(originalmaterialid.educationalmaterialid, 10);
+        } else {
+            educationalmaterialId = parseInt(materialid.materialid, 10);
+        }
+
+        const data = await downloadFileFromStorage(req, res, next);
+        //if (!data) return res.end();
+
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
             try {
-                await updateDownloadCounter(educationalMaterialId.toString());
+                await updateDownloadCounter(educationalmaterialId.toString());
             } catch (error) {
                 winstonLogger.error('Updating download counter failed: ' + error);
             }
         }
 
-        res.status(200).send(data);
+        return res.status(200).end();
+        //return next();
         
     } catch (err) {
         if (!res.headersSent) {
@@ -907,7 +923,7 @@ export const downloadFromStorage = async (req: Request,
                     })
                     .once('end', () => {
                         winstonLogger.debug('Download of %s completed in downloadFromStorage()', key);
-                        resolve('Download of ' + key + ' completed in downloadFromStorage()');
+                        resolve();
                     })
                     .pipe(res);
             }
