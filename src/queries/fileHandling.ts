@@ -725,16 +725,16 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
-export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
+export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const filename = req.params.filename;
+        const filename: string = req.params.filename;
         const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
-        const materialid = await db.oneOrNone(materialidQuery, [filename]);
+        const materialid: { materialid: string} = await db.oneOrNone(materialidQuery, [filename]);
 
-        if (!materialid) return res.end();
+        if (!materialid) return res.status(404).end();
 
         const educationalmaterialidQuery = "SELECT educationalmaterialid FROM versioncomposition WHERE materialid = $1";
-        const originalmaterialid = await db.oneOrNone(educationalmaterialidQuery, [materialid.materialid]);
+        const originalmaterialid: { educationalmaterialid: string} = await db.oneOrNone(educationalmaterialidQuery, [materialid.materialid]);
         
         let educationalmaterialId: number;
         if (originalmaterialid) {
