@@ -12,6 +12,7 @@ import { downloadFile } from '../../queries/fileHandling';
  */
 export default (router: Router) => {
 
+    // TODO: Add regex validation
     router.get('/download/:filename', downloadFile);
 
 }

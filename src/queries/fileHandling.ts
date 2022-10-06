@@ -725,11 +725,38 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
-export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
+export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+        const filename: string = req.params.filename;
+        const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
+        const materialid: { materialid: string} = await db.oneOrNone(materialidQuery, [filename]);
+
+        if (!materialid) return res.status(404).end();
+
+        const educationalmaterialidQuery = "SELECT educationalmaterialid FROM versioncomposition WHERE materialid = $1";
+        const originalmaterialid: { educationalmaterialid: string} = await db.oneOrNone(educationalmaterialidQuery, [materialid.materialid]);
+        
+        let educationalmaterialId: number;
+        if (originalmaterialid) {
+            educationalmaterialId = parseInt(originalmaterialid.educationalmaterialid, 10);
+        } else {
+            educationalmaterialId = parseInt(materialid.materialid, 10);
+        }
+
         const data = await downloadFileFromStorage(req, res, next);
-        if (!data) return res.end();
-        res.status(200).send(data);
+        //if (!data) return res.end();
+
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
+            try {
+                await updateDownloadCounter(educationalmaterialId.toString());
+            } catch (error) {
+                winstonLogger.error('Updating download counter failed: ' + error);
+            }
+        }
+
+        return res.status(200).end();
+        //return next();
+        
     } catch (err) {
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
