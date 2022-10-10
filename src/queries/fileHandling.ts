@@ -776,10 +776,6 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
             }
         }
 
-        //check counter
-        const test = await db.oneOrNone('select downloadcounter from educationalmaterial where id = $1', [educationalmaterialId]);
-            console.log("test " + test.downloadcounter);
-
         return res.status(200).end();
         //return next();
         
