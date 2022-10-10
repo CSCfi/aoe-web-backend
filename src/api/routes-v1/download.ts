@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { downloadFile } from '../../queries/fileHandling';
+import { downloadFile, downloadPreviewFile } from '../../queries/fileHandling';
 
 /**
  * API version 1.0 for requesting files and metadata related to stored educational material.
@@ -13,6 +13,8 @@ import { downloadFile } from '../../queries/fileHandling';
 export default (router: Router) => {
 
     // TODO: Add regex validation
-    router.get('/download/:filename', downloadFile);
+    router.get('/download/:filename', downloadPreviewFile);
+    
+    router.get('/download/file/:filename', downloadFile);
 
 }

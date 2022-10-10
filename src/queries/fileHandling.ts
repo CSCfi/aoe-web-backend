@@ -725,6 +725,28 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
+ export const downloadPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const data = await downloadFileFromStorage(req, res, next);
+        //if (!data) return res.end();
+
+        return res.status(200).end();
+        //return next();
+        
+    } catch (err) {
+        if (!res.headersSent) {
+            next(new ErrorHandler(400, "Failed to download file"));
+        }
+    }
+}
+
+
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ */
 export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const filename: string = req.params.filename;
@@ -753,6 +775,10 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
                 winstonLogger.error('Updating download counter failed: ' + error);
             }
         }
+
+        //check counter
+        const test = await db.oneOrNone('select downloadcounter from educationalmaterial where id = $1', [educationalmaterialId]);
+            console.log("test " + test.downloadcounter);
 
         return res.status(200).end();
         //return next();
@@ -1113,6 +1139,7 @@ export default {
     uploadMaterial,
     uploadFileToMaterial,
     uploadFileToStorage,
+    downloadPreviewFile,
     downloadFile,
     unZipAndExtract,
     downloadFileFromStorage,
