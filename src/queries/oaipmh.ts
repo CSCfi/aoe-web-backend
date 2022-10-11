@@ -161,6 +161,6 @@ async function getMaterialMetaData(req: Request, res: Response) {
     }
 }
 
-module.exports = {
+export default {
     getMaterialMetaData: getMaterialMetaData
 };

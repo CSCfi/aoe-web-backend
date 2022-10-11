@@ -214,3 +214,10 @@ export async function renderH5Ppage(contentid: string, filepath: string) {
         throw new Error(error);
     }
 }
+
+export default {
+    play,
+    getH5PContent,
+    startH5Pplayer,
+    renderH5Ppage
+}

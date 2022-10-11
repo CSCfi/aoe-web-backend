@@ -207,3 +207,14 @@ export async function getRecentCollection(req: Request, res: Response, next: Nex
         next(new ErrorHandler(500, "Issue getting recent collection"));
     }
 }
+
+
+export default {
+    createCollection,
+    addEducationalMaterialToCollection,
+    removeEducationalMaterialFromCollection,
+    getUserCollections,
+    getCollection,
+    updateCollection,
+    getRecentCollection
+}

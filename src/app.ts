@@ -1,18 +1,20 @@
 import bodyParser from 'body-parser';
 import apiRoot from './api/routes-root';
+import apiV1 from './api/routes-v1';
 import apiV2 from './api/routes-v2';
 import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-import cookieParser from 'cookie-parser';
+
+// import cookieParser from 'cookie-parser';
+
 import flash from 'connect-flash';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
-import apiRouterV1 from './routes/routes';
 import { aoeScheduler, morganLogger } from './util';
 
 const app = express();
@@ -20,6 +22,10 @@ const app = express();
 // Load API root modules
 const apiRouterRoot: Router = Router();
 apiRoot(apiRouterRoot);
+
+// Load API version 2.0
+const apiRouterV1: Router = Router();
+apiV1(apiRouterV1);
 
 // Load API version 2.0
 const apiRouterV2: Router = Router();
@@ -73,7 +79,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
-app.use('/api/', [apiRouterV1, apiRouterRoot]);
+app.use('/', apiRouterRoot);
+app.use('/api/v1/', apiRouterV1);
 app.use('/api/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
