@@ -73,8 +73,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
-app.use('/api', [apiRouterV1, apiRouterRoot]);
-app.use('/api/v2', apiRouterV2);
+app.use('/api/', [apiRouterV1, apiRouterRoot]);
+app.use('/api/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {
