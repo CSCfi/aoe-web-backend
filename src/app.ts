@@ -27,7 +27,15 @@ apiV2(apiRouterV2);
 
 // Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
 app.set('trust proxy', '127.0.0.1');
-app.use(cookieParser());
+
+// app.use(cookieParser(undefined, {
+//         domain: 'lessons.aoe.fi',
+//         httpOnly: true,
+//         maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
+//         sameSite: true
+//     }
+// ));
+
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);
@@ -65,8 +73,8 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
-app.use('/', [apiRouterV1, apiRouterRoot]);
-app.use('/v2/', apiRouterV2);
+app.use('/api', [apiRouterV1, apiRouterRoot]);
+app.use('/api/v2', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {

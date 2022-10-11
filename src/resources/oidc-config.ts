@@ -101,8 +101,11 @@ export const sessionInit = (app: Express): void => {
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
             cookie: {
+                domain: 'aoe.fi',
                 httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
+                path: '/api',
+                sameSite: true
             },
         }),
     );
