@@ -1,11 +1,11 @@
 // import { Request, Response, NextFunction } from "express";
-import { aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
+import { aoeCollectionThumbnailDownloadUrl } from '../services/urlService';
 // import { Client, ApiResponse } from "@elastic/elasticsearch";
-const elasticsearch = require("@elastic/elasticsearch");
-import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResult } from "./esTypes";
-import { createMatchAllObject } from "./esQueries";
-import { ApiResponse } from "@elastic/elasticsearch";
-import { rdbms } from "../resources";
+const elasticsearch = require('@elastic/elasticsearch');
+import { MultiMatchSeachBody, SearchResponse, AoeBody, AoeCollectionResult } from './esTypes';
+import { createMatchAllObject } from './esQueries';
+import { ApiResponse } from '@elastic/elasticsearch';
+import rdbms from '../resources/pg-connect';
 import { winstonLogger } from "../util";
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
