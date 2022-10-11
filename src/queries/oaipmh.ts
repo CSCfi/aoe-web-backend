@@ -5,7 +5,7 @@ import rdbms from '../resources/pg-connect';
 
 const db = rdbms.db;
 
-async function getMaterialMetaData(req: Request, res: Response) {
+export async function getMaterialMetaData(req: Request, res: Response): Promise<any> {
     try {
         const min = req.body.min;
         let query2 = "select count(*) from educationalmaterial where publishedat is not null"; // removed: "where ... and obsoleted = 0"
@@ -159,7 +159,3 @@ async function getMaterialMetaData(req: Request, res: Response) {
         res.sendStatus(500);
     }
 }
-
-export default {
-    getMaterialMetaData: getMaterialMetaData
-};

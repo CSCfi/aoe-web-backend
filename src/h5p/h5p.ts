@@ -2,12 +2,9 @@ import * as H5P from "h5p-nodejs-library";
 import path = require("path");
 import { lookup as mimeLookup } from "mime-types";
 import { Request, Response, NextFunction } from "express";
-import h5pAjaxExpressRouter from "h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter";
 import { readStreamFromStorage } from "./../queries/fileHandling";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { resolve, reject } from "bluebird";
 import { winstonLogger } from '../util';
-// import { H5P } from "h5p-standalone";
 const fs = require("fs");
 
 const config = new H5P.H5PConfig();
@@ -27,7 +24,7 @@ export const h5pEditor: H5P.H5PEditor = H5P.fs(
  * @param next
  * play req.params.contentid h5p material
  */
-export async function play(req: Request, res: Response, next: NextFunction) {
+export async function play(req: Request, res: Response, next: NextFunction): Promise<any> {
     try {
         const page = await startH5Pplayer(req.params.contentid);
         res.send(page);
@@ -41,7 +38,7 @@ export async function play(req: Request, res: Response, next: NextFunction) {
 /**
  *
  */
-export async function getH5PContent(req: Request, res: Response) {
+export async function getH5PContent(req: Request, res: Response): Promise<any> {
     try {
         const user = {
             canCreateRestricted: true,

@@ -23,6 +23,10 @@ const app = express();
 const apiRouterRoot: Router = Router();
 apiRoot(apiRouterRoot);
 
+// Load API version 1.0
+const apiRouterV1: Router = Router();
+apiV1(apiRouterV1);
+
 // Load API version 2.0
 const apiRouterV1: Router = Router();
 apiV1(apiRouterV1);

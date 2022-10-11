@@ -8,7 +8,7 @@ import {
 } from '../../controllers/material';
 import esCollection from '../../elasticSearch/es';
 import es from '../../elasticSearch/esQueries';
-import h5p, { getH5PContent } from '../../h5p/h5p';
+import { getH5PContent, play } from '../../h5p/h5p';
 import db from '../../queries/apiQueries';
 import { aoeRoutes, isAllasEnabled } from '../../services/routeEnablerService';
 import fh from '../../queries/fileHandling';
@@ -22,7 +22,7 @@ import {
     metadataExtensionValidationRules, ratingValidationRules, removeCollectionValidationRules,
     rulesValidate, updateCollectionValidationRules, validateRatingUser
 } from '../../validators/validator';
-import oaipmh from '../../queries/oaipmh';
+import { getMaterialMetaData } from '../../queries/oaipmh';
 import { downloadPdfFromAllas } from '../../helpers/officeToPdfConverter';
 import { downloadCollectionThumbnail, downloadEmThumbnail } from '../../queries/thumbnailHandler';
 import { updateUserSettings } from '../../users/userSettings';
@@ -30,7 +30,7 @@ import { verifyEmailToken } from '../../services/mailService';
 import collection from '../../collection/collection';
 import rating from '../../rating/rating';
 
-export default (router: Router) => {
+export default (router: Router): void => {
 
     router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
     router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
@@ -40,7 +40,7 @@ export default (router: Router) => {
     router.post('/elasticSearch/search', es.elasticSearchQuery);
 
     router.get('/h5p/content/:id/:file(*)', getH5PContent);
-    router.get('/h5p/play/:contentid', h5p.play);
+    router.get('/h5p/play/:contentid', play);
     router.post('/logout', ah.logout);
 
 // TODO: Unused endpoint?
@@ -59,7 +59,7 @@ export default (router: Router) => {
     router.get('/metadata/:id', getMetadataExtension);
     router.put('/metadata/:id', metadataExtensionValidationRules(), rulesValidate, ah.checkAuthenticated, addMetadataExtension);
     router.get('/names/:id', hasAccessToAoe, getMaterialNames);
-    router.post('/oaipmh/metadata', oaipmh.getMaterialMetaData);
+    router.post('/oaipmh/metadata', getMaterialMetaData);
     router.get('/pdf/content/:key', downloadPdfFromAllas);
     router.get('/recentmaterial', db.getRecentMaterial);
 
