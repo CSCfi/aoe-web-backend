@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+// import { Request, Response, NextFunction } from "express";
 import { aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
 // import { Client, ApiResponse } from "@elastic/elasticsearch";
 const elasticsearch = require("@elastic/elasticsearch");
@@ -12,7 +12,7 @@ const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true});
 // const client = new Client({ node: process.env.ES_NODE});
-const pgp = rdbms.pgp;
+// const pgp = rdbms.pgp;
 const db = rdbms.db;
 
 /**
