@@ -1,7 +1,6 @@
 import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import rdbms from '../resources/pg-connect';
 
-// const pgp = connection.pgp;
 const db = rdbms.db;
 
 export async function updateEducationalMaterial(emid: string) {

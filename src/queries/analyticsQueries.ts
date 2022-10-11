@@ -1,6 +1,5 @@
-import { rdbms } from '../resources';
+import rdbms from '../resources/pg-connect';
 
-// const pgp = rdbms.pgp;
 const db = rdbms.db;
 
 export async function updateViewCounter(id: string) {

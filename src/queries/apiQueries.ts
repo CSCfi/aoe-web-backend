@@ -7,7 +7,7 @@ import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
 import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import rdbms from '../resources/pg-connect';
 
 const fh = require("./fileHandling");
 const pgp = rdbms.pgp;
