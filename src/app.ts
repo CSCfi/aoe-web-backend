@@ -1,5 +1,6 @@
 import bodyParser from 'body-parser';
 import apiRoot from './api/routes-root';
+import apiV1 from './api/routes-v1';
 import apiV2 from './api/routes-v2';
 import express, { Router } from 'express';
 import compression from 'compression';
@@ -12,7 +13,6 @@ import cors from 'cors';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
-import apiRouterV1 from './routes/routes';
 import { aoeScheduler, morganLogger } from './util';
 
 const app = express();
@@ -20,6 +20,10 @@ const app = express();
 // Load API root modules
 const apiRouterRoot: Router = Router();
 apiRoot(apiRouterRoot);
+
+// Load API version 1.0
+const apiRouterV1: Router = Router();
+apiV1(apiRouterV1);
 
 // Load API version 2.0
 const apiRouterV2: Router = Router();
