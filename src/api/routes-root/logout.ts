@@ -2,8 +2,7 @@ import { Router } from 'express';
 import ah from '../../services/authService';
 
 /**
- * Open root level API for H5P interactive web materials.
- * Sessions and cookies not created.
+ * Open root level API for the session log out.
  *
  * @param router express.Router
  */
