@@ -11,8 +11,8 @@ const PG_USER: string = process.env.PG_USER || '';
 const PG_PASS: string = process.env.PG_PASS || '';
 const PG_DATA: string = process.env.PG_DATA || '';
 
-const PG_URL_FULL: string = 'postgres://' + PG_USER + ':' + PG_PASS + '@' + PG_HOST + ':' + PG_PORT + '/' + PG_DATA;
-const PG_URL_HOST: string = 'postgres://' + PG_HOST + ':' + PG_PORT;
+const PG_URL_FULL: string = ['postgres://', PG_USER, ':', PG_PASS, '@', PG_HOST, ':', PG_PORT, '/', PG_DATA].join('');
+const PG_URL_HOST: string = ['postgres://', PG_HOST, ':', PG_PORT].join('');
 
 // Options and error handlers for pg-promise.
 const initOptions: IInitOptions = {
@@ -45,6 +45,6 @@ db.connect()
         winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
     });
 
-export default function createClient(): { db: IDatabase<any, IClient>, pgp: IMain<any, IClient> } {
+export default function getClient(): { db: IDatabase<any, IClient>, pgp: IMain<any, IClient> } {
     return { db, pgp };
 }

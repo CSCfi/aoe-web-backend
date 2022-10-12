@@ -2,8 +2,8 @@ import { Router } from 'express';
 import { getH5PContent, play } from '../../h5p/h5p';
 
 /**
- * Open root level API for H5P interactive web materials.
- * Sessions and cookies not created.
+ * Root level Open API for H5P interactive web materials.
+ * Sessions and cookies are not created.
  *
  * @param router express.Router
  */
