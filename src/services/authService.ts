@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { winstonLogger } from '../util';
-import rdbms from '../resources/pg-connect';
-
-const db = rdbms.db;
+import { db } from '../resources/pg-connect';
 
 export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
     if (req.isAuthenticated()) {

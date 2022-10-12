@@ -16,7 +16,7 @@ import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import { requestRedirected } from '../services/streamingService';
 import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import { db, pgp } from '../resources/pg-connect';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -47,8 +47,7 @@ const upload = multer({
     "limits": {"fileSize": Number(process.env.FILE_SIZE_LIMIT)},
     "preservePath": true
 }); // provide the return value from
-// Database connection
-const db = rdbms.db;
+
 
 /**
  *

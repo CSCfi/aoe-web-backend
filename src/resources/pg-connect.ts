@@ -1,8 +1,9 @@
 import promise from 'bluebird';
 import moment from 'moment';
-import pgPromise, { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
+import pgPromise from 'pg-promise';
 import { IClient } from 'pg-promise/typescript/pg-subset';
 import { winstonLogger } from '../util';
+import { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
 
 const PG_HOST: string = process.env.PG_HOST || '';
 const PG_PORT: string = process.env.PG_PORT || '';
@@ -25,14 +26,14 @@ const initOptions: IInitOptions = {
 };
 
 // Initialize pg-promise with options.
-const pgp: IMain = pgPromise(initOptions);
+export const pgp: IMain = pgPromise(initOptions);
 
 // Converter for TYPE_TIMESTAMP
 const TYPE_TIMESTAMP = 1114;
 pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, (str: string) => moment.utc(str).toISOString());
 
 // Initialize DB connection
-const db: IDatabase<any> = pgp(PG_URL_FULL);
+export const db: IDatabase<any> = pgp(PG_URL_FULL);
 
 // Test DB connection
 db.connect()
@@ -44,7 +45,6 @@ db.connect()
         winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
     });
 
-export default {
-    pgp,
-    db,
-};
+export default function createClient(): { db: IDatabase<any, IClient>, pgp: IMain<any, IClient> } {
+    return { db, pgp };
+}

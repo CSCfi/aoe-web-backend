@@ -1,7 +1,5 @@
 import { winstonLogger } from '../util';
-import rdbms from '../resources/pg-connect';
-
-const db = rdbms.db;
+import { db } from '../resources/pg-connect';
 
 export async function updateEducationalMaterial(emid: string) {
     try {

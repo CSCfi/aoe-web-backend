@@ -8,7 +8,6 @@ import {
 } from '../../controllers/material';
 import esCollection from '../../elasticSearch/es';
 import es from '../../elasticSearch/esQueries';
-import { getH5PContent, play } from '../../h5p/h5p';
 import db from '../../queries/apiQueries';
 import { aoeRoutes, isAllasEnabled } from '../../services/routeEnablerService';
 import fh from '../../queries/fileHandling';
@@ -36,20 +35,15 @@ export default (router: Router): void => {
     router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
     router.post('/elasticSearch/collection/search', esCollection.getCollectionEsData);
 
-// TODO: To be removed
     router.post('/elasticSearch/search', es.elasticSearchQuery);
 
-    router.get('/h5p/content/:id/:file(*)', getH5PContent);
-    router.get('/h5p/play/:contentid', play);
-    router.post('/logout', ah.logout);
-
-// TODO: Unused endpoint?
+    // TODO: Unused endpoint?
     router.get('/material', db.getMaterial);
 
     router.delete('/material/attachment/:attachmentid', ah.checkAuthenticated, ah.hasAccessToAttachmentFile, db.deleteAttachment);
     router.post('/material/attachment/:materialId', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToMaterial, fh.uploadAttachmentToMaterial);
 
-// Keep the order
+    // Keep the order
     router.post('/material/file/:edumaterialid', isAllasEnabled, ah.checkAuthenticated, ah.hasAccessToPublicatication, fh.uploadFileToMaterial);
     router.post('/material/file', isAllasEnabled, ah.checkAuthenticated, fh.uploadMaterial);
 

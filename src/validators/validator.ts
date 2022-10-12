@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
-
-const db = rdbms.db;
+import { db } from '../resources/pg-connect';
 
 export function ratingValidationRules(): any[] {
     return [

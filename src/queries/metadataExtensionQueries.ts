@@ -1,8 +1,6 @@
 import { MetadataExtension } from "./../metadataExtension/metadataExtension";
 import { winstonLogger } from '../util';
-import rdbms from '../resources/pg-connect';
-
-const db = rdbms.db;
+import { db } from '../resources/pg-connect';
 
 export async function insertMetadataExtension(id: string, username: string, metadata: MetadataExtension) {
     try {

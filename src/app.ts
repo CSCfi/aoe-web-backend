@@ -28,10 +28,6 @@ const apiRouterV1: Router = Router();
 apiV1(apiRouterV1);
 
 // Load API version 2.0
-const apiRouterV1: Router = Router();
-apiV1(apiRouterV1);
-
-// Load API version 2.0
 const apiRouterV2: Router = Router();
 apiV2(apiRouterV2);
 

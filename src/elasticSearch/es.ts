@@ -1,11 +1,12 @@
-import { getPopularityQuery } from "./../queries/analyticsQueries";
-import { aoeThumbnailDownloadUrl } from "./../services/urlService";
-import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollectionDataToUpdate } from "./esCollection";
-import { ErrorHandler } from "./../helpers/errorHandler";
-import { Request, Response, NextFunction } from "express";
-import { AoeBody, AoeCollectionResult } from "./esTypes";
-import rdbms from '../resources/pg-connect';
+import { getPopularityQuery } from '../queries/analyticsQueries';
+import { aoeThumbnailDownloadUrl } from '../services/urlService';
+import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollectionDataToUpdate } from './esCollection';
+import { ErrorHandler } from '../helpers/errorHandler';
+import { Request, Response, NextFunction } from 'express';
+import { AoeBody, AoeCollectionResult } from './esTypes';
 import { winstonLogger } from '../util';
+import { db, pgp } from '../resources/pg-connect';
+import * as pgLib from 'pg-promise';
 
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
@@ -21,19 +22,15 @@ export namespace Es {
     export const ESCounterUpdated = { value: new Date() };
     export const CollectionEsUpdated = { value: new Date() };
 }
-const pgp = rdbms.pgp;
-const db = rdbms.db;
-const TransactionMode = pgp.txMode.TransactionMode;
-const isolationLevel = pgp.txMode.isolationLevel;
 
 // Create a reusable transaction mode (serializable + read-only + deferrable):
-const mode = new TransactionMode({
-    tiLevel: isolationLevel.serializable,
+const mode = new pgLib.txMode.TransactionMode({
+    tiLevel: pgLib.txMode.isolationLevel.serializable,
     readOnly: true,
     deferrable: true
 });
 
-export async function createEsIndex() {
+export async function createEsIndex(): Promise<any> {
     client.ping({
         // ping usually has a 3000ms timeout
         // requestTimeout: 1000
