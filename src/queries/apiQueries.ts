@@ -80,6 +80,7 @@ const mode = new pgLib.txMode.TransactionMode({
 
 export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
+    console.log('ID: ' + eduMaterialId);
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
@@ -286,8 +287,8 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         }
         let owner = false;
         // winstonLogger.debug(owner);
-        if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
-            owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
+        if (req.session?.passport && req.session?.passport.user && req.session?.passport.user.uid) {
+            owner = await isOwner(eduMaterialId.toString(), req.session?.passport.user.uid);
         }
         // winstonLogger.debug(owner);
         // add displayname object to material object
@@ -405,6 +406,9 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         jsonObj.urn = (data[20]) ? data[20].urn : data[20];
         res.status(200).json(jsonObj);
+
+        console.log('CHECKPOINT');
+
         if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
             updateViewCounter(jsonObj.id).catch((error) => {
                 winstonLogger.error(`View counter update failed: ${error}`);

@@ -18,6 +18,7 @@ import { oidc } from './resources';
 import { aoeScheduler, morganLogger } from './util';
 
 const app = express();
+app.disable('x-powered-by');
 
 // Load API root modules
 const apiRouterRoot: Router = Router();
@@ -75,6 +76,7 @@ const corsOptions = {
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     optionsSuccessStatus: 200,
 };
+
 app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
