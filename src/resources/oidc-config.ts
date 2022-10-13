@@ -64,16 +64,21 @@ export const authInit = (app: Express): void => {
     app.use(passport.session());
 
     // Login endpoint for the client application.
-    app.get('/login', isLoginEnabled, passport.authenticate('oidc', {
+    app.get('/api/login', isLoginEnabled, passport.authenticate('oidc', {
             successRedirect: '/',
-            failureRedirect: '/login',
+            failureRedirect: '/', // '/login'
             failureFlash: true,
             scope: 'openid profile offline_access',
         }),
     );
 
+    app.get('/api/logout', (req: Request, res: Response) => {
+        req.logout();
+        res.status(200).json({ status: 'ok' });
+    });
+
     // Redirect endpoint and handlers after successful or failed authorization.
-    app.get('/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
+    app.get('/api/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
             next();
         },
         passport.authenticate('oidc', {
@@ -91,6 +96,11 @@ export const authInit = (app: Express): void => {
 export const sessionInit = (app: Express): void => {
     const RedisStore = connectRedis(session);
 
+    const domainSelector = {
+        production: 'aoe.fi',
+        development: 'demo.aoe.fi',
+        localhost: 'localhost',
+    }
     app.use(
         session({
             genid: () => {
@@ -101,11 +111,12 @@ export const sessionInit = (app: Express): void => {
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
             cookie: {
-                domain: 'aoe.fi',
+                domain: domainSelector[process.env.NODE_ENV],
                 httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
                 path: '/api',
-                sameSite: true
+                sameSite: 'lax',
+                secure: true,
             },
         }),
     );

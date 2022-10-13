@@ -183,31 +183,29 @@ export async function userInfo(req: Request, res: Response): Promise<any> {
     }
 }
 
-export async function hasAoeAccess(username: string): Promise<any> {
-    const query = "SELECT username FROM aoeuser WHERE username = $1";
+export const hasAoeAccess = async (username: string): Promise<boolean> => {
+    const query = "SELECT username " +
+        "FROM aoeuser " +
+        "WHERE username = $1";
     const result = await db.oneOrNone(query, [username]);
-    if (!result) {
-        return false;
-    } else {
-        return true;
-    }
+    return !!result;
 }
 
-export function logout(req: Request, res: Response): void {
-    req.logout();
-    res.status(200).json({"status": "ok"});
-}
+// export function logout(req: Request, res: Response): void {
+//     req.logout();
+//     res.status(200).json({"status": "ok"});
+// }
 
 export default {
     getUserData,
-    hasAccesstoPublication,
+    // hasAccesstoPublication,
     checkAuthenticated,
     InsertUserToDatabase,
     hasAccessToPublicatication,
-    logout,
+    // logout,
     hasAccessToMaterial,
     hasAccessToAttachmentFile,
     hasAccessToCollection,
-    hasAccessToCollectionParams,
+    // hasAccessToCollectionParams,
     userInfo,
 };
