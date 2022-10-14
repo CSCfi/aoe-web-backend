@@ -31,7 +31,7 @@ const apiRouterV2: Router = Router();
 apiV2(apiRouterV2);
 
 // Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
-app.set('trust proxy', 1);
+app.set('trust proxy', '127.0.0.1');
 
 // const domainSelector = {
 //     production: 'aoe.fi',

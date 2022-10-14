@@ -112,16 +112,17 @@ export const sessionInit = (app: Express): void => {
                 return uuid(); // use UUIDs for session IDs
             },
             store: new RedisStore({ client: redisClient }),
-            resave: true,
+            resave: false,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
+            proxy: true,
             cookie: {
                 domain: domainSelector[process.env.NODE_ENV],
                 httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
                 path: '/api',
                 sameSite: 'lax',
-                secure: false,
+                secure: true,
             },
         }),
     );
