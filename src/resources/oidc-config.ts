@@ -120,7 +120,7 @@ export const sessionInit = (app: Express): void => {
                 httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
                 path: '/api',
-                sameSite: 'none',
+                sameSite: 'lax',
                 secure: false,
             },
         }),
