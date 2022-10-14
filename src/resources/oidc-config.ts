@@ -8,6 +8,7 @@ import redisClient from './redis-client';
 import { isLoginEnabled } from '../services/routeEnablerService';
 import { winstonLogger } from '../util';
 import uuid from 'uuid/v4';
+import winston from 'winston';
 
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
@@ -74,11 +75,13 @@ export const authInit = (app: Express): void => {
 
     app.get('/api/logout', (req: Request, res: Response) => {
         req.logout();
+        // req.session.destroy();
         res.status(200).json({ status: 'ok' });
     });
 
     // Redirect endpoint and handlers after successful or failed authorization.
     app.get('/api/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
+            winstonLogger.debug('Login request /secure/redirect');
             next();
         },
         passport.authenticate('oidc', {
@@ -116,7 +119,7 @@ export const sessionInit = (app: Express): void => {
                 httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
                 path: '/api',
-                sameSite: 'none', // 'lax'
+                sameSite: 'lax',
                 secure: true,
             },
         }),
