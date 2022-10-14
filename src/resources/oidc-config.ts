@@ -90,7 +90,8 @@ export const authInit = (app: Express): void => {
 };
 
 /**
- * Initialize session management and attach to Express application.
+ * Initialize session and cookie management with Redis storage.
+ *
  * @param app Express
  */
 export const sessionInit = (app: Express): void => {

@@ -6,9 +6,7 @@ import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-
 // import cookieParser from 'cookie-parser';
-
 import flash from 'connect-flash';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
@@ -35,11 +33,18 @@ apiV2(apiRouterV2);
 // Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
 app.set('trust proxy', '127.0.0.1');
 
+// const domainSelector = {
+//     production: 'aoe.fi',
+//     development: 'demo.aoe.fi',
+//     localhost: 'localhost',
+// }
 // app.use(cookieParser(undefined, {
-//         domain: 'lessons.aoe.fi',
+//         domain: domainSelector[process.env.NODE_ENV],
 //         httpOnly: true,
 //         maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-//         sameSite: true
+//         path: '/api',
+//         sameSite: 'lax',
+//         secure: true,
 //     }
 // ));
 
