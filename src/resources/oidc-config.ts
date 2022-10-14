@@ -72,7 +72,7 @@ export const authInit = (app: Express): void => {
         }),
     );
 
-    app.get('/api/logout', (req: Request, res: Response) => {
+    app.post('/api/logout', (req: Request, res: Response) => {
         req.logout();
         req.session.destroy((error) => {
             winstonLogger.error('Destroying session on logout failed: %o', error);
@@ -121,7 +121,7 @@ export const sessionInit = (app: Express): void => {
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
                 path: '/api',
                 sameSite: 'lax',
-                secure: false,
+                secure: true,
             },
         }),
     );
