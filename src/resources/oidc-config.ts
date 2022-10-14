@@ -65,8 +65,8 @@ export const authInit = (app: Express): void => {
 
     // Login endpoint for the client application.
     app.get('/api/login', isLoginEnabled, passport.authenticate('oidc', {
-            // successRedirect: '/',
-            // failureRedirect: '/api/login', // '/login'
+            successRedirect: '/',
+            failureRedirect: '/api/login',
             failureFlash: true,
             scope: 'openid profile offline_access',
         }),
@@ -74,7 +74,9 @@ export const authInit = (app: Express): void => {
 
     app.get('/api/logout', (req: Request, res: Response) => {
         req.logout();
-        // req.session.destroy();
+        req.session.destroy((error) => {
+            winstonLogger.error('Destroying session on logout failed: %o', error);
+        });
         res.status(200).json({ status: 'ok' });
     });
 
@@ -107,21 +109,19 @@ export const sessionInit = (app: Express): void => {
     app.use(
         session({
             genid: () => {
-                const id = uuid();
-                winstonLogger.debug('UUID: %s', id);
-                return id; // use UUIDs for session IDs
+                return uuid(); // use UUIDs for session IDs
             },
             store: new RedisStore({ client: redisClient }),
             resave: true,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
             cookie: {
-                // domain: domainSelector[process.env.NODE_ENV],
-                // httpOnly: false,
+                domain: domainSelector[process.env.NODE_ENV],
+                httpOnly: true,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-                // path: '/api',
+                path: '/api',
                 sameSite: 'none',
-                // secure: false,
+                secure: false,
             },
         }),
     );
