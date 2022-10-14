@@ -3,6 +3,9 @@ import { winstonLogger } from '../util';
 import { db } from '../resources/pg-connect';
 
 export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
+    const authenticated: boolean = req.isAuthenticated();
+    winstonLogger.debug('Authenticated: ' + authenticated);
+
     if (req.isAuthenticated()) {
         return next();
     } else {

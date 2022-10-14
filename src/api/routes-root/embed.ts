@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { downloadFile } from '../../queries/fileHandling';
+import { downloadPreviewFile } from '../../queries/fileHandling';
 import { getEducationalMaterialMetadata } from '../../queries/apiQueries';
 
 /**
  * Open root level API for embedded materials.
- * Sessions and cookies not created.
+ * Sessions and cookies are not created.
  *
  * @param router express.Router
  */
@@ -17,6 +17,6 @@ export default (router: Router) => {
     router.get('/embed/material/:edumaterialid([0-9]{1,6})/:publishedat?', getEducationalMaterialMetadata);
 
     // Download single file by file name.
-    router.get('/embed/download/:filename', downloadFile);
+    router.get('/embed/download/:filename', downloadPreviewFile);
 
 }

@@ -8,7 +8,6 @@ import redisClient from './redis-client';
 import { isLoginEnabled } from '../services/routeEnablerService';
 import { winstonLogger } from '../util';
 import uuid from 'uuid/v4';
-import winston from 'winston';
 
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
@@ -22,7 +21,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((userinfo: Record<string, unknown>, done) => {
     done(undefined, { user: userinfo.id });
 });
-Issuer.discover(process.env.PROXY_URI || '')
+Issuer.discover(process.env.PROXY_URI)
     .then((oidcIssuer: InstanceType<typeof Issuer>) => {
         const client = new oidcIssuer.Client({
             client_id: process.env.CLIENT_ID,
@@ -108,11 +107,13 @@ export const sessionInit = (app: Express): void => {
     app.use(
         session({
             genid: () => {
-                return uuid(); // use UUIDs for session IDs
+                const id = uuid();
+                winstonLogger.debug('UUID: %s', id);
+                return id; // use UUIDs for session IDs
             },
             store: new RedisStore({ client: redisClient }),
             resave: false,
-            saveUninitialized: true,
+            saveUninitialized: false,
             secret: process.env.SESSION_SECRET || 'dev_secret',
             cookie: {
                 domain: domainSelector[process.env.NODE_ENV],

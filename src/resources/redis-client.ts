@@ -31,4 +31,6 @@ redisClient.on('error', (error: Error) => {
     winstonLogger.error('REDIS [redis://' + redisHost + ':' + redisPort + '] Error: ' + error);
 });
 
-export default redisClient;
+export default function getRedisClient(): RedisClient {
+    return redisClient;
+}

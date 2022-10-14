@@ -6,7 +6,7 @@ import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-// import cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
@@ -38,16 +38,18 @@ app.set('trust proxy', '127.0.0.1');
 //     development: 'demo.aoe.fi',
 //     localhost: 'localhost',
 // }
+
+
 // app.use(cookieParser(undefined, {
 //         domain: domainSelector[process.env.NODE_ENV],
 //         httpOnly: true,
 //         maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-//         path: '/api',
-//         sameSite: 'none', // 'lax'
-//         secure: true,
+//         path: '/',
+//         sameSite: 'lax',
+//         // secure: true,
 //     }
 // ));
-
+app.use(cookieParser());
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);

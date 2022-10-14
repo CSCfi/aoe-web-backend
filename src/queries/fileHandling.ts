@@ -746,7 +746,7 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
-export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
         const filename: string = req.params.filename;
         const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
