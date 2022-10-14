@@ -65,8 +65,8 @@ export const authInit = (app: Express): void => {
 
     // Login endpoint for the client application.
     app.get('/api/login', isLoginEnabled, passport.authenticate('oidc', {
-            successRedirect: '/',
-            failureRedirect: '/', // '/login'
+            // successRedirect: '/',
+            // failureRedirect: '/api/login', // '/login'
             failureFlash: true,
             scope: 'openid profile offline_access',
         }),
@@ -112,16 +112,16 @@ export const sessionInit = (app: Express): void => {
                 return id; // use UUIDs for session IDs
             },
             store: new RedisStore({ client: redisClient }),
-            resave: false,
-            saveUninitialized: false,
+            resave: true,
+            saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
             cookie: {
-                domain: domainSelector[process.env.NODE_ENV],
-                httpOnly: true,
+                // domain: domainSelector[process.env.NODE_ENV],
+                // httpOnly: false,
                 maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-                path: '/api',
-                sameSite: 'lax',
-                secure: true,
+                // path: '/api',
+                sameSite: 'none',
+                // secure: false,
             },
         }),
     );
