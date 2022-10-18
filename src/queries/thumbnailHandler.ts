@@ -45,7 +45,7 @@ export const uploadbase64Image = async (req: Request, res: Response, next: NextF
  */
 export const downloadEmThumbnail = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     try {
-        const key = req.params.id;
+        const key = req.params.filename || req.params.id;
         if (!key) {
             return res.status(200).json({});
         }
