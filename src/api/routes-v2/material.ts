@@ -15,13 +15,13 @@ export default (router: Router) => {
 
     // MATERIAL FILE DOWNLOAD FOR SAVING:
     // Download the fysical material file by file name (:filename) to save it on a local hard drive.
-    router.get('/material/download/:filename', downloadFile);
+    router.get('/material/files/:filename/download', downloadFile);
 
-    // MATERIAL FILE DOWNLOAD FOR EMBEDDED REVIEW:
-    // Fetch a material file by file name (:filename) for the embedded view (iframe).
-    router.get('/material/preview/:filename', downloadPreviewFile);
+    // MATERIAL FILE DOWNLOAD FOR EMBEDDED PREVIEW:
+    // Fetch a material file by file name (:filename) for the embedded preview (iframe).
+    router.get('/material/files/:filename/preview', downloadPreviewFile);
 
-    // THUMBNAIL FILE DOWNLOAD FOR WEB VIEW:
+    // THUMBNAIL FILE LOAD FOR WEB VIEW:
     // Fetch a thumbnail picture by file name (:id) for the educational material view.
     router.get('/material/thumbnail/:id', downloadEmThumbnail);
 
@@ -32,4 +32,5 @@ export default (router: Router) => {
         checkAuthenticated,
         hasAccessToPublicatication,
         uploadbase64Image);
+
 }
