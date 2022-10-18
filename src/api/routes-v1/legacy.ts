@@ -33,9 +33,6 @@ export default (router: Router): void => {
 
     router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
     router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
-    router.post('/elasticSearch/collection/search', esCollection.getCollectionEsData);
-
-    router.post('/elasticSearch/search', es.elasticSearchQuery);
 
     // TODO: Unused endpoint?
     router.get('/material', db.getMaterial);

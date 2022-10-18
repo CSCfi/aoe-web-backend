@@ -12,6 +12,7 @@ export default (router: Router): void => {
 
     let notification: Notification = new Notification('');
 
+    // Get a notification
     router.get('/process/notification', (req: Request, res: Response) => {
         if (req.accepts('json')) {
             return res.status(200).json(notification);
@@ -19,6 +20,7 @@ export default (router: Router): void => {
         return res.sendStatus(400);
     });
 
+    // Save a notification
     router.post('/process/notification', (req: Request, res: Response) => {
         if (req.accepts('json') && req.body.notification) {
             notification.notification = req.body.notification;
