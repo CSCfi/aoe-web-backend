@@ -4,16 +4,18 @@ import Notification from './dto/notification';
 /**
  * API version 2.0 for requesting application processes.
  * This module is a collection of endpoints starting with /process/.
- * Endpoints ordered by the request URL (1) and method (2).
+ * Endpoints ordered by the request URL (1) and the method (2).
  *
  * @param router express.Router
  */
 export default (router: Router): void => {
 
+    const requestRoot = '/process';
+
     let notification: Notification = new Notification('');
 
     // Get a notification
-    router.get('/process/notification', (req: Request, res: Response) => {
+    router.get(`${requestRoot}/notification`, (req: Request, res: Response) => {
         if (req.accepts('json')) {
             return res.status(200).json(notification);
         }
@@ -21,7 +23,7 @@ export default (router: Router): void => {
     });
 
     // Save a notification
-    router.post('/process/notification', (req: Request, res: Response) => {
+    router.post(`${requestRoot}/notification`, (req: Request, res: Response) => {
         if (req.accepts('json') && req.body.notification) {
             notification.notification = req.body.notification;
             notification.updated = new Date().toISOString();

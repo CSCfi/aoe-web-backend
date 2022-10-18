@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import collection from './collection';
-import material from './material';
+import edumaterial from './edumaterial';
 import metadata from './metadata';
 import process from './process';
 import search from './search';
 
 export { default as collection } from './collection';
-export { default as material } from './material';
+export { default as edumaterial } from './edumaterial';
 export { default as metadata } from './metadata';
 export { default as process } from './process';
 export { default as search } from './search';
@@ -19,7 +19,7 @@ export { default as search } from './search';
  */
 export default (router: Router): void => {
     collection(router);
-    material(router);
+    edumaterial(router);
     metadata(router);
     process(router);
     search(router);

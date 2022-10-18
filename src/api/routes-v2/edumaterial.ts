@@ -6,28 +6,30 @@ import { downloadEmThumbnail, uploadbase64Image } from '../../queries/thumbnailH
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
- * This module is a collection of endpoints starting with /material/.
+ * This module is a collection of endpoints starting with /edumaterial/.
  * Endpoints ordered by the request URL (1) and the method (2).
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
+
+    const requestRoot = '/edumaterial';
 
     // MATERIAL FILE DOWNLOAD FOR SAVING:
     // Download the fysical material file by file name (:filename) to save it on a local hard drive.
-    router.get('/material/files/:filename/download', downloadFile);
+    router.get(`${requestRoot}/files/:filename/download`, downloadFile);
 
     // MATERIAL FILE DOWNLOAD FOR EMBEDDED PREVIEW:
     // Fetch a material file by file name (:filename) for the embedded preview (iframe).
-    router.get('/material/files/:filename/preview', downloadPreviewFile);
+    router.get(`${requestRoot}/files/:filename/preview`, downloadPreviewFile);
 
     // THUMBNAIL FILE LOAD FOR WEB VIEW:
     // Fetch a thumbnail picture by file name (:id) for the educational material view.
-    router.get('/material/thumbnail/:id', downloadEmThumbnail);
+    router.get(`${requestRoot}/thumbnail/:id`, downloadEmThumbnail);
 
     // THUMBNAIL UPLOAD FOR STORING:
     // Store a new thumbnail picture file for the educational material (:edumaterialid).
-    router.post('/material/thumbnail/:edumaterialid([0-9]{1,6})',
+    router.post(`${requestRoot}/thumbnail/:edumaterialid([0-9]{1,6})`,
         isAllasEnabled,
         checkAuthenticated,
         hasAccessToPublicatication,

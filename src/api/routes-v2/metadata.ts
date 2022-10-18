@@ -9,12 +9,14 @@ import { Router } from 'express';
  * @param router express.Router
  */
 export default (router: Router): void => {
+    
+    const requestRoot = '/metadata';
 
     // Fetch metadata of an educational material by ID (:edumaterialid).
-    router.get('/metadata/:edumaterialid([0-9]{1,6})', getEducationalMaterialMetadata);
+    router.get(`${requestRoot}/:edumaterialid([0-9]{1,6})`, getEducationalMaterialMetadata);
 
     // Fetch metadata of an educational material version by ID (:edumaterialid) and published timestamp (:publishedat).
-    router.get('/metadata/:edumaterialid([0-9]{1,6})/version/' +
+    router.get(`${requestRoot}/:edumaterialid([0-9]{1,6})/version/` +
         ':publishedat([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z)',
         getEducationalMaterialMetadata);
 

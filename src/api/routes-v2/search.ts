@@ -11,10 +11,12 @@ import { getCollectionEsData } from '../../elasticSearch/es';
  */
 export default (router: Router): void => {
 
+    const requestRoot = '/search';
+
     // Search for educational materials with criteria.
-    router.post('/search', elasticSearchQuery);
+    router.post(`${requestRoot}`, elasticSearchQuery);
 
     // Update search index with collection changes.
-    router.post('/search/collection', getCollectionEsData);
+    router.post(`${requestRoot}/collection`, getCollectionEsData);
 
 }
