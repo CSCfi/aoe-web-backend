@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Router } from 'express';
 import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
 import { downloadFile, downloadPreviewFile } from '../../queries/fileHandling';
 import { isAllasEnabled } from '../../services/routeEnablerService';
@@ -15,20 +15,20 @@ export default (router: Router): void => {
 
     const moduleRoot = '/material';
 
-    // MATERIAL FILE DOWNLOAD FOR LOCAL SAVING:
+    // MATERIAL FILE DOWNLOAD FOR LOCAL SAVING
     // Download the fysical material file by file name (:filename) to save it on a local hard drive.
     router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/download`, downloadFile);
 
-    // MATERIAL FILE DOWNLOAD FOR EMBEDDED PREVIEW:
+    // MATERIAL FILE DOWNLOAD FOR EMBEDDED PREVIEW
     // Fetch a material file by file name (:filename) for the embedded preview (iframe).
     router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/preview`, downloadPreviewFile);
 
-    // THUMBNAIL FETCH FOR THE WEB VIEW:
+    // THUMBNAIL FETCH FOR THE WEB VIEW
     // Fetch a thumbnail picture by file name (:filename) for the educational material web view.
     router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/thumbnail`, downloadEmThumbnail);
 
-    // THUMBNAIL UPLOAD FOR STORING:
-    // Store a new thumbnail picture file for the educational material (:edumaterialid).
+    // THUMBNAIL UPLOAD TO CLOUD STORAGE
+    // Store a new thumbnail picture of an educational material (:edumaterialid) to the cloud storage.
     router.post(`${moduleRoot}/edumaterial/:edumaterialid([0-9]{1,6})/thumbnail`,
         isAllasEnabled,
         checkAuthenticated,
