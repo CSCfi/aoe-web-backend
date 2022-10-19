@@ -731,6 +731,7 @@ export const downloadPreviewFile = async (req: Request, res: Response, next: Nex
         const data = await downloadFileFromStorage(req, res, next);
         //if (!data) return res.end();
 
+        winstonLogger.debug('Response writable ended: ' + res.writableEnded);
         if (!res.writableEnded) {
             return res.status(200).end();
         }
@@ -820,7 +821,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
 
             if (!fileDetails) {
-                next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
+                next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found.'));
             } else {
                 // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
                 if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
