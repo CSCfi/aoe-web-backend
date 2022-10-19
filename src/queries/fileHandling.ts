@@ -724,19 +724,12 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
-export const downloadPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const downloadPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
     winstonLogger.debug('HTTP request headers present in downloadPreviewFile(): %o', req.headers);
-
     try {
         const data = await downloadFileFromStorage(req, res, next);
-        //if (!data) return res.end();
-
-        winstonLogger.debug('Response writable ended: ' + res.writableEnded);
-        if (!res.writableEnded) {
-            return res.status(200).end();
-        }
-        //return next();
-
+        if (!data) return res.end();
+        return res.status(200).end();
     } catch (err) {
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
@@ -826,7 +819,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
                 // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
                 if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
                     res.setHeader('Location', env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName)
-                    res.status(302).end();
+                    res.status(302);
                     return resolve();
                 }
                 const params = {
