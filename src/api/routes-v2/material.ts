@@ -29,7 +29,7 @@ export default (router: Router): void => {
 
     // THUMBNAIL UPLOAD TO CLOUD STORAGE
     // Store a new thumbnail picture of an educational material (:edumaterialid) to the cloud storage.
-    router.post(`${moduleRoot}/edumaterial/:edumaterialid([0-9]{1,6})/thumbnail`,
+    router.post(`${moduleRoot}/:edumaterialid([0-9]{1,6})/thumbnail`,
         isAllasEnabled,
         checkAuthenticated,
         hasAccessToPublicatication,
