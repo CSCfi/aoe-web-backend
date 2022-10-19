@@ -115,7 +115,7 @@ export const sessionInit = (app: Express): void => {
             resave: false,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'dev_secret',
-            proxy: undefined,
+            proxy: true,
             cookie: {
                 domain: domainSelector[process.env.NODE_ENV],
                 httpOnly: true,
