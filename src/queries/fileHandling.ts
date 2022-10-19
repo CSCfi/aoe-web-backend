@@ -731,7 +731,9 @@ export const downloadPreviewFile = async (req: Request, res: Response, next: Nex
         const data = await downloadFileFromStorage(req, res, next);
         //if (!data) return res.end();
 
-        return res.status(200).end();
+        if (!res.writableEnded) {
+            return res.status(200).end();
+        }
         //return next();
 
     } catch (err) {
@@ -822,9 +824,8 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             } else {
                 // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
                 if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
-                    res.status(302).set({
-                        'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName
-                    });
+                    res.setHeader('Location', env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName)
+                    res.status(302).end();
                     return resolve();
                 }
                 const params = {
