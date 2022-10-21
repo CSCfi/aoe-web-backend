@@ -753,11 +753,11 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
         if (!materialid) return res.status(404).end();
 
         const educationalmaterialidQuery = "SELECT educationalmaterialid FROM versioncomposition WHERE materialid = $1";
-        const originalmaterialid: any[] = await db.any(educationalmaterialidQuery, [materialid.materialid]);
+        const originalMaterialIdArr: { educationalmaterialid: string }[] = await db.any(educationalmaterialidQuery, [materialid.materialid]);
 
         let educationalmaterialId: number;
-        if (originalmaterialid) {
-            educationalmaterialId = parseInt(originalmaterialid[0].educationalmaterialid, 10);
+        if (originalMaterialIdArr) {
+            educationalmaterialId = parseInt(originalMaterialIdArr[0].educationalmaterialid, 10);
         } else {
             educationalmaterialId = parseInt(materialid.materialid, 10);
         }
