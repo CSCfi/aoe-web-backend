@@ -11,7 +11,7 @@ import s3Zip from 's3-zip';
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
-import env from '../configuration/environments';
+import config from '../configuration';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import { requestRedirected } from '../services/streamingService';
@@ -818,7 +818,7 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
             } else {
                 // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
                 if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
-                    res.setHeader('Location', env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName)
+                    res.setHeader('Location', config.STREAM_REDIRECT_CRITERIA.redirectUri + fileName)
                     res.status(302);
                     return resolve();
                 }

@@ -1,5 +1,6 @@
 import ah from '../services/authService';
 import connectRedis from 'connect-redis';
+import config from '../configuration';
 import { Express, NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import openidClient, { custom, HttpOptions } from 'openid-client';
@@ -72,17 +73,18 @@ export const authInit = (app: Express): void => {
         }),
     );
 
-    app.post('/api/logout', (req: Request, res: Response) => {
+    app.get('/api/logout', (req: Request, res: Response) => {
         req.logout();
         req.session.destroy((error) => {
-            winstonLogger.error('Destroying session on logout failed: %o', error);
+            winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
+            res.clearCookie('connect.sid', config.SESSION_COOKIE_OPTIONS);
+            res.redirect('/');
         });
-        res.status(200).json({ status: 'ok' });
     });
 
     // Redirect endpoint and handlers after successful or failed authorization.
     app.get('/api/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
-            winstonLogger.debug('Login request /secure/redirect');
+            winstonLogger.debug('Login redirect /secure/redirect | URI: %s', process.env.SUCCESS_REDIRECT_URI);
             next();
         },
         passport.authenticate('oidc', {
@@ -101,11 +103,6 @@ export const authInit = (app: Express): void => {
 export const sessionInit = (app: Express): void => {
     const RedisStore = connectRedis(session);
 
-    const domainSelector = {
-        production: 'aoe.fi',
-        development: 'demo.aoe.fi',
-        localhost: 'localhost',
-    }
     app.use(
         session({
             genid: () => {
@@ -114,16 +111,9 @@ export const sessionInit = (app: Express): void => {
             store: new RedisStore({ client: redisClient }),
             resave: false,
             saveUninitialized: true,
-            secret: process.env.SESSION_SECRET || 'dev_secret',
+            secret: process.env.SESSION_SECRET || 'secret',
             proxy: true,
-            cookie: {
-                domain: domainSelector[process.env.NODE_ENV],
-                httpOnly: true,
-                maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-                path: '/api',
-                sameSite: 'lax',
-                secure: true,
-            },
+            cookie: config.SESSION_COOKIE_OPTIONS,
         }),
     );
 };
