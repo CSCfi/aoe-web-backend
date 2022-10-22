@@ -74,10 +74,12 @@ export const authInit = (app: Express): void => {
     );
 
     app.get('/api/logout', (req: Request, res: Response) => {
+        const deleteCookie = config.SESSION_COOKIE_OPTIONS;
+        deleteCookie.maxAge = 0;
         req.logout();
         req.session.destroy((error) => {
             winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
-            res.clearCookie('connect.sid', config.SESSION_COOKIE_OPTIONS);
+            res.clearCookie('connect.sid', deleteCookie);
             res.redirect('/');
         });
     });
