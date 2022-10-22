@@ -17,6 +17,7 @@ export function checkAuthenticated(req: Request, res: Response, next: NextFuncti
 export async function getUserData(req: Request, res: Response): Promise<any> {
     const query = "SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;";
     const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
+    res.setHeader('Cache-Control', 'private, max-age=0');
     res.status(200).json({
         "userdata": req.session.passport.user,
         "email": data.email,
