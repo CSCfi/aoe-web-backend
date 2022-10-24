@@ -80,7 +80,8 @@ export const authInit = (app: Express): void => {
         req.session.destroy((error) => {
             winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
             res.clearCookie('connect.sid', deleteCookie);
-            res.redirect('/#/logout');
+            res.status(204);
+            // res.redirect('/#/logout');
         });
     });
 
