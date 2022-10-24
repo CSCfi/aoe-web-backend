@@ -75,7 +75,7 @@ export const authInit = (app: Express): void => {
 
     app.post('/api/logout', (req: Request, res: Response) => {
         const deleteCookie = config.SESSION_COOKIE_OPTIONS;
-        deleteCookie.maxAge = 0;
+        deleteCookie['maxAge'] = 0;
         req.logout();
         req.session.destroy((error) => {
             winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
