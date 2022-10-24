@@ -6,7 +6,7 @@ import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-import cookieParser from 'cookie-parser';
+// import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
@@ -48,7 +48,7 @@ app.set('trust proxy', '127.0.0.1');
 //         // secure: true,
 //     }
 // ));
-app.use(cookieParser());
+// app.use(cookieParser());
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);

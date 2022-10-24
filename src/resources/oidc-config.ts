@@ -113,6 +113,7 @@ export const sessionInit = (app: Express): void => {
             },
             store: new RedisStore({ client: redisClient }),
             resave: false,
+            rolling: false,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'secret',
             proxy: true,
