@@ -112,7 +112,7 @@ export const sessionInit = (app: Express): void => {
                 return uuid(); // use UUIDs for session IDs
             },
             store: new RedisStore({ client: redisClient }),
-            resave: false,
+            resave: true,
             rolling: false,
             saveUninitialized: true,
             secret: process.env.SESSION_SECRET || 'secret',
