@@ -73,7 +73,7 @@ export const authInit = (app: Express): void => {
         }),
     );
 
-    app.get('/api/logout', (req: Request, res: Response) => {
+    app.post('/api/logout', (req: Request, res: Response) => {
         const deleteCookie = config.SESSION_COOKIE_OPTIONS;
         deleteCookie.maxAge = 0;
         req.logout();
