@@ -6,7 +6,7 @@ export default {
     SESSION_COOKIE_OPTIONS: {
         domain: process.env.SESSION_COOKIE_DOMAIN as string,
         httpOnly: (process.env.SESSION_COOKIE_HTTPONLY.toLowerCase() === 'true') as boolean,
-        // maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) as number,
+        maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) as number,
         path: process.env.SESSION_COOKIE_PATH as string,
         sameSite: 'lax' as boolean | 'lax' | 'strict' | 'none',
         secure: true as boolean | 'auto',
