@@ -5,16 +5,16 @@ export default {
     SESSION_CONFIG_OPTIONS: {
         resave: (process.env.SESSION_OPTION_RESAVE.toLowerCase() === 'true') as boolean,
         rolling: (process.env.SESSION_OPTION_ROLLING.toLowerCase() === 'true') as boolean,
-        saveUninitialized: (process.env.SESSION_OPTION_SAVEUNINITIALIZED.toLowerCase() === 'true') as boolean,
+        saveUninitialized: (process.env.SESSION_OPTION_SAVE_UNINITIALIZED.toLowerCase() === 'true') as boolean,
     },
 
     // Session cookie options to initialize and terminate sessions for a user.
     SESSION_COOKIE_OPTIONS: {
         domain: process.env.SESSION_COOKIE_DOMAIN as string,
-        httpOnly: (process.env.SESSION_COOKIE_HTTPONLY.toLowerCase() === 'true') as boolean,
+        httpOnly: (process.env.SESSION_COOKIE_HTTP_ONLY.toLowerCase() === 'true') as boolean,
         maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) as number,
         path: process.env.SESSION_COOKIE_PATH as string,
-        sameSite: process.env.SESSION_COOKIE_SAMESITE as 'lax' | 'strict' | 'none', // boolean | 'lax' | 'strict' | 'none'
+        sameSite: process.env.SESSION_COOKIE_SAME_SITE as 'lax' | 'strict' | 'none', // boolean | 'lax' | 'strict' | 'none'
         secure: (process.env.SESSION_COOKIE_SECURE.toLowerCase() === 'true') as boolean, // boolean | 'auto'
     },
 
