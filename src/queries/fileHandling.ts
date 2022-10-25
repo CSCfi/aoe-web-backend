@@ -912,7 +912,7 @@ export const downloadFromStorage = async (req: Request,
                         // });
                     })
                     .once('end', () => {
-                        winstonLogger.error('Download of %s completed in downloadFromStorage()', key);
+                        winstonLogger.debug('Download of %s completed in downloadFromStorage()', key);
                     })
                     .pipe(fs.createWriteStream(folderpath));
                 zipStream.once('finish', async () => {

@@ -33,6 +33,18 @@ apiV2(apiRouterV2);
 // Process X-Forwarded-* headers behind a proxy server at localhost (127.0.0.1)
 app.set('trust proxy', '127.0.0.1');
 
+/**
+ * CORS Configuration
+ */
+const corsOptions = {
+    allowedHeaders: ['Accept', 'Authorization', 'Content-Type', 'Origin', 'Range', 'X-Requested-With'],
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    optionsSuccessStatus: 204,
+    origin: ['https://demo.aoe.fi', 'https://aoe.fi', 'https://86.50.27.30:80', 'http://localhost:4200'],
+};
+app.use(cors(corsOptions));
+
 // const domainSelector = {
 //     production: 'aoe.fi',
 //     development: 'demo.aoe.fi',
@@ -74,16 +86,6 @@ app.use(
     ),
 );
 
-/**
- * CORS Configuration
- */
-const corsOptions = {
-    origin: ['https://demo.aoe.fi', 'https://aoe.fi', 'https://86.50.27.30:80', 'http://localhost'],
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/favicon.ico', express.static('./views/favicon.ico'));
