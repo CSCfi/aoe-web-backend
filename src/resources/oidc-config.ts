@@ -73,13 +73,13 @@ export const authInit = (app: Express): void => {
         }),
     );
 
-    app.get('/api/logout', (req: Request, res: Response) => {
+    app.post('/api/logout', (req: Request, res: Response) => {
         const deleteCookie = req.session.cookie;
         deleteCookie['maxAge'] = -1;
         req.logout();
         req.session.destroy((error) => {
             winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
-            res.setHeader('Cache-Control', 'no-store');
+            // res.setHeader('Cache-Control', 'no-store');
             res.clearCookie('connect.sid', deleteCookie);
             res.status(200).json({ message: 'logged out' });
             // res.redirect(['https://', config.SESSION_COOKIE_OPTIONS.domain, '/#/logout'].join(''));

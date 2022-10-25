@@ -45,22 +45,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-// const domainSelector = {
-//     production: 'aoe.fi',
-//     development: 'demo.aoe.fi',
-//     localhost: 'localhost',
-// }
-
-// app.use(cookieParser(undefined, {
-//         domain: domainSelector[process.env.NODE_ENV],
-//         httpOnly: true,
-//         maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-//         path: '/',
-//         sameSite: 'lax',
-//         // secure: true,
-//     }
-// ));
-// app.use(cookieParser());
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);
