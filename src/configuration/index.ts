@@ -8,8 +8,8 @@ export default {
         httpOnly: (process.env.SESSION_COOKIE_HTTPONLY.toLowerCase() === 'true') as boolean,
         maxAge: parseInt(process.env.SESSION_COOKIE_MAX_AGE, 10) as number,
         path: process.env.SESSION_COOKIE_PATH as string,
-        sameSite: 'lax' as boolean | 'lax' | 'strict' | 'none',
-        secure: true as boolean | 'auto',
+        sameSite: process.env.SESSION_COOKIE_SAMESITE as 'lax' | 'strict' | 'none', // boolean | 'lax' | 'strict' | 'none'
+        secure: (process.env.SESSION_COOKIE_SECURE.toLowerCase() === 'true') as boolean, // boolean | 'auto'
     },
 
     // Streaming redirect criteria to accept a media file download by streaming.
