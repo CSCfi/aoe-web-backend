@@ -2,6 +2,12 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 export default {
 
+    SESSION_CONFIG_OPTIONS: {
+        resave: (process.env.SESSION_OPTION_RESAVE.toLowerCase() === 'true') as boolean,
+        rolling: (process.env.SESSION_OPTION_ROLLING.toLowerCase() === 'true') as boolean,
+        saveUninitialized: (process.env.SESSION_OPTION_SAVEUNINITIALIZED.toLowerCase() === 'true') as boolean,
+    },
+
     // Session cookie options to initialize and terminate sessions for a user.
     SESSION_COOKIE_OPTIONS: {
         domain: process.env.SESSION_COOKIE_DOMAIN as string,
