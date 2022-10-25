@@ -8,7 +8,7 @@ import passport from 'passport';
 import redisClient from './redis-client';
 import { isLoginEnabled } from '../services/routeEnablerService';
 import { winstonLogger } from '../util';
-import uuid from 'uuid/v4';
+// import uuid from 'uuid/v4';
 
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
@@ -106,7 +106,6 @@ export const authInit = (app: Express): void => {
  */
 export const sessionInit = (app: Express): void => {
     // OPTIONAL IN-MEMORY SESSION STORAGE:
-    //
     // const MemoryStore = require('memorystore')(session);
     // app.use(session({
     //     cookie: config.SESSION_COOKIE_OPTIONS, // { maxAge: 86400000 },
@@ -132,7 +131,7 @@ export const sessionInit = (app: Express): void => {
             rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,
             saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
             secret: process.env.SESSION_SECRET as string,
-            proxy: false,
+            proxy: config.SESSION_CONFIG_OPTIONS.proxy,
             cookie: config.SESSION_COOKIE_OPTIONS,
         }),
     );

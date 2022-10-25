@@ -3,6 +3,7 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 export default {
 
     SESSION_CONFIG_OPTIONS: {
+        proxy: (process.env.SESSION_OPTION_PROXY.toLowerCase() === 'true') as boolean,
         resave: (process.env.SESSION_OPTION_RESAVE.toLowerCase() === 'true') as boolean,
         rolling: (process.env.SESSION_OPTION_ROLLING.toLowerCase() === 'true') as boolean,
         saveUninitialized: (process.env.SESSION_OPTION_SAVE_UNINITIALIZED.toLowerCase() === 'true') as boolean,
