@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 // import { IUserRequest} from "./../definitions"
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { insertMetadataExtension, metadataExtension, usersMetadataExtension } from "./../queries/metadataExtensionQueries";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 export class MetadataExtension {
     "keywords": Array<{"key": string; "value": string}>;
     "accessibilityFeatures": Array<{"value": string; "key": string}>;

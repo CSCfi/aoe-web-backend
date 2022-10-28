@@ -1,5 +1,5 @@
 import redis, { RedisClient } from 'redis';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 const redisHost: string = process.env.REDIS_HOST || '';
 const redisPort: number = Number(process.env.REDIS_PORT) || 0;

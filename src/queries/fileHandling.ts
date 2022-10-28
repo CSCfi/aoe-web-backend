@@ -15,7 +15,7 @@ import config from '../configuration';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import { requestRedirected } from '../services/streamingService';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db, pgp } from '../resources/pg-connect';
 
 // TODO: Remove legacy dependencies

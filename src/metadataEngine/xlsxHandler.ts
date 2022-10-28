@@ -1,5 +1,5 @@
 // handling and validating xlsx file
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 const csv = require ("fast-csv");
 const xlsx = require("xlsx");

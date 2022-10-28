@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
 import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
 const contentDisposition = require("content-disposition");

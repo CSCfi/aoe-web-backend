@@ -6,7 +6,6 @@ import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
-// import cookieParser from 'cookie-parser';
 import flash from 'connect-flash';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
@@ -14,6 +13,7 @@ import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxR
 import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
 import { aoeScheduler, morganLogger } from './util';
+import { winstonLogger } from './util/winstonLogger';
 
 const app = express();
 app.disable('x-powered-by');
@@ -48,6 +48,15 @@ app.use(cors(corsOptions));
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);
+
+// Add a development helper module (dev.ts) to the application if available.
+if (process.env.NODE_ENV === 'localhost') {
+    try {
+        require('./dev').devHelper(app);
+    } catch (error) {
+        winstonLogger.debug('Development helper module (dev.ts) not available.');
+    }
+}
 
 // Initialize session management and OIDC authorization
 oidc.sessionInit(app);

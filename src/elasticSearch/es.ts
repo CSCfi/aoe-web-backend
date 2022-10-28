@@ -4,7 +4,7 @@ import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollect
 import { ErrorHandler } from '../helpers/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import { AoeBody, AoeCollectionResult } from './esTypes';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db, pgp } from '../resources/pg-connect';
 import * as pgLib from 'pg-promise';
 

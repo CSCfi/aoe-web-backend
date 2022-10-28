@@ -7,7 +7,7 @@ import { ErrorHandler } from '../helpers/errorHandler';
 import fs from 'fs';
 import { ContentId, IUser } from "h5p-nodejs-library";
 import { IContentMetadata, ILibraryInstallResult } from "h5p-nodejs-library/build/src/types";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 const config = new H5P.H5PConfig();
 

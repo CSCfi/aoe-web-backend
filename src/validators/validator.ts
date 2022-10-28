@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
 export function ratingValidationRules(): any[] {

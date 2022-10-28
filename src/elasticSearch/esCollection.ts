@@ -6,13 +6,13 @@ import { MultiMatchSeachBody, SearchResponse, AoeBody, AoeCollectionResult } fro
 import { createMatchAllObject } from './esQueries';
 import { ApiResponse } from '@elastic/elasticsearch';
 // import rdbms from '../resources/pg-connect';
-import { winstonLogger } from "../util";
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true});
 // const client = new Client({ node: process.env.ES_NODE});
 import { db, pgp } from '../resources/pg-connect';
+import { winstonLogger } from '../util/winstonLogger';
 
 /**
  *

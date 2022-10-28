@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
 import { updateEducationalMaterial, getUsers, changeEducationalMaterialUser, getOwnerName, getMaterialName } from "./../queries/materialQueries";
 import { deleteDocument } from "./../elasticSearch/esQueries";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 /**
  *
  * @param req

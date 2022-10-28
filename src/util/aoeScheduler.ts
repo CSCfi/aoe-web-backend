@@ -1,4 +1,4 @@
-import { winstonLogger } from './index';
+
 import fh from '../queries/fileHandling';
 import { scheduleJob } from 'node-schedule';
 import { rmDir } from '../helpers/fileRemover';
@@ -6,6 +6,7 @@ import { updateEsDocument } from '../elasticSearch/es';
 import { sendExpirationMail, sendRatingNotificationMail, sendSystemNotification } from '../services/mailService';
 import { officeFilesToAllasAsPdf } from '../helpers/officeToPdfConverter';
 import { pidResolutionService } from '../services';
+import { winstonLogger } from './winstonLogger';
 
 // 4:00 AM: scheduled directory cleaning tasks.
 export const startScheduledCleaning = (): void => {

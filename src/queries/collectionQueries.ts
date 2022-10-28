@@ -1,6 +1,6 @@
 import { Collection } from "./../collection/collection";
 import { aoeThumbnailDownloadUrl, aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db, pgp } from '../resources/pg-connect';
 
 /**

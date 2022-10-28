@@ -7,7 +7,7 @@ import openidClient, { custom, HttpOptions } from 'openid-client';
 import passport from 'passport';
 import redisClient from './redis-client';
 import { isLoginEnabled } from '../services/routeEnablerService';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 // import uuid from 'uuid/v4';
 
 const Issuer = openidClient.Issuer;

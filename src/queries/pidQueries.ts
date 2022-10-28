@@ -1,4 +1,4 @@
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
 export const getEdumaterialVersionsWithoutURN = async (limit: number): Promise<any> => {

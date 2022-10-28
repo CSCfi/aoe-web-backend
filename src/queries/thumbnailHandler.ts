@@ -2,7 +2,7 @@ import { ErrorHandler } from '../helpers/errorHandler';
 import { Request, Response, NextFunction } from 'express';
 import fh, { downloadFromStorage } from './fileHandling';
 import mime from 'mime';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
 /**

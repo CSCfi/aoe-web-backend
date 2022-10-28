@@ -1,6 +1,6 @@
 import config from '../configuration';
 import { httpsClient } from '../resources';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 /**
  * Criteria check for Streaming service redirect.

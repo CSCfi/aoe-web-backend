@@ -24,7 +24,7 @@ const consoleOptions: ConsoleTransportOptions = {
 // const digivisioLogPath: string = process.env.DIGIVISIO_LOG_PATH as string;
 
 // Configuration for logging format and transports
-const logger = winston.createLogger({
+export const winstonLogger = winston.createLogger({
     exitOnError: false,
     format: format.combine(
         format.splat(), // Use also printf format with argument specifiers %d %s %o etc.
@@ -42,4 +42,6 @@ const logger = winston.createLogger({
     ],
 });
 
-export default logger;
+export default {
+    winstonLogger,
+}

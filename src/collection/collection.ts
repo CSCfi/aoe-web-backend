@@ -10,7 +10,7 @@ import {
     recentCollectionQuery
 } from "./../queries/collectionQueries";
 import { updateEsCollectionIndex } from "./../elasticSearch/es";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 export class Collection {
     public collectionId?: string;

@@ -6,7 +6,7 @@ import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db, pgp } from '../resources/pg-connect';
 import * as pgLib from 'pg-promise';
 

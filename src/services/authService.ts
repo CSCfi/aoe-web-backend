@@ -1,15 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
 export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
-    const authenticated: boolean = req.isAuthenticated();
-    winstonLogger.debug('Authenticated: ' + authenticated);
-
     if (req.isAuthenticated()) {
         return next();
     } else {
-        // return next();
         res.sendStatus(401);
     }
 }

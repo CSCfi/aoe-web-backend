@@ -4,7 +4,7 @@ import { updateMaterial, updateEduMaterialVersionURN } from '../queries/apiQueri
 import { updateEsDocument } from '../elasticSearch/es';
 import { getEduMaterialVersionURL } from '../services/urlService';
 import { pidResolutionService } from '../services';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 export interface EducationalMaterialMetadata {
     name: {
