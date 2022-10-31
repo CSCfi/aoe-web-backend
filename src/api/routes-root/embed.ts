@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { downloadPreviewFile } from '../../queries/fileHandling';
 import { getEducationalMaterialMetadata } from '../../queries/apiQueries';
+import { downloadPdfFromAllas } from '../../helpers/officeToPdfConverter';
 
 /**
  * Open root level API for embedded materials.
@@ -16,7 +17,11 @@ export default (router: Router) => {
     // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
     router.get('/embed/material/:edumaterialid([0-9]{1,6})/:publishedat?', getEducationalMaterialMetadata);
 
-    // Download single file by file name.
+    // Download a single file by file name.
     router.get('/embed/download/:filename', downloadPreviewFile);
+
+    // Download a single file converted to the PDF format.
+    // Files are converted into a PDF by office mimetypes.
+    router.get('/embed/pdf/content/:key', downloadPdfFromAllas);
 
 }
