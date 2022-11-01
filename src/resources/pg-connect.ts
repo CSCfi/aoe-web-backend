@@ -1,8 +1,9 @@
 import promise from 'bluebird';
 import moment from 'moment';
-import pgPromise, { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
+import pgPromise from 'pg-promise';
 import { IClient } from 'pg-promise/typescript/pg-subset';
-import { winstonLogger } from '../util';
+import { IConnected, IDatabase, IEventContext, IInitOptions, IMain } from 'pg-promise';
+import { winstonLogger } from '../util/winstonLogger';
 
 const PG_HOST: string = process.env.PG_HOST || '';
 const PG_PORT: string = process.env.PG_PORT || '';
@@ -10,8 +11,8 @@ const PG_USER: string = process.env.PG_USER || '';
 const PG_PASS: string = process.env.PG_PASS || '';
 const PG_DATA: string = process.env.PG_DATA || '';
 
-const PG_URL_FULL: string = 'postgres://' + PG_USER + ':' + PG_PASS + '@' + PG_HOST + ':' + PG_PORT + '/' + PG_DATA;
-const PG_URL_HOST: string = 'postgres://' + PG_HOST + ':' + PG_PORT;
+const PG_URL_FULL: string = ['postgres://', PG_USER, ':', PG_PASS, '@', PG_HOST, ':', PG_PORT, '/', PG_DATA].join('');
+const PG_URL_HOST: string = ['postgres://', PG_HOST, ':', PG_PORT].join('');
 
 // Options and error handlers for pg-promise.
 const initOptions: IInitOptions = {
@@ -25,14 +26,14 @@ const initOptions: IInitOptions = {
 };
 
 // Initialize pg-promise with options.
-const pgp: IMain = pgPromise(initOptions);
+export const pgp: IMain = pgPromise(initOptions);
 
 // Converter for TYPE_TIMESTAMP
 const TYPE_TIMESTAMP = 1114;
 pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, (str: string) => moment.utc(str).toISOString());
 
 // Initialize DB connection
-const db: IDatabase<any> = pgp(PG_URL_FULL);
+export const db: IDatabase<any> = pgp(PG_URL_FULL);
 
 // Test DB connection
 db.connect()
@@ -44,7 +45,6 @@ db.connect()
         winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
     });
 
-export default {
-    pgp,
-    db,
-};
+export default function getClient(): { db: IDatabase<any, IClient>, pgp: IMain<any, IClient> } {
+    return { db, pgp };
+}

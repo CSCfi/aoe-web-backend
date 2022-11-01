@@ -1,6 +1,6 @@
 import { IncomingMessage, RequestOptions } from 'http';
 import https from 'https';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 /**
  * HTTP(S) client to execute internal request to other service components.

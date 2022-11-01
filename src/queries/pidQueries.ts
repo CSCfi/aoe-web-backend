@@ -1,7 +1,5 @@
-import { rdbms } from '../resources';
-import { winstonLogger } from '../util';
-
-const db = rdbms.db;
+import { winstonLogger } from '../util/winstonLogger';
+import { db } from '../resources/pg-connect';
 
 export const getEdumaterialVersionsWithoutURN = async (limit: number): Promise<any> => {
     try {

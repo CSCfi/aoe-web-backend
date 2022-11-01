@@ -9,7 +9,7 @@ import errorHandler from 'errorhandler';
 import fs from 'fs';
 import https from 'https';
 import { Server, Socket } from 'net';
-import { winstonLogger } from './util';
+import { winstonLogger } from './util/winstonLogger';
 
 // Add timestamp to console logging.
 consoleStamp(console, {

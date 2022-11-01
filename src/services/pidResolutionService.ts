@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { updateEduMaterialVersionURN } from '../queries/apiQueries';
 import { getEdumaterialVersionsWithoutURN } from '../queries/pidQueries';
 import { getEduMaterialVersionURL } from './urlService';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 import { IRegisterPID } from './dto/IRegisterPID';
 
 /**

@@ -49,3 +49,6 @@ htmlfiles
 *~
 .vagrant
 id_rsa.pub
+
+# Development helper module
+dev.ts

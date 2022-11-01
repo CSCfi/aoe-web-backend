@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./../helpers/errorHandler";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 export interface AoeRouteMessage {
     "enabled": string;
     "message": {

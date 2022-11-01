@@ -2,10 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 import { sign, verify } from 'jsonwebtoken';
 import Mail from 'nodemailer/lib/mailer';
 import { createTransport, Transporter } from 'nodemailer';
-import { rdbms } from '../resources';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
-const db = rdbms.db;
+import { db } from '../resources/pg-connect';
 
 /**
  * Initialize Nodemailer Transporter

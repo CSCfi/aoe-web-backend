@@ -1,4 +1,4 @@
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 const fs = require("fs");
 const path = require("path");
