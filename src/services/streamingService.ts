@@ -1,6 +1,6 @@
-import env from '../configuration/environments';
+import config from '../configuration';
 import { httpsClient } from '../resources';
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 /**
  * Criteria check for Streaming service redirect.
@@ -11,8 +11,8 @@ import { winstonLogger } from '../util';
  */
 export const requestRedirected = async (fileDetails: { originalfilename: string, filesize: number, mimetype: string },
                                         fileStorageId: string): Promise<boolean> => {
-    const criteriaFulfilled: boolean = fileDetails.filesize >= env.STREAM_REDIRECT_CRITERIA.minFileSize &&
-        env.STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
+    const criteriaFulfilled: boolean = fileDetails.filesize >= config.STREAM_REDIRECT_CRITERIA.minFileSize &&
+        config.STREAM_REDIRECT_CRITERIA.mimeTypeArr.indexOf(fileDetails.mimetype) > -1;
     const streamingOperable: boolean = await streamingStatusCheck(fileStorageId);
     return criteriaFulfilled && streamingOperable;
 };
@@ -28,9 +28,9 @@ export const streamingStatusCheck = (fileStorageId: string): Promise<boolean> =>
         headers: {
             'Cache-Control': 'no-cache'
         },
-        host: env.STREAM_STATUS_REQUEST.host as string,
+        host: config.STREAM_STATUS_REQUEST.host as string,
         method: 'HEAD',
-        path: env.STREAM_STATUS_REQUEST.path as string + fileStorageId,
+        path: config.STREAM_STATUS_REQUEST.path as string + fileStorageId,
         timeout: 1000
     }).then(({ statusCode }) => {
         winstonLogger.debug('Streaming service status: %s', statusCode);

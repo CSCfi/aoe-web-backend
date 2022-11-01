@@ -21,7 +21,7 @@ import {
     FilterTerm,
     expiresFilterObject
 } from "./esTypes";
-import { winstonLogger } from '../util';
+import { winstonLogger } from '../util/winstonLogger';
 
 export async function aoeResponseMapper(response: ApiResponse<SearchResponse<Source>>) {
     try {

@@ -1,10 +1,7 @@
 // import { Rating } from "./../rating/rating";
 import { RatingInformation } from "../rating/interface/rating-information.interface";
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
-
-const pgp = rdbms.pgp;
-const db = rdbms.db;
+import { winstonLogger } from '../util/winstonLogger';
+import { db, pgp } from '../resources/pg-connect';
 const TransactionMode = pgp.txMode.TransactionMode;
 const isolationLevel = pgp.txMode.isolationLevel;
 

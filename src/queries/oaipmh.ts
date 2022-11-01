@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from "./../services/urlService";
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import { winstonLogger } from '../util/winstonLogger';
+import { db } from '../resources/pg-connect';
 
-// const pgp = rdbms.pgp;
-const db = rdbms.db;
-
-async function getMaterialMetaData(req: Request, res: Response) {
+export async function getMaterialMetaData(req: Request, res: Response): Promise<any> {
     try {
         const min = req.body.min;
         let query2 = "select count(*) from educationalmaterial where publishedat is not null"; // removed: "where ... and obsoleted = 0"
@@ -160,7 +157,3 @@ async function getMaterialMetaData(req: Request, res: Response) {
         res.sendStatus(500);
     }
 }
-
-module.exports = {
-    getMaterialMetaData: getMaterialMetaData
-};

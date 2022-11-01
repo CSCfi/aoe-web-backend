@@ -1,12 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import { ErrorHandler } from "./errorHandler";
 import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import { winstonLogger } from '../util/winstonLogger';
+import { db } from '../resources/pg-connect';
 
 const contentDisposition = require("content-disposition");
-const pgp = rdbms.pgp;
-const db = rdbms.db;
 
 const libre = require("libreoffice-convert");
 const path = require("path");

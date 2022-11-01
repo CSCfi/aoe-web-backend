@@ -1,14 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { winstonLogger } from '../util';
-import rdbms from '../resources/pg-connect';
-
-const db = rdbms.db;
+import { winstonLogger } from '../util/winstonLogger';
+import { db } from '../resources/pg-connect';
 
 export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
     if (req.isAuthenticated()) {
         return next();
     } else {
-        // return next();
         res.sendStatus(401);
     }
 }
@@ -16,6 +13,7 @@ export function checkAuthenticated(req: Request, res: Response, next: NextFuncti
 export async function getUserData(req: Request, res: Response): Promise<any> {
     const query = "SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;";
     const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
+    res.setHeader('Cache-Control', 'private, max-age=0');
     res.status(200).json({
         "userdata": req.session.passport.user,
         "email": data.email,
@@ -185,31 +183,29 @@ export async function userInfo(req: Request, res: Response): Promise<any> {
     }
 }
 
-export async function hasAoeAccess(username: string): Promise<any> {
-    const query = "SELECT username FROM aoeuser WHERE username = $1";
+export const hasAoeAccess = async (username: string): Promise<boolean> => {
+    const query = "SELECT username " +
+        "FROM aoeuser " +
+        "WHERE username = $1";
     const result = await db.oneOrNone(query, [username]);
-    if (!result) {
-        return false;
-    } else {
-        return true;
-    }
+    return !!result;
 }
 
-export function logout(req: Request, res: Response): void {
-    req.logout();
-    res.status(200).json({"status": "ok"});
-}
+// export function logout(req: Request, res: Response): void {
+//     req.logout();
+//     res.status(200).json({"status": "ok"});
+// }
 
 export default {
     getUserData,
-    hasAccesstoPublication,
+    // hasAccesstoPublication,
     checkAuthenticated,
     InsertUserToDatabase,
     hasAccessToPublicatication,
-    logout,
+    // logout,
     hasAccessToMaterial,
     hasAccessToAttachmentFile,
     hasAccessToCollection,
-    hasAccessToCollectionParams,
+    // hasAccessToCollectionParams,
     userInfo,
 };

@@ -6,12 +6,11 @@ import { isOfficeMimeType, officeToPdf } from "./../helpers/officeToPdfConverter
 import { hasAccesstoPublication } from "./../services/authService";
 import { updateViewCounter, getPopularity, getPopularityQuery } from "./analyticsQueries";
 import { EducationalMaterialMetadata } from "./../controllers/educationalMaterial";
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import { winstonLogger } from '../util/winstonLogger';
+import { db, pgp } from '../resources/pg-connect';
+import * as pgLib from 'pg-promise';
 
 const fh = require("./fileHandling");
-const pgp = rdbms.pgp;
-const db = rdbms.db;
 const elasticSearch = require("./../elasticSearch/es");
 
 export async function addLinkToMaterial(req: Request, res: Response, next: NextFunction) {
@@ -60,7 +59,6 @@ export async function addLinkToMaterial(req: Request, res: Response, next: NextF
     }
 }
 
-
 export async function getMaterial(req: Request, res: Response, next: NextFunction) {
     try {
         const query = "SELECT * FROM educationalmaterial where obsoleted != 1 order by id desc limit 100;";
@@ -73,18 +71,16 @@ export async function getMaterial(req: Request, res: Response, next: NextFunctio
     }
 }
 
-const TransactionMode = pgp.txMode.TransactionMode;
-const isolationLevel = pgp.txMode.isolationLevel;
-
 // Create a reusable transaction mode (serializable + read-only + deferrable):
-const mode = new TransactionMode({
-    tiLevel: isolationLevel.serializable,
+const mode = new pgLib.txMode.TransactionMode({
+    tiLevel: pgLib.txMode.isolationLevel.serializable,
     readOnly: true,
     deferrable: true
 });
 
 export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
+    console.log('ID: ' + eduMaterialId);
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
@@ -291,8 +287,8 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         }
         let owner = false;
         // winstonLogger.debug(owner);
-        if (req.session.passport && req.session.passport.user && req.session.passport.user.uid) {
-            owner = await isOwner(eduMaterialId.toString(), req.session.passport.user.uid);
+        if (req.session?.passport && req.session?.passport.user && req.session?.passport.user.uid) {
+            owner = await isOwner(eduMaterialId.toString(), req.session?.passport.user.uid);
         }
         // winstonLogger.debug(owner);
         // add displayname object to material object
@@ -410,6 +406,7 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         jsonObj.urn = (data[20]) ? data[20].urn : data[20];
         res.status(200).json(jsonObj);
+
         if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
             updateViewCounter(jsonObj.id).catch((error) => {
                 winstonLogger.error(`View counter update failed: ${error}`);

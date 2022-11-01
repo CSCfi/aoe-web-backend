@@ -1,26 +1,38 @@
 import { Router } from 'express';
 import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
-import { downloadFile } from '../../queries/fileHandling';
+import { downloadFile, downloadPreviewFile } from '../../queries/fileHandling';
 import { isAllasEnabled } from '../../services/routeEnablerService';
-import { uploadbase64Image } from '../../queries/thumbnailHandler';
-import digivisioLogger from '../../util/digivisioLogger';
+import { downloadEmThumbnail, uploadbase64Image } from '../../queries/thumbnailHandler';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
- * This module is a collection of endpoints starting with /material.
- * Endpoints ordered by the request URL (1) and method (2).
- *
- * Replaces following root routes in previous API version 1.0:
- * /download**
- * /upload**
+ * This module is a collection of endpoints starting with /edumaterial/.
+ * Endpoints ordered by the request URL (1) and the request method (2).
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
-    router.post('/material/:edumaterialid([0-9]{1,6})/thumbnail', isAllasEnabled, checkAuthenticated, hasAccessToPublicatication, uploadbase64Image);
+    const moduleRoot = '/material';
 
-    // TODO: Add regex validation
-    router.get('/material/download/:filename', digivisioLogger, downloadFile);
+    // MATERIAL FILE DOWNLOAD FOR LOCAL SAVING
+    // Download the fysical material file by file name (:filename) to save it on a local hard drive.
+    router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/download`, downloadFile);
+
+    // MATERIAL FILE DOWNLOAD FOR EMBEDDED PREVIEW
+    // Fetch a material file by file name (:filename) for the embedded preview (iframe).
+    router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/preview`, downloadPreviewFile);
+
+    // THUMBNAIL FETCH FOR THE WEB VIEW
+    // Fetch a thumbnail picture by file name (:filename) for the educational material web view.
+    router.get(`${moduleRoot}/file/:filename([A-Za-z0-9._-]+[.][A-Za-z0-9]{2,4})/thumbnail`, downloadEmThumbnail);
+
+    // THUMBNAIL UPLOAD TO CLOUD STORAGE
+    // Store a new thumbnail picture of an educational material (:edumaterialid) to the cloud storage.
+    router.post(`${moduleRoot}/:edumaterialid([0-9]{1,6})/thumbnail`,
+        isAllasEnabled,
+        checkAuthenticated,
+        hasAccessToPublicatication,
+        uploadbase64Image);
 
 }

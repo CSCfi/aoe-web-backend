@@ -1,13 +1,14 @@
 import ah from '../services/authService';
 import connectRedis from 'connect-redis';
+import config from '../configuration';
 import { Express, NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import openidClient, { custom, HttpOptions } from 'openid-client';
 import passport from 'passport';
 import redisClient from './redis-client';
 import { isLoginEnabled } from '../services/routeEnablerService';
-import { winstonLogger } from '../util';
-import uuid from 'uuid/v4';
+import { winstonLogger } from '../util/winstonLogger';
+// import uuid from 'uuid/v4';
 
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
@@ -21,7 +22,7 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((userinfo: Record<string, unknown>, done) => {
     done(undefined, { user: userinfo.id });
 });
-Issuer.discover(process.env.PROXY_URI || '')
+Issuer.discover(process.env.PROXY_URI)
     .then((oidcIssuer: InstanceType<typeof Issuer>) => {
         const client = new oidcIssuer.Client({
             client_id: process.env.CLIENT_ID,
@@ -64,16 +65,30 @@ export const authInit = (app: Express): void => {
     app.use(passport.session());
 
     // Login endpoint for the client application.
-    app.get('/login', isLoginEnabled, passport.authenticate('oidc', {
+    app.get('/api/login', isLoginEnabled, passport.authenticate('oidc', {
             successRedirect: '/',
-            failureRedirect: '/login',
+            failureRedirect: '/api/login',
             failureFlash: true,
             scope: 'openid profile offline_access',
         }),
     );
 
+    app.post('/api/logout', (req: Request, res: Response) => {
+        const deleteCookie = req.session.cookie;
+        deleteCookie['maxAge'] = -1;
+        req.logout();
+        req.session.destroy((error) => {
+            winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
+            // res.setHeader('Cache-Control', 'no-store');
+            res.clearCookie('connect.sid', deleteCookie);
+            res.status(200).json({ message: 'logged out' });
+            // res.redirect(['https://', config.SESSION_COOKIE_OPTIONS.domain, '/#/logout'].join(''));
+        });
+    });
+
     // Redirect endpoint and handlers after successful or failed authorization.
-    app.get('/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
+    app.get('/api/secure/redirect', (req: Request, res: Response, next: NextFunction) => {
+            winstonLogger.debug('Login redirect /secure/redirect | URI: %s', process.env.SUCCESS_REDIRECT_URI);
             next();
         },
         passport.authenticate('oidc', {
@@ -85,25 +100,39 @@ export const authInit = (app: Express): void => {
 };
 
 /**
- * Initialize session management and attach to Express application.
+ * Initialize session and cookie management with Redis storage.
+ *
  * @param app Express
  */
 export const sessionInit = (app: Express): void => {
+    // OPTIONAL IN-MEMORY SESSION STORAGE:
+    // const MemoryStore = require('memorystore')(session);
+    // app.use(session({
+    //     cookie: config.SESSION_COOKIE_OPTIONS, // { maxAge: 86400000 },
+    //     store: new MemoryStore({
+    //         checkPeriod: 86400000 // prune expired entries every 24h
+    //     }),
+    //     resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
+    //     secret: process.env.SESSION_SECRET as string,
+    //     rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,
+    //     saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
+    //     proxy: false,
+    // }))
     const RedisStore = connectRedis(session);
-
     app.use(
         session({
-            genid: () => {
-                return uuid(); // use UUIDs for session IDs
-            },
-            store: new RedisStore({ client: redisClient }),
-            resave: false,
-            saveUninitialized: true,
-            secret: process.env.SESSION_SECRET || 'dev_secret',
-            cookie: {
-                httpOnly: true,
-                maxAge: Number(process.env.SESSION_COOKIE_MAX_AGE) || 60 * 60 * 1000,
-            },
+            // genid: () => {
+            //     const id = uuid();
+            //     winstonLogger.debug('UUID: %s', id);
+            //     return id; // use UUIDs for session IDs
+            // },
+            store: new RedisStore({ client: redisClient }), // disableTTL: true
+            resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
+            rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,
+            saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
+            secret: process.env.SESSION_SECRET as string,
+            proxy: config.SESSION_CONFIG_OPTIONS.proxy,
+            cookie: config.SESSION_COOKIE_OPTIONS,
         }),
     );
 };

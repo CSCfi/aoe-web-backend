@@ -1,19 +1,18 @@
-import { Request, Response, NextFunction } from "express";
-import { aoeCollectionThumbnailDownloadUrl } from "./../services/urlService";
+// import { Request, Response, NextFunction } from "express";
+import { aoeCollectionThumbnailDownloadUrl } from '../services/urlService';
 // import { Client, ApiResponse } from "@elastic/elasticsearch";
-const elasticsearch = require("@elastic/elasticsearch");
-import { MultiMatchSeachBody, SearchResponse, Source, AoeBody, AoeCollectionResult } from "./esTypes";
-import { createMatchAllObject } from "./esQueries";
-import { ApiResponse } from "@elastic/elasticsearch";
-import { rdbms } from "../resources";
-import { winstonLogger } from "../util";
+const elasticsearch = require('@elastic/elasticsearch');
+import { MultiMatchSeachBody, SearchResponse, AoeBody, AoeCollectionResult } from './esTypes';
+import { createMatchAllObject } from './esQueries';
+import { ApiResponse } from '@elastic/elasticsearch';
+// import rdbms from '../resources/pg-connect';
 
 const client = new elasticsearch.Client({ node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true});
 // const client = new Client({ node: process.env.ES_NODE});
-const pgp = rdbms.pgp;
-const db = rdbms.db;
+import { db, pgp } from '../resources/pg-connect';
+import { winstonLogger } from '../util/winstonLogger';
 
 /**
  *

@@ -11,12 +11,12 @@ import s3Zip from 's3-zip';
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import { hasAccesstoPublication } from '../services/authService';
-import env from '../configuration/environments';
+import config from '../configuration';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { isOfficeMimeType, allasFileToPdf, updatePdfKey } from '../helpers/officeToPdfConverter';
 import { requestRedirected } from '../services/streamingService';
-import { winstonLogger } from '../util';
-import { rdbms } from '../resources';
+import { winstonLogger } from '../util/winstonLogger';
+import { db, pgp } from '../resources/pg-connect';
 
 // TODO: Remove legacy dependencies
 // import { ReadStream } from "fs";
@@ -44,11 +44,10 @@ const storage = multer.diskStorage({ // notice you are calling the multer.diskSt
 });
 const upload = multer({
     "storage": storage,
-    "limits": {"fileSize": Number(process.env.FILE_SIZE_LIMIT)},
+    "limits": { "fileSize": Number(process.env.FILE_SIZE_LIMIT) },
     "preservePath": true
 }); // provide the return value from
-// Database connection
-const db = rdbms.db;
+
 
 /**
  *
@@ -94,7 +93,7 @@ export async function uploadAttachmentToMaterial(req: Request, res: Response, ne
                         }
                         // return 200 if success and continue sending files to pouta
                         const resp: any = {};
-                        res.status(200).json({"id": attachmentId});
+                        res.status(200).json({ "id": attachmentId });
                         try {
                             if (typeof file !== "undefined") {
                                 const obj: any = await uploadFileToStorage(("./" + file.path), file.filename, process.env.BUCKET_NAME);
@@ -181,7 +180,7 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                                 queries.push(emresp);
                                 const id = await insertDataToMaterialTable(t, emresp.id, "", fileDetails.language, fileDetails.priority);
                                 queries.push(id);
-                                material.push({"id": id.id, "createFrom": file.originalname});
+                                material.push({ "id": id.id, "createFrom": file.originalname });
                                 materialid = id.id;
                                 let result = await insertDataToDisplayName(t, emresp.id, id.id, fileDetails);
                                 queries.push(result);
@@ -290,7 +289,7 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
                                 const queries = [];
                                 const id = await insertDataToMaterialTable(t, req.params.edumaterialid, "", fileDetails.language, fileDetails.priority);
                                 queries.push(id);
-                                material.push({"id": id.id, "createFrom": file.originalname});
+                                material.push({ "id": id.id, "createFrom": file.originalname });
                                 materialid = id.id;
                                 let result = await insertDataToDisplayName(t, req.params.edumaterialid, id.id, fileDetails);
                                 queries.push(result);
@@ -332,18 +331,18 @@ export async function uploadFileToMaterial(req: Request, res: Response, next: Ne
 
                                     }
                                 ).catch((err: Error) => {
-                                    winstonLogger.error(err);
-                                    if (!res.headersSent) {
-                                        next(new ErrorHandler(500, "Error in upload"));
+                                winstonLogger.error(err);
+                                if (!res.headersSent) {
+                                    next(new ErrorHandler(500, "Error in upload"));
+                                }
+                                fs.unlink("./" + file.path, (err: any) => {
+                                    if (err) {
+                                        winstonLogger.error('Error in uploadFileToMaterial(): ' + err);
+                                    } else {
+                                        winstonLogger.debug("file removed");
                                     }
-                                    fs.unlink("./" + file.path, (err: any) => {
-                                        if (err) {
-                                            winstonLogger.error('Error in uploadFileToMaterial(): ' + err);
-                                        } else {
-                                            winstonLogger.debug("file removed");
-                                        }
-                                    });
                                 });
+                            });
                         }
                     } catch (e) {
                         if (!res.headersSent) {
@@ -376,7 +375,7 @@ export async function fileToStorage(file: any, materialid: string): Promise<{ ke
             winstonLogger.error(err);
         }
     });
-    return {key: obj.Key, recordid: recordid};
+    return { key: obj.Key, recordid: recordid };
 }
 
 /**
@@ -592,7 +591,7 @@ export async function insertDataToRecordTable(files: any, materialID: any, fileK
             winstonLogger.debug(query);
             const record = await t.oneOrNone(query, [location, files.originalname, files.size, files.mimetype,
                 files.encoding, fileKey, fileBucket, materialID]);
-            return {record};
+            return { record };
         });
         return data.record.id;
     } catch (err) {
@@ -725,17 +724,64 @@ export async function uploadBase64FileToStorage(base64data: Buffer, filename: st
  * @param res
  * @param next
  */
-export async function downloadFile(req: Request, res: Response, next: NextFunction): Promise<any> {
+export const downloadPreviewFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    winstonLogger.debug('HTTP request headers present in downloadPreviewFile(): %o', req.headers);
     try {
         const data = await downloadFileFromStorage(req, res, next);
         if (!data) return res.end();
-        res.status(200).send(data);
+        return res.status(200).end();
     } catch (err) {
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
         }
     }
-}
+};
+
+
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ */
+export const downloadFile = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+    try {
+        const filename: string = req.params.filename;
+        const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
+        const materialid: { materialid: string } = await db.oneOrNone(materialidQuery, [filename]);
+
+        if (!materialid) return res.status(404).end();
+
+        const educationalmaterialidQuery = "SELECT educationalmaterialid FROM versioncomposition WHERE materialid = $1";
+        const originalMaterialIdArr: { educationalmaterialid: string }[] = await db.any(educationalmaterialidQuery, [materialid.materialid]);
+
+        let educationalmaterialId: number;
+        if (originalMaterialIdArr) {
+            educationalmaterialId = parseInt(originalMaterialIdArr[0].educationalmaterialid, 10);
+        } else {
+            educationalmaterialId = parseInt(materialid.materialid, 10);
+        }
+
+        const data = await downloadFileFromStorage(req, res, next);
+        //if (!data) return res.end();
+
+        if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
+            try {
+                await updateDownloadCounter(educationalmaterialId.toString());
+            } catch (error) {
+                winstonLogger.error('Updating download counter failed: ' + error);
+            }
+        }
+
+        return res.status(200).end();
+        //return next();
+
+    } catch (err) {
+        if (!res.headersSent) {
+            next(new ErrorHandler(400, "Failed to download file"));
+        }
+    }
+};
 
 /**
  * Get file details from the database before proceeding to the file download from the cloud object storage.
@@ -765,16 +811,15 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =
                 await db.oneOrNone(query, [fileName]);
-                // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
+            // { originalfilename: 'oceanwaves1280x720.mp4', filesize: 2000000, mimetype: 'video/mp4' };
 
             if (!fileDetails) {
-                next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found'));
+                next(new ErrorHandler(404, 'Requested file ' + fileName + ' not found.'));
             } else {
                 // Check if Range HTTP header is present and the criteria for streaming service redirect are fulfilled.
                 if (req.headers['range'] && await requestRedirected(fileDetails, fileName)) {
-                    res.status(302).set({
-                        'Location': env.STREAM_REDIRECT_CRITERIA.redirectUri + fileName
-                    });
+                    res.setHeader('Location', config.STREAM_REDIRECT_CRITERIA.redirectUri + fileName)
+                    res.status(302);
                     return resolve();
                 }
                 const params = {
@@ -867,7 +912,7 @@ export const downloadFromStorage = async (req: Request,
                         // });
                     })
                     .once('end', () => {
-                        winstonLogger.error('Download of %s completed in downloadFromStorage()', key);
+                        winstonLogger.debug('Download of %s completed in downloadFromStorage()', key);
                     })
                     .pipe(fs.createWriteStream(folderpath));
                 zipStream.once('finish', async () => {
@@ -997,7 +1042,7 @@ export async function downloadAndZipFromStorage(req: Request, res: Response, nex
             winstonLogger.debug('Starting s3Zip stream');
             try {
                 s3Zip
-                    .archive({s3: s3, bucket: bucketName}, '', keys, files)
+                    .archive({ s3: s3, bucket: bucketName }, '', keys, files)
                     .pipe(res)
                     .on('finish', async () => {
                         winstonLogger.debug('Completed the s3Zip stream');
@@ -1086,6 +1131,7 @@ export default {
     uploadMaterial,
     uploadFileToMaterial,
     uploadFileToStorage,
+    downloadPreviewFile,
     downloadFile,
     unZipAndExtract,
     downloadFileFromStorage,
