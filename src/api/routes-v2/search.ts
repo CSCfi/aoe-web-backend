@@ -1,6 +1,8 @@
-import { Router } from 'express';
-import { elasticSearchQuery } from '../../elasticSearch/esQueries';
+import { Request, Response, Router } from 'express';
 import { getCollectionEsData } from '../../elasticSearch/es';
+import { runMessageQueueThread } from '../../services/threadService';
+import { winstonLogger } from '../../util/winstonLogger';
+import { elasticSearchQuery } from '../../elasticSearch/esQueries';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
@@ -13,8 +15,16 @@ export default (router: Router): void => {
 
     const moduleRoot = '/search';
 
-    // Search for educational materials with criteria.
-    router.post(`${moduleRoot}`, elasticSearchQuery);
+    // Search for educational materials with search criteria.
+    // Search options are published in the messaging system for further analytical processing.
+    router.post(`${moduleRoot}`,
+        (req: Request, res: Response) => {
+            runMessageQueueThread(req).then((result) =>
+                winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
+            return res.status(204).end();
+        },
+        elasticSearchQuery,
+    );
 
     // Update search index with collection changes.
     router.post(`${moduleRoot}/collection`, getCollectionEsData);
