@@ -1,4 +1,4 @@
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import { getCollectionEsData } from '../../elasticSearch/es';
 import { runMessageQueueThread } from '../../services/threadService';
 import { winstonLogger } from '../../util/winstonLogger';
@@ -18,10 +18,14 @@ export default (router: Router): void => {
     // Search for educational materials with search criteria.
     // Search options are published in the messaging system for further analytical processing.
     router.post(`${moduleRoot}`,
-        (req: Request, res: Response) => {
-            runMessageQueueThread(req).then((result) =>
-                winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
-            return res.status(204).end();
+        (req: Request, res: Response, next: NextFunction) => {
+
+            // Bypass search requests with paging parameters.
+            if (!req.body.size) {
+                runMessageQueueThread(req).then((result) =>
+                    winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
+            }
+            next();
         },
         elasticSearchQuery,
     );
