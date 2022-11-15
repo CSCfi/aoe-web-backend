@@ -22,7 +22,7 @@ const md5 = (content: string) => {
  */
 export function runMessageQueueThread(req: Request): Promise<any> {
     const workerData: SearchMessageType = {
-        sessionId: md5(req.headers.cookie) as string,
+        sessionId: md5(req.headers['cookie']) as string,
         timestamp: moment.utc().toISOString() as string,
         ...req.body as SearchOptionsType,
     }
