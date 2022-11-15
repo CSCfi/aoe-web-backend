@@ -5,6 +5,7 @@ import path from 'path';
 import { SearchOptionsType } from './dto/ISearchOptions';
 import { Request } from 'express';
 import { SearchMessageType } from './dto/ISearchMessage';
+import { winstonLogger } from '../util/winstonLogger';
 
 // Import the worker file in .ts format in localhost environment for nodemon live rebuild.
 const workerFile = process.env.NODE_ENV === 'localhost' ? 'workerSearch.import.js' : 'workerSearch.js';
@@ -21,6 +22,8 @@ const md5 = (content: string) => {
  * @param req express.Request
  */
 export function runMessageQueueThread(req: Request): Promise<any> {
+    winstonLogger.debug('COOKIE: %s, Hash: %s', req.headers['cookie'], md5(req.headers['cookie']));
+
     const workerData: SearchMessageType = {
         sessionId: md5(req.headers['cookie']) as string,
         timestamp: moment.utc().toISOString() as string,
