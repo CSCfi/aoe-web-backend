@@ -8,9 +8,9 @@ import { officeFilesToAllasAsPdf } from '../helpers/officeToPdfConverter';
 import { pidResolutionService } from '../services';
 import { winstonLogger } from './winstonLogger';
 
-// 4:00 AM: scheduled directory cleaning tasks.
+// 1:00 AM (UTC): scheduled directory cleaning tasks.
 export const startScheduledCleaning = (): void => {
-    const dirCleaningScheduler = scheduleJob('0 0 4 * * *', async () => {
+    const dirCleaningScheduler = scheduleJob('0 0 1 * * *', async () => {
 
         // Remove temporary content from the resource directories (H5P, HTML).
         try {
@@ -21,16 +21,16 @@ export const startScheduledCleaning = (): void => {
             winstonLogger.debug('Scheduled removal for temporary H5P and HTML content completed.');
         } catch (error) {
             winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: %o', error);
-            await sendSystemNotification('Scheduled directory cleaning at 4:00 AM has failed and interrupted.');
+            await sendSystemNotification('Scheduled directory cleaning at 1:00 AM (UTC) has failed and interrupted.');
             dirCleaningScheduler.cancel();
         }
     });
-    winstonLogger.info('Scheduled job active for directory cleaning at 4:00 AM');
+    winstonLogger.info('Scheduled job active for directory cleaning at 1:00 AM (UTC)');
 }
 
-// 4:15 AM: scheduled PID (Permanent Identifiers) registration for recently published educational materials.
+// 1:15 AM (UTC): scheduled PID (Permanent Identifiers) registration for recently published educational materials.
 export const startScheduledRegistrationForPIDs = (): void => {
-    const pidRegisterScheduler = scheduleJob('0 15 4 * * *', async () => {
+    const pidRegisterScheduler = scheduleJob('0 15 1 * * *', async () => {
         try {
             if (parseInt(process.env.PID_SERVICE_ENABLED, 10) as number === 1 &&
                 parseInt(process.env.PID_SERVICE_RUN_SCHEDULED, 10) as number === 1) {
@@ -39,16 +39,16 @@ export const startScheduledRegistrationForPIDs = (): void => {
             }
         } catch (error) {
             winstonLogger.error('Scheduled PID registration for recently published educational materials failed: %o', error);
-            await sendSystemNotification('Scheduled PID registration at 4:15 AM has failed and interrupted.');
+            await sendSystemNotification('Scheduled PID registration at 1:15 AM (UTC) has failed and interrupted.');
             pidRegisterScheduler.cancel();
         }
     });
-    winstonLogger.info('Scheduled job active for PID registration at 4:15 AM');
+    winstonLogger.info('Scheduled job active for PID registration at 1:15 AM (UTC)');
 }
 
-// 4:30 AM: scheduled search index update.
+// 1:30 AM (UTC): scheduled search index update.
 export const startScheduledSearchIndexUpdate = (): void => {
-    const searchUpdateScheduler = scheduleJob('0 30 4 * * *', async () => {
+    const searchUpdateScheduler = scheduleJob('0 30 1 * * *', async () => {
 
         // Update search engine index with recent changes.
         try {
@@ -60,7 +60,7 @@ export const startScheduledSearchIndexUpdate = (): void => {
             searchUpdateScheduler.cancel();
         }
     });
-    winstonLogger.info('Scheduled job active for search index update at 4:30 AM');
+    winstonLogger.info('Scheduled job active for search index update at 1:30 AM (UTC)');
 }
 
 
