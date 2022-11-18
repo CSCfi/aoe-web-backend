@@ -6,7 +6,7 @@ import { kafkaProducer } from '../../resources/kafka-client';
 const produceKafkaMessage = async (): Promise<void> => {
     await kafkaProducer.connect();
     await kafkaProducer.send({
-        topic: config.MESSAGE_QUEUE_OPTIONS.topicSearchRequests,
+        topic: config.MESSAGE_QUEUE_OPTIONS.topicMaterialActivity,
         messages: [
             {
                 value: JSON.stringify(workerData),

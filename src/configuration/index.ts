@@ -5,6 +5,7 @@ export default {
     // Configuration for the client of Kafka message queue system.
     MESSAGE_QUEUE_OPTIONS: {
         brokerServers: process.env.KAFKA_BROKER_SERVERS as string,
+        topicMaterialActivity: process.env.KAFKA_BROKER_TOPIC_MATERIAL_ACTIVITY as string,
         topicSearchRequests: process.env.KAFKA_BROKER_TOPIC_SEARCH_REQUESTS as string,
         clientId: process.env.KAFKA_CLIENT_ID as string,
     },

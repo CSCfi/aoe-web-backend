@@ -2,31 +2,52 @@ import { createHash } from 'crypto';
 import moment from 'moment';
 import { Worker, WorkerOptions } from 'worker_threads';
 import path from 'path';
-import { SearchOptionsType } from './dto/ISearchOptions';
 import { Request } from 'express';
-import { SearchMessageType } from './dto/ISearchMessage';
+import { TypeSearchOptions, TypeSearchRequest } from './dto/IMessageSearchRequest';
+import { TypeActivityMetadata, TypeMaterialActivity } from './dto/IMessageMaterialActivity';
 
-// Import the worker file in .ts format in localhost environment for nodemon live rebuild.
-const workerFile = process.env.NODE_ENV === 'localhost' ? 'workerSearch.import.js' : 'workerSearch.js';
-
+// Session ID anonymized and shortened with MD5 hash algorithm.
 const md5 = (content: string) => {
     return createHash('md5').update(content).digest('hex');
+};
+
+// Extend worker data with request specific parameters related to the messqge queue target topic.
+const extendWorkerDataWithTopicDetails = (req: Request): TypeActivityMetadata | TypeSearchOptions => {
+    if (req.url.includes('search')) return {
+        keywords: req.body.keywords,
+        filters: req.body.filters,
+    } as TypeSearchOptions;
+
+    if (req.url.includes('material')) return {
+        eduMaterialId: req.params.edumaterialid,
+        interaction: req.query.interaction || 'view',
+    } as TypeActivityMetadata;
+};
+
+const selectWorkerFile = (req: Request): string => {
+
+    // Compile the worker file with .import.js in localhost environment for Nodemon project execution.
+    if (process.env.NODE_ENV === 'localhost' && req.url.includes('search')) return 'workerSearch.import.js';
+    if (process.env.NODE_ENV === 'localhost' && req.url.includes('material')) return 'workerActivity.import.js';
+    if (req.url.includes('search')) return 'workerSearch.js';
+    if (req.url.includes('material')) return 'workerActivity.js';
+    return null;
 }
 
 /**
  * Worker creation function to execute a process in a new thread in parallel to main process.
- *
  * Request data is enriched and sent to the message queue system for further analysis.
  *
  * @param req express.Request
  */
 export function runMessageQueueThread(req: Request): Promise<any> {
-    const workerData: SearchMessageType = {
+    const workerData: TypeMaterialActivity | TypeSearchRequest = {
         sessionId: md5(req.headers['cookie']) as string,
         timestamp: moment.utc().toISOString() as string,
-        ...req.body as SearchOptionsType,
-    }
+        ...extendWorkerDataWithTopicDetails(req) as TypeActivityMetadata | TypeSearchOptions,
+    };
     return new Promise((resolve, reject) => {
+        const workerFile = selectWorkerFile(req);
         const worker = new Worker(
             path.resolve(__dirname, `workers/${workerFile}`),
             { workerData } as WorkerOptions,
