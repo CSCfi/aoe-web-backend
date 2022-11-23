@@ -1,4 +1,6 @@
+import config from '../../configuration';
 import { Request, Response, Router } from 'express';
+import { Proxy } from 'axios-express-proxy';
 import Notification from './dto/notification';
 
 /**
@@ -11,6 +13,7 @@ import Notification from './dto/notification';
 export default (router: Router): void => {
 
     const moduleRoot = '/process';
+    const statsApp = `${config.SERVER_CONFIG_OPTIONS.oaipmhHost}:${config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsPort}`;
 
     let notification: Notification = new Notification('');
 
@@ -31,4 +34,11 @@ export default (router: Router): void => {
         }
         return res.sendStatus(400);
     });
+
+    /**
+     * Endpoints for requesting statistical information from AOE Analytics Sercice.
+     * Requests are forwarded to external REST API (aoe-data-anytics) and responses are returned as is.
+     */
+    router.post(`${moduleRoot}/statistics`, (req: Request, res: Response) =>
+        Proxy(`http://${statsApp}/api/statistics`, req, res));
 }

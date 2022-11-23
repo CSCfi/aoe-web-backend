@@ -10,6 +10,12 @@ export default {
         clientId: process.env.KAFKA_CLIENT_ID as string,
     },
 
+    // AOE server and service component general purpose configurations.
+    SERVER_CONFIG_OPTIONS: {
+        oaipmhHost: process.env.SERVER_CONFIG_OAIPMH_HOST as string,
+        oaipmhAnalyticsPort: process.env.SERVER_CONFIG_OAIPMH_ANALYTICS_PORT as string,
+    },
+
     // Session management conventions to handle session initialization and persistence.
     SESSION_CONFIG_OPTIONS: {
         proxy: (process.env.SESSION_OPTION_PROXY.toLowerCase() === 'true') as boolean,
