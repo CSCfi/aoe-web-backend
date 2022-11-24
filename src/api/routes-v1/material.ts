@@ -31,12 +31,12 @@ export default (router: Router) => {
     // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
     router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?',
         getEducationalMaterialMetadata,
-        (req: Request, res: Response, next: NextFunction) => {
+        (req: Request, res: Response) => {
             if (req.headers['cookie']/* && req.query.interaction*/) {
                 runMessageQueueThread(req, res).then((result) =>
                     winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
             }
-            next();
+            res.end();
         });
 
     // Download all files related to an educational material and stream as a single zip file from the cloud object storage.
