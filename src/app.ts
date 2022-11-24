@@ -2,7 +2,7 @@ import bodyParser from 'body-parser';
 import apiRoot from './api/routes-root';
 import apiV1 from './api/routes-v1';
 import apiV2 from './api/routes-v2';
-import express, { Request, Router } from 'express';
+import express, { Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
@@ -16,6 +16,7 @@ import { aoeScheduler, morganLogger } from './util';
 import { winstonLogger } from './util/winstonLogger';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import config from './configuration';
+import { LogProviderCallback } from 'http-proxy-middleware/dist/types';
 
 const app = express();
 app.disable('x-powered-by');
@@ -86,8 +87,11 @@ app.use(
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
     logLevel: 'debug',
+    logProvider: () => {
+        return winstonLogger;
+    },
     changeOrigin: true,
-    pathRewrite: (path: string, req: Request) => {
+    pathRewrite: (path: string) => {
         return path.replace('/v2', '');
     },
 }));
