@@ -91,7 +91,7 @@ app.use('/api/v2/', apiRouterV2);
 // Statistics requests forwarded to AOE Analytics Service.
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
-    changeOrigin: false,
+    changeOrigin: true,
     pathRewrite: {
         '^/api/v2': '/api',
     },
