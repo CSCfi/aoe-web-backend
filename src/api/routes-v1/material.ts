@@ -4,7 +4,7 @@ import {
     setEducationalMaterialObsoleted
 } from '../../queries/apiQueries';
 import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { downloadMaterialFile } from '../../queries/fileHandling';
 import { updateEducationalMaterialMetadata } from '../../controllers/educationalMaterial';
 import { runMessageQueueThread } from '../../services/threadService';

@@ -23,6 +23,7 @@ const extendWorkerDataWithTopicDetails = (req: Request, res?: Response): TypeAct
         interaction: req.query.interaction || 'view',
         metadata: {
             educationalLevels: res.locals.educationalLevels?.map(obj => obj.educationallevelkey),
+            educationalSubjects: res.locals.educationalAlignment?.map(obj => obj.objectkey),
         }
     } as TypeActivityMetadata;
 };
