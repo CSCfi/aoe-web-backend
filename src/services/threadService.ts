@@ -5,6 +5,7 @@ import path from 'path';
 import { Request, Response } from 'express';
 import { TypeSearchOptions, TypeSearchRequest } from './dto/IMessageSearchRequest';
 import { TypeActivityMetadata, TypeMaterialActivity } from './dto/IMessageMaterialActivity';
+import { winstonLogger } from '../util/winstonLogger';
 
 // Session ID anonymized and shortened with MD5 hash algorithm.
 const md5 = (content: string) => {
@@ -13,6 +14,10 @@ const md5 = (content: string) => {
 
 // Extend worker data with request specific parameters related to the messqge queue target topic.
 const extendWorkerDataWithTopicDetails = (req: Request, res?: Response): TypeActivityMetadata | TypeSearchOptions => {
+    if (res.locals) {
+        winstonLogger.debug('RESPONSE (locals): %o', res.locals);
+    }
+
     if (req.url.includes('search')) return {
         keywords: req.body.keywords,
         filters: req.body.filters,

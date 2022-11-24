@@ -415,6 +415,7 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
                 winstonLogger.error(`View counter update failed: ${error}`);
             });
         }
+        next();
     })
     .catch((error: any) => {
         winstonLogger.error(error);
