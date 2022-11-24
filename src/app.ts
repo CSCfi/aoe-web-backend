@@ -16,7 +16,6 @@ import { aoeScheduler, morganLogger } from './util';
 import { winstonLogger } from './util/winstonLogger';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import config from './configuration';
-import { LogProviderCallback } from 'http-proxy-middleware/dist/types';
 
 const app = express();
 app.disable('x-powered-by');
@@ -83,7 +82,7 @@ app.use(
 );
 
 // Statistics requests forwarded to AOE Analytics Service.
-// Keep the HTTP forwarding before the body parsers to avoid changes the proxy cannot handle.
+// Keep the HTTP forwarding before the body parsers to avoid request body changes the proxy cannot handle.
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
     logLevel: 'debug',

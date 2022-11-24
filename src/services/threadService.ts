@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import moment from 'moment';
 import { Worker, WorkerOptions } from 'worker_threads';
 import path from 'path';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { TypeSearchOptions, TypeSearchRequest } from './dto/IMessageSearchRequest';
 import { TypeActivityMetadata, TypeMaterialActivity } from './dto/IMessageMaterialActivity';
 
@@ -12,15 +12,18 @@ const md5 = (content: string) => {
 };
 
 // Extend worker data with request specific parameters related to the messqge queue target topic.
-const extendWorkerDataWithTopicDetails = (req: Request): TypeActivityMetadata | TypeSearchOptions => {
+const extendWorkerDataWithTopicDetails = (req: Request, res?: Response): TypeActivityMetadata | TypeSearchOptions => {
     if (req.url.includes('search')) return {
         keywords: req.body.keywords,
         filters: req.body.filters,
     } as TypeSearchOptions;
 
-    if (req.url.includes('material')) return {
+    if (req.url.includes('material') && res) return {
         eduMaterialId: req.params.edumaterialid,
         interaction: req.query.interaction || 'view',
+        metadata: {
+            educationalLevels: res.locals.educationalLevels?.map(obj => obj.educationallevelkey),
+        }
     } as TypeActivityMetadata;
 };
 
@@ -39,12 +42,13 @@ const selectWorkerFile = (req: Request): string => {
  * Request data is enriched and sent to the message queue system for further analysis.
  *
  * @param req express.Request
+ * @param res express.Response
  */
-export function runMessageQueueThread(req: Request): Promise<any> {
+export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
     const workerData: TypeMaterialActivity | TypeSearchRequest = {
         sessionId: md5(req.headers['cookie']) as string,
         timestamp: moment.utc().toISOString() as string,
-        ...extendWorkerDataWithTopicDetails(req) as TypeActivityMetadata | TypeSearchOptions,
+        ...extendWorkerDataWithTopicDetails(req, res) as TypeActivityMetadata | TypeSearchOptions,
     };
     return new Promise((resolve, reject) => {
         const workerFile = selectWorkerFile(req);

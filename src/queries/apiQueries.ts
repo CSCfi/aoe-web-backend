@@ -407,6 +407,9 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         jsonObj.urn = (data[20]) ? data[20].urn : data[20];
         res.status(200).json(jsonObj);
 
+        // Pass response (metadata) to the next function in the request chain.
+        res.locals = jsonObj;
+
         if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
             updateViewCounter(jsonObj.id).catch((error) => {
                 winstonLogger.error(`View counter update failed: ${error}`);
