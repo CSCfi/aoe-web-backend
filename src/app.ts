@@ -81,13 +81,6 @@ app.use(
     ),
 );
 
-app.use(bodyParser.json({ limit: '1mb' }));
-app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
-app.use('/favicon.ico', express.static('./views/favicon.ico'));
-app.use('/', apiRouterRoot);
-app.use('/api/v1/', apiRouterV1);
-app.use('/api/v2/', apiRouterV2);
-
 // Statistics requests forwarded to AOE Analytics Service.
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
@@ -103,6 +96,12 @@ app.use('/api/v2/statistics', createProxyMiddleware({
     },
 }));
 
+app.use(bodyParser.json({ limit: '1mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+app.use('/favicon.ico', express.static('./views/favicon.ico'));
+app.use('/', apiRouterRoot);
+app.use('/api/v1/', apiRouterV1);
+app.use('/api/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {
