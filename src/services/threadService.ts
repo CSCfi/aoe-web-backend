@@ -24,7 +24,7 @@ const extendWorkerDataWithTopicDetails = (req: Request, res?: Response): TypeAct
         metadata: {
             created: res.locals.createdAt,
             updated: res.locals.updatedAt,
-            organizations: res.locals.author?.filter(obj => obj.organization).map(obj => obj.organization),
+            organizations: res.locals.author?.filter(obj => obj.organizationkey).map(obj => obj.organizationkey),
             educationalLevels: res.locals.educationalLevels?.map(obj => obj.educationallevelkey),
             educationalSubjects: res.locals.educationalAlignment?.map(obj => obj.objectkey),
         }
