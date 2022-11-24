@@ -91,9 +91,15 @@ app.use('/api/v2/', apiRouterV2);
 // Statistics requests forwarded to AOE Analytics Service.
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
+    logLevel: 'debug',
     changeOrigin: true,
-    pathRewrite: (path: string) => {
-        return path.replace('/v2', '');
+    pathRewrite: (path: string, req: Request) => {
+        const rewritePath = path.replace('/v2', '');
+        winstonLogger.debug('Proxied request to path [%s] with the content [%s] using the headers: %o',
+            rewritePath,
+            JSON.stringify(req.body),
+            req.headers);
+        return rewritePath;
     },
 }));
 
