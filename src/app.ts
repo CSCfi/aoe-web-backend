@@ -2,7 +2,7 @@ import bodyParser from 'body-parser';
 import apiRoot from './api/routes-root';
 import apiV1 from './api/routes-v1';
 import apiV2 from './api/routes-v2';
-import express, { Router } from 'express';
+import express, { Request, Router } from 'express';
 import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
@@ -92,8 +92,8 @@ app.use('/api/v2/', apiRouterV2);
 app.use('/api/v2/statistics', createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
     changeOrigin: true,
-    pathRewrite: {
-        '^/api/v2': '/api',
+    pathRewrite: (path: string) => {
+        return path.replace('/v2', '');
     },
 }));
 
