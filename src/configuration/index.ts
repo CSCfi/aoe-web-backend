@@ -12,8 +12,7 @@ export default {
 
     // AOE server and service component general purpose configurations.
     SERVER_CONFIG_OPTIONS: {
-        oaipmhHost: process.env.SERVER_CONFIG_OAIPMH_HOST as string,
-        oaipmhAnalyticsPort: process.env.SERVER_CONFIG_OAIPMH_ANALYTICS_PORT as string,
+        oaipmhAnalyticsURL: process.env.SERVER_CONFIG_OAIPMH_ANALYTICS_URL as string,
     },
 
     // Session management conventions to handle session initialization and persistence.

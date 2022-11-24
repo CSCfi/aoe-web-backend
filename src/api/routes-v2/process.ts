@@ -1,6 +1,5 @@
 import config from '../../configuration';
 import { Request, Response, Router } from 'express';
-import { Proxy } from 'axios-express-proxy';
 import Notification from './dto/notification';
 
 /**
@@ -39,6 +38,6 @@ export default (router: Router): void => {
      * Endpoints for requesting statistical information from AOE Analytics Sercice.
      * Requests are forwarded to external REST API (aoe-data-anytics) and responses are returned as is.
      */
-    router.post(`${moduleRoot}/statistics`, (req: Request, res: Response) =>
-        Proxy(`http://${statsApp}/api/statistics`, req, res));
+    // router.post(`${moduleRoot}/statistics`, (req: Request, res: Response) =>
+    //     Proxy(`http://${statsApp}/api/statistics`, req, res));
 }

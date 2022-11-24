@@ -14,6 +14,8 @@ import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
 import { aoeScheduler, morganLogger } from './util';
 import { winstonLogger } from './util/winstonLogger';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import config from './configuration';
 
 const app = express();
 app.disable('x-powered-by');
@@ -85,6 +87,16 @@ app.use('/favicon.ico', express.static('./views/favicon.ico'));
 app.use('/', apiRouterRoot);
 app.use('/api/v1/', apiRouterV1);
 app.use('/api/v2/', apiRouterV2);
+
+// Statistics requests forwarded to AOE Analytics Service.
+app.use('/api/v2/statistics', createProxyMiddleware({
+    target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
+    changeOrigin: false,
+    pathRewrite: {
+        '^/api/v2': '/api',
+    },
+}));
+
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {
