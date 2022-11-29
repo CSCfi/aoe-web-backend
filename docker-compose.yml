@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.9'
 services:
   aoe-web-backend:
     build:
@@ -8,7 +8,7 @@ services:
     container_name: aoe-web-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - '3000:3000'
     depends_on:
       - aoe-postgres
       - aoe-redis-session
@@ -17,7 +17,7 @@ services:
     env_file:
       - ./.env
     networks:
-      - aoe-local-network
+      - network-analytics
 
   aoe-postgres:
     build:
@@ -27,7 +27,7 @@ services:
     container_name: aoe-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       - POSTGRES_DB=aoe
       - POSTGRES_PASSWORD=aoe_secret
@@ -36,7 +36,7 @@ services:
       - ./docker/aoe-postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
       - ./docker/aoe-postgres/aoe-db-dump.sql:/docker-entrypoint-initdb.d/aoe-db-dump.sql
     networks:
-      - aoe-local-network
+      - network-analytics
 
   aoe-redis-session:
     build:
@@ -48,12 +48,14 @@ services:
     container_name: aoe-redis-session
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '6379:6379'
     environment:
       - REDIS_REPLICATION_MODE=master
     networks:
-      - aoe-local-network
+      - network-analytics
 
 networks:
-  aoe-local-network:
-    driver: bridge
+  network-analytics:
+    external: true
+    name: network-analytics
+

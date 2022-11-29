@@ -14,6 +14,8 @@ import { h5pEditor } from './h5p/h5p';
 import { oidc } from './resources';
 import { aoeScheduler, morganLogger } from './util';
 import { winstonLogger } from './util/winstonLogger';
+import { createProxyMiddleware } from 'http-proxy-middleware';
+import config from './configuration';
 
 const app = express();
 app.disable('x-powered-by');
@@ -78,6 +80,20 @@ app.use(
         // languageOverride // (optional) can be used to override the language used by i18next http middleware
     ),
 );
+
+// Statistics requests forwarded to AOE Analytics Service.
+// Keep the HTTP forwarding before the body parsers to avoid request body changes the proxy cannot handle.
+app.use('/api/v2/statistics', createProxyMiddleware({
+    target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
+    logLevel: 'debug',
+    logProvider: () => {
+        return winstonLogger;
+    },
+    changeOrigin: true,
+    pathRewrite: (path: string) => {
+        return path.replace('/v2', '');
+    },
+}));
 
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));

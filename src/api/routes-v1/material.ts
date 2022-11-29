@@ -1,8 +1,14 @@
-import { addLinkToMaterial, getEducationalMaterialMetadata, setEducationalMaterialObsoleted } from '../../queries/apiQueries';
+import {
+    addLinkToMaterial,
+    getEducationalMaterialMetadata,
+    setEducationalMaterialObsoleted
+} from '../../queries/apiQueries';
 import { checkAuthenticated, hasAccessToPublicatication } from '../../services/authService';
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { downloadMaterialFile } from '../../queries/fileHandling';
 import { updateEducationalMaterialMetadata } from '../../controllers/educationalMaterial';
+import { runMessageQueueThread } from '../../services/threadService';
+import { winstonLogger } from '../../util/winstonLogger';
 
 /**
  * API version 1.0 for requesting files and metadata related to stored educational material.
@@ -23,7 +29,15 @@ export default (router: Router) => {
     // Version specified optionally with publishing date (:publishedat).
     // :publishedat format 'YYYY-MM-DDTHH:mm:ss.SSSZ' (ISODate) - regex path validation in API v2.0.
     // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
-    router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?', getEducationalMaterialMetadata);
+    router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?',
+        getEducationalMaterialMetadata,
+        (req: Request, res: Response) => {
+            if (req.headers['cookie']/* && req.query.interaction*/) {
+                runMessageQueueThread(req, res).then((result) =>
+                    winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
+            }
+            res.end();
+        });
 
     // Download all files related to an educational material and stream as a single zip file from the cloud object storage.
     // :publishedat format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' (ISODate) - regex path validation in API v2.0.

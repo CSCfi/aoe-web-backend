@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.9'
 services:
   aoe-web-backend:
     build:
@@ -8,7 +8,7 @@ services:
     container_name: aoe-web-backend
     restart: unless-stopped
     ports:
-      - "3002:3000"
+      - '3002:3000'
     volumes:
       - /data/thumbnail:/app/thumbnail
       - /data/uploads:/app/uploads
@@ -18,7 +18,7 @@ services:
       - /data/digivisio:/app/digivisio:rw
     env_file:
       - /environment/aoe-web-backend/.env
-    user: "root:5606"
+    user: 'root:5606'
     networks:
       - network-web-backend
 

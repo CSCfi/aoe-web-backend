@@ -2,6 +2,20 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
 export default {
 
+    // Configuration for the client of Kafka message queue system.
+    MESSAGE_QUEUE_OPTIONS: {
+        brokerServers: process.env.KAFKA_BROKER_SERVERS as string,
+        topicMaterialActivity: process.env.KAFKA_BROKER_TOPIC_MATERIAL_ACTIVITY as string,
+        topicSearchRequests: process.env.KAFKA_BROKER_TOPIC_SEARCH_REQUESTS as string,
+        clientId: process.env.KAFKA_CLIENT_ID as string,
+    },
+
+    // AOE server and service component general purpose configurations.
+    SERVER_CONFIG_OPTIONS: {
+        oaipmhAnalyticsURL: process.env.SERVER_CONFIG_OAIPMH_ANALYTICS_URL as string,
+    },
+
+    // Session management conventions to handle session initialization and persistence.
     SESSION_CONFIG_OPTIONS: {
         proxy: (process.env.SESSION_OPTION_PROXY.toLowerCase() === 'true') as boolean,
         resave: (process.env.SESSION_OPTION_RESAVE.toLowerCase() === 'true') as boolean,
