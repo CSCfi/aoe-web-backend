@@ -10,7 +10,7 @@ import { elasticSearchQuery } from '../../elasticSearch/esQueries';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     router.get('/elasticSearch/search', elasticSearchQuery);
 

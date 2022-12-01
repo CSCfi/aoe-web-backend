@@ -17,7 +17,7 @@ import { winstonLogger } from '../../util/winstonLogger';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // Set educational material obsoleted (archived) and hide it from the search results - data remains in the database.
     router.delete('/material/:edumaterialid', checkAuthenticated, hasAccessToPublicatication, setEducationalMaterialObsoleted);

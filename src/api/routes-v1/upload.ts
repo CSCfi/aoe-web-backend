@@ -12,7 +12,7 @@ import { uploadbase64Image } from '../../queries/thumbnailHandler';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // Upload eduactional material thumbnail image to the cloud object storage.
     // Case of an educational material (instead of collection) identified by request parameter name :edumaterialid in uploadbase64Image().

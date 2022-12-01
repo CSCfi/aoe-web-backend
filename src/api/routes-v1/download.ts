@@ -10,7 +10,7 @@ import { downloadFile, downloadPreviewFile } from '../../queries/fileHandling';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // TODO: Add regex validation
     router.get('/download/:filename', downloadPreviewFile);

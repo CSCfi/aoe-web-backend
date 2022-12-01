@@ -10,7 +10,7 @@ import v2 from './routes-v2';
  *
  * @param router  express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
     root(router);
     v1(router);
     v2(router);

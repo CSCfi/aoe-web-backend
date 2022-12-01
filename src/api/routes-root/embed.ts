@@ -9,7 +9,7 @@ import { downloadPdfFromAllas } from '../../helpers/officeToPdfConverter';
  *
  * @param router express.Router
  */
-export default (router: Router) => {
+export default (router: Router): void => {
 
     // Get all metadata of an educational material.
     // Version specified optionally with publishing date (:publishedat).
