@@ -6,7 +6,7 @@ import process from './process';
 import search from './search';
 
 export { default as collection } from './collection';
-export { default as material } from './material';
+export { default as edumaterial } from './material';
 export { default as metadata } from './metadata';
 export { default as process } from './process';
 export { default as search } from './search';
