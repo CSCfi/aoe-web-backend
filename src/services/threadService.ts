@@ -1,6 +1,7 @@
 import { Worker, WorkerOptions } from 'worker_threads';
 import path from 'path';
 import { Request, Response } from 'express';
+import config from '../configuration';
 
 const selectWorkerFile = (req: Request): string => {
 
@@ -22,6 +23,7 @@ const selectWorkerFile = (req: Request): string => {
  * @param res express.Response
  */
 export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
+    if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled) return;
     const workerData = {
         body: req.body,
         headers: req.headers,

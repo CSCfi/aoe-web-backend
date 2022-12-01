@@ -33,8 +33,9 @@ export default (router: Router): void => {
         getEducationalMaterialMetadata,
         (req: Request, res: Response) => {
             if (req.query.interaction && req.headers['cookie']) {
-                runMessageQueueThread(req, res).then((result) =>
-                    winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
+                runMessageQueueThread(req, res).then((result) => {
+                    if (result) winstonLogger.debug('THREAD: Message queue publishing completed for %o', result);
+                });
             }
             res.end();
         });
