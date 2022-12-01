@@ -7,10 +7,10 @@ import { createHash } from 'crypto';
 import moment from 'moment';
 
 const message: TypeSearchRequest = {
-    sessionId: createHash('md5').update(workerData.req.headers['cookie']).digest('hex') as string,
+    sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
     timestamp: moment.utc().toISOString() as string,
-    keywords: workerData.req.body.keywords,
-    filters: workerData.req.body.filters,
+    keywords: workerData.body.keywords,
+    filters: workerData.body.filters,
 }
 
 const produceKafkaMessage = async (): Promise<void> => {

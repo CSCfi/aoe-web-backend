@@ -22,7 +22,13 @@ const selectWorkerFile = (req: Request): string => {
  * @param res express.Response
  */
 export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
-    const workerData = { req, res };
+    const workerData = {
+        body: req.body,
+        headers: req.headers,
+        locals: res?.locals,
+        params: req.params,
+        query: req.query,
+    };
     return new Promise((resolve, reject) => {
         const workerFile = selectWorkerFile(req);
         const worker = new Worker(

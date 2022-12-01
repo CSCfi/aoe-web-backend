@@ -7,16 +7,16 @@ import moment from 'moment';
 import { createHash } from 'crypto';
 
 const message: TypeMaterialActivity = {
-    sessionId: createHash('md5').update(workerData.req.headers['cookie']).digest('hex') as string,
+    sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
     timestamp: moment.utc().toISOString() as string,
-    eduMaterialId: workerData.req.params.edumaterialid,
-    interaction: workerData.req.query.interaction || 'view',
+    eduMaterialId: workerData.params.edumaterialid,
+    interaction: workerData.query.interaction || 'view',
     metadata: {
-        created: workerData.res.locals.createdAt,
-        updated: workerData.res.locals.updatedAt,
-        organizations: workerData.res.locals.author?.filter(obj => obj.organizationkey).map(obj => obj.organizationkey),
-        educationalLevels: workerData.res.locals.educationalLevels?.map(obj => obj.educationallevelkey),
-        educationalSubjects: workerData.res.locals.educationalAlignment?.map(obj => obj.objectkey),
+        created: workerData.locals.createdAt,
+        updated: workerData.locals.updatedAt,
+        organizations: workerData.locals.author?.filter(obj => obj.organizationkey).map(obj => obj.organizationkey),
+        educationalLevels: workerData.locals.educationalLevels?.map(obj => obj.educationallevelkey),
+        educationalSubjects: workerData.locals.educationalAlignment?.map(obj => obj.objectkey),
     }
 }
 
