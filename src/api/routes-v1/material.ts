@@ -32,7 +32,7 @@ export default (router: Router) => {
     router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?',
         getEducationalMaterialMetadata,
         (req: Request, res: Response) => {
-            if (req.headers['cookie']/* && req.query.interaction*/) {
+            if (req.query.interaction && req.headers['cookie']) {
                 runMessageQueueThread(req, res).then((result) =>
                     winstonLogger.debug('THREAD: Message queue publishing completed for %o', result));
             }

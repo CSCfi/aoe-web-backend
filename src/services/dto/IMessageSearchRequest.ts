@@ -10,6 +10,4 @@ export interface ISearchFilters {
     }
 }
 
-export type TypeSearchOptions = ISearchKeywords | ISearchFilters;
-
 export type TypeSearchRequest = Partial<IMessageBase> & (ISearchKeywords | ISearchFilters);
