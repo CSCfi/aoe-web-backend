@@ -3,6 +3,7 @@ import { getCollectionEsData } from '../../elasticSearch/es';
 import { runMessageQueueThread } from '../../services/threadService';
 import { winstonLogger } from '../../util/winstonLogger';
 import { elasticSearchQuery } from '../../elasticSearch/esQueries';
+import { checkAuthenticated } from '../../services/authService';
 
 /**
  * API version 2.0 for requesting files and metadata related to stored educational material.
@@ -18,6 +19,7 @@ export default (router: Router): void => {
     // Search for educational materials with search criteria.
     // Search options are published in the messaging system for further analytical processing.
     router.post(`${moduleRoot}`,
+        checkAuthenticated,
         (req: Request, res: Response, next: NextFunction) => {
 
             // Bypass search requests with paging parameters included.

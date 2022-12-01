@@ -30,6 +30,7 @@ export default (router: Router): void => {
     // :publishedat format 'YYYY-MM-DDTHH:mm:ss.SSSZ' (ISODate) - regex path validation in API v2.0.
     // :edumaterialid defined as a number between 1 to 6 digits to prevent similar endpoints collision.
     router.get('/material/:edumaterialid([0-9]{1,6})/:publishedat?',
+        checkAuthenticated,
         getEducationalMaterialMetadata,
         (req: Request, res: Response) => {
             if (req.query.interaction && req.headers['cookie']) {
