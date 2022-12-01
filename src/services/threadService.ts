@@ -23,7 +23,7 @@ const selectWorkerFile = (req: Request): string => {
  * @param res express.Response
  */
 export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
-    if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled) return null;
+    if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled) return Promise.resolve(undefined);
     const workerData = {
         body: req.body,
         headers: req.headers,
