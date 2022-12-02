@@ -9,6 +9,7 @@ import { EducationalMaterialMetadata } from "./../controllers/educationalMateria
 import { winstonLogger } from '../util/winstonLogger';
 import { db, pgp } from '../resources/pg-connect';
 import * as pgLib from 'pg-promise';
+import { removeInvalidXMLCharacters } from '../util/invalidXMLCharValidator';
 
 const fh = require("./fileHandling");
 const elasticSearch = require("./../elasticSearch/es");
@@ -650,7 +651,7 @@ export async function setLanguage(obj: any) {
     }
 }
 
-export async function insertDataToDescription(t: any, educationalmaterialid: string, description: any) {
+export const insertDataToDescription = async (t: any, educationalmaterialid: string, description: any): Promise<any> => {
     const queries = [];
     // const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
     const query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
@@ -662,13 +663,13 @@ export async function insertDataToDescription(t: any, educationalmaterialid: str
                 if (!description.en || description.en === "") {
                     queries.push(await t.any(query, ["", "fi", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [description.en, "fi", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "fi", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [description.sv, "fi", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "fi", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [description.fi, "fi", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "fi", educationalmaterialid]));
         }
 
         if (!description.sv || description.sv === "") {
@@ -676,13 +677,13 @@ export async function insertDataToDescription(t: any, educationalmaterialid: str
                 if (!description.en || description.en === "") {
                     queries.push(await t.any(query, ["", "sv", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [description.en, "sv", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "sv", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [description.fi, "sv", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "sv", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [description.sv, "sv", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "sv", educationalmaterialid]));
         }
 
         if (!description.en || description.en === "") {
@@ -690,13 +691,13 @@ export async function insertDataToDescription(t: any, educationalmaterialid: str
                 if (!description.sv || description.sv === "") {
                     queries.push(await t.any(query, ["", "en", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [description.sv, "en", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "en", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [description.fi, "en", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "en", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [description.en, "en", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "en", educationalmaterialid]));
         }
     }
     return queries;
@@ -754,16 +755,21 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
 
         // material
         const dnow = Date.now() / 1000.0;
-        query = "UPDATE educationalmaterial SET (expires,UpdatedAt,timeRequired,agerangeMin,agerangeMax,licensecode,suitsAllEarlyChildhoodSubjects,suitsAllPrePrimarySubjects,suitsAllBasicStudySubjects,suitsAllUpperSecondarySubjects,suitsAllVocationalDegrees,suitsAllSelfMotivatedSubjects,suitsAllBranches ,suitsAllUpperSecondarySubjectsNew) = ($1,to_timestamp($2),$3,$4,$5,$7,$8,$9,$10,$11,$12,$13,$14,$15) where id=$6;";
+        query = 'UPDATE educationalmaterial ' +
+            'SET (expires, UpdatedAt, timeRequired, agerangeMin, agerangeMax, licensecode, ' +
+            'suitsAllEarlyChildhoodSubjects, suitsAllPrePrimarySubjects, suitsAllBasicStudySubjects, ' +
+            'suitsAllUpperSecondarySubjects, suitsAllVocationalDegrees, suitsAllSelfMotivatedSubjects, ' +
+            'suitsAllBranches, suitsAllUpperSecondarySubjectsNew) = ' +
+            '($1, to_timestamp($2), $3, $4, $5, $7, $8, $9, $10, $11, $12, $13, $14, $15) ' +
+            'WHERE id=$6';
         winstonLogger.debug('Query in updateMaterial(): ' + query, [metadata.expires, dnow, metadata.timeRequired, ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license]);
         queries.push(await t.any(query, [metadata.expires, dnow, ((metadata.timeRequired == undefined) ? "" : metadata.timeRequired), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin), ((!metadata.typicalAgeRange) ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax), emid, metadata.license, metadata.suitsAllEarlyChildhoodSubjects, metadata.suitsAllPrePrimarySubjects, metadata.suitsAllBasicStudySubjects, metadata.suitsAllUpperSecondarySubjects, metadata.suitsAllVocationalDegrees, metadata.suitsAllSelfMotivatedSubjects, metadata.suitsAllBranches, metadata.suitsAllUpperSecondarySubjectsNew]));
-// description
-        const description = metadata.description;
-        if (description == undefined) {
-            // if not found do nothing
-        } else {
-            queries.push(await insertDataToDescription(t, emid, description));
+
+        // description
+        if (metadata.description) {
+            queries.push(await insertDataToDescription(t, emid, metadata.description));
         }
+
         // educationalRoles
         const audienceparams = [];
         const audienceArr = metadata.educationalRoles;
