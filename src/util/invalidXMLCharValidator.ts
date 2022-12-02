@@ -15,7 +15,9 @@ export const removeInvalidXMLCharacters = (text: string, removeDiscouraged?: boo
             '(?:[^\\uD800-\\uDBFF]|^)[\\uDC00-\\uDFFF]))', 'g');
         text = text.replace(regex, '');
     }
-    return text;
+
+    // Final extra white space removal
+    return text.replace(/ +/g, ' ');
 }
 
 export default {
