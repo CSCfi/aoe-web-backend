@@ -654,8 +654,12 @@ export async function setLanguage(obj: any) {
 export const insertDataToDescription = async (t: any, educationalmaterialid: string, description: any): Promise<any> => {
     const queries = [];
     // const query = "INSERT INTO materialdisplayname (displayname, language, materialid) (SELECT $1,$2,$3 where $3 in (select id from material where educationalmaterialid = $4)) ON CONFLICT (language, materialid) DO UPDATE Set displayname = $1;";
-    const query = "INSERT INTO materialdescription (description, language, educationalmaterialid) VALUES ($1,$2,$3) ON CONFLICT (language,educationalmaterialid) DO " +
-        "UPDATE SET description = $1;";
+    const query = 'INSERT ' +
+        'INTO materialdescription ' +
+        '(description, language, educationalmaterialid) ' +
+        'VALUES ($1, $2, $3) ' +
+        'ON CONFLICT (language, educationalmaterialid) DO ' +
+        'UPDATE SET description = $1';
     winstonLogger.debug('Query in insertDataToDescription(): ' + query);
     if (description && educationalmaterialid) {
         if (!description.fi || description.fi === "") {
@@ -663,13 +667,13 @@ export const insertDataToDescription = async (t: any, educationalmaterialid: str
                 if (!description.en || description.en === "") {
                     queries.push(await t.any(query, ["", "fi", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "fi", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en, true), "fi", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "fi", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv, true), "fi", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "fi", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi, true), "fi", educationalmaterialid]));
         }
 
         if (!description.sv || description.sv === "") {
@@ -677,13 +681,13 @@ export const insertDataToDescription = async (t: any, educationalmaterialid: str
                 if (!description.en || description.en === "") {
                     queries.push(await t.any(query, ["", "sv", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "sv", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en, true), "sv", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "sv", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi, true), "sv", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "sv", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv, true), "sv", educationalmaterialid]));
         }
 
         if (!description.en || description.en === "") {
@@ -691,13 +695,13 @@ export const insertDataToDescription = async (t: any, educationalmaterialid: str
                 if (!description.sv || description.sv === "") {
                     queries.push(await t.any(query, ["", "en", educationalmaterialid]));
                 } else {
-                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv), "en", educationalmaterialid]));
+                    queries.push(await t.any(query, [removeInvalidXMLCharacters(description.sv, true), "en", educationalmaterialid]));
                 }
             } else {
-                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi), "en", educationalmaterialid]));
+                queries.push(await t.any(query, [removeInvalidXMLCharacters(description.fi, true), "en", educationalmaterialid]));
             }
         } else {
-            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en), "en", educationalmaterialid]));
+            queries.push(await t.any(query, [removeInvalidXMLCharacters(description.en, true), "en", educationalmaterialid]));
         }
     }
     return queries;
