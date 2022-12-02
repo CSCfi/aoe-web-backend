@@ -19,7 +19,7 @@ export const removeInvalidXMLCharacters = (text: string, removeDiscouraged?: boo
     // Final extra white space and tabs removal
     text = text.trim();
     text = text.replace(/\s{2,}/g, ' ');
-    text = text.replace(/\t+/g, ' ');
+    text = text.replace(/\t+/g, '');
 
     return text;
 }
