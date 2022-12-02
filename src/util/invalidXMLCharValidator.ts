@@ -17,7 +17,7 @@ export const removeInvalidXMLCharacters = (text: string, removeDiscouraged?: boo
     }
 
     // Final extra white space removal
-    return text.replace(/ +/g, ' ');
+    return text.replace(/\s{2,}/g, ' ');
 }
 
 export default {
