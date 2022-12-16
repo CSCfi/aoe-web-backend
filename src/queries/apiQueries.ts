@@ -81,7 +81,6 @@ const mode = new pgLib.txMode.TransactionMode({
 
 export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
-    console.log('ID: ' + eduMaterialId);
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
