@@ -8,10 +8,10 @@ const selectWorkerFile = (req: Request): string => {
     // Compile the worker file with .import.js in localhost environment for Nodemon project execution.
     if (process.env.NODE_ENV === 'localhost') {
         if (req.url.includes('search')) return 'workerSearch.import.js';
-        if (req.url.includes('material')) return 'workerActivity.import.js';
+        if (req.url.includes('material') || req.url.includes('download')) return 'workerActivity.import.js';
     }
     if (req.url.includes('search')) return 'workerSearch.js';
-    if (req.url.includes('material')) return 'workerActivity.js';
+    if (req.url.includes('material') || req.url.includes('download')) return 'workerActivity.js';
     return null;
 }
 

@@ -1,7 +1,7 @@
 interface IActivityMetadata {
     eduMaterialId: string;
     interaction: string;
-    metadata: {
+    metadata?: {
         created: string;
         updated: string;
         organizations?: string[];

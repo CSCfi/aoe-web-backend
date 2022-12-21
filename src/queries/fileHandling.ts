@@ -758,6 +758,9 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
         let educationalmaterialId: number;
         if (originalMaterialIdArr) {
             educationalmaterialId = parseInt(originalMaterialIdArr[0].educationalmaterialid, 10);
+
+            // Pass educational material ID to the next function in request chain.
+            res.locals.edumaterialid = educationalmaterialId;
         } else {
             educationalmaterialId = parseInt(materialid.materialid, 10);
         }
@@ -765,6 +768,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
         const data = await downloadFileFromStorage(req, res, next);
         //if (!data) return res.end();
 
+        // Increase download counter unless the user is the owner of the material.
         if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
             try {
                 await updateDownloadCounter(educationalmaterialId.toString());
@@ -772,10 +776,8 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
                 winstonLogger.error('Updating download counter failed: ' + error);
             }
         }
-
-        return res.status(200).end();
-        //return next();
-
+        next();
+        // return res.status(200).end();
     } catch (err) {
         if (!res.headersSent) {
             next(new ErrorHandler(400, "Failed to download file"));
@@ -802,11 +804,13 @@ export const downloadFileFromStorage = async (req: Request, res: Response, next:
     return new Promise(async (resolve) => {
         try {
             const query =
-                "SELECT originalfilename, filesize, mimetype FROM record " +
+                "SELECT originalfilename, filesize, mimetype " +
+                "FROM record " +
                 "RIGHT JOIN material AS m ON m.id = materialid " +
                 "WHERE m.obsoleted = 0 AND filekey = $1 " +
                 "UNION " +
-                "SELECT originalfilename, filesize, mimetype FROM attachment " +
+                "SELECT originalfilename, filesize, mimetype " +
+                "FROM attachment " +
                 "WHERE filekey = $1 AND obsoleted = 0";
 
             const fileDetails: { originalfilename: string, filesize: number, mimetype: string } =

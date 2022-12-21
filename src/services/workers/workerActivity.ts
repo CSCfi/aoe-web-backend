@@ -9,15 +9,23 @@ import { createHash } from 'crypto';
 const message: TypeMaterialActivity = {
     sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
     timestamp: moment.utc().toISOString() as string,
-    eduMaterialId: workerData.params.edumaterialid,
-    interaction: workerData.query.interaction || 'view',
-    metadata: {
+    eduMaterialId: null,
+    interaction: workerData.query.interaction,
+}
+
+if (workerData.query.interaction === 'view') {
+    message.eduMaterialId = workerData.params.edumaterialid;
+    message.metadata = {
         created: workerData.locals.createdAt,
         updated: workerData.locals.updatedAt,
         organizations: workerData.locals.author?.filter(obj => obj.organizationkey).map(obj => obj.organizationkey),
         educationalLevels: workerData.locals.educationalLevels?.map(obj => obj.educationallevelkey),
         educationalSubjects: workerData.locals.educationalAlignment?.map(obj => obj.objectkey),
-    }
+    };
+}
+
+if (workerData.query.interaction === 'load') {
+    message.eduMaterialId = workerData.edumaterialid;
 }
 
 const produceKafkaMessage = async (): Promise<void> => {
