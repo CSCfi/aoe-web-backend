@@ -79,8 +79,21 @@ const mode = new pgLib.txMode.TransactionMode({
     deferrable: true
 });
 
-export const getEducationalMaterialMetadata = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const eduMaterialId: number = parseInt(req.params.edumaterialid as string, 10);
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ * @param {boolean} resDisabled Request metadata in post processes without handling the HTTP response.
+ */
+export const getEducationalMaterialMetadata = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+    resDisabled?: boolean): Promise<void> => {
+    const eduMaterialId: number = resDisabled ?
+        parseInt(res.locals.id as string, 10) :
+        parseInt(req.params.edumaterialid as string, 10);
 
     db.tx({mode}, async (t: any) => {
         const queries: any = [];
@@ -258,7 +271,7 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
             "FROM versioncomposition " +
             "WHERE educationalmaterialid = $1 " +
             "ORDER BY publishedat DESC";
-        winstonLogger.debug(query, [eduMaterialId]);
+        // winstonLogger.debug(query, [eduMaterialId]);
         response = await t.any(query, [eduMaterialId]);
         queries.push(response);
         // pgp.pg.types.setTypeParser(TYPE_TIMESTAMP, parseDate);
@@ -332,9 +345,9 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
                 jsonObj.materials[i]["filepath"] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]["pdfkey"];
             } else if (jsonObj.materials[i] && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i].mimetype === "text/html" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                 req.params.key = jsonObj.materials[i].filekey;
-                winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
+                // winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
                 const result = await fh.downloadFileFromStorage(req, res, next, true);
-                winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
+                // winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
                 if (result != false && (jsonObj.materials[i]["mimetype"] === "application/zip" || jsonObj.materials[i]["mimetype"] === "application/x-zip-compressed")) {
                     /**
                      * if the unZipAndExtract returns a pathToReturn instead of false, we know its a html file, so then we change the mimetype to text/html
@@ -343,7 +356,7 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
                      */
                     jsonObj.materials[i]["mimetype"] = "text/html";
                     jsonObj.materials[i]["filepath"] = process.env.HTML_BASE_URL + result;
-                    winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
+                    // winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
 
 
                 } else if (result != false) {
@@ -352,7 +365,7 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
                      * Simply return the result to the frontend, which means we have to to the query here and push the response thereafter
                      */
                     jsonObj.materials[i]["filepath"] = result;
-                    winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
+                    // winstonLogger.debug("The jsonObj: " + JSON.stringify(jsonObj));
                 }
             }
         }
@@ -405,12 +418,12 @@ export const getEducationalMaterialMetadata = async (req: Request, res: Response
         jsonObj.versions = data[19];
         jsonObj.hasDownloadableFiles = (jsonObj.materials) ? hasDownloadableFiles(jsonObj.materials) : false;
         jsonObj.urn = (data[20]) ? data[20].urn : data[20];
-        res.status(200).json(jsonObj);
+        !resDisabled && res.status(200).json(jsonObj);
 
         // Pass response (metadata) to the next function in the request chain.
         res.locals = jsonObj;
 
-        if (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req))) {
+        if (!resDisabled && (!req.isAuthenticated() || !(await hasAccesstoPublication(jsonObj.id, req)))) {
             updateViewCounter(jsonObj.id).catch((error) => {
                 winstonLogger.error(`View counter update failed: ${error}`);
             });

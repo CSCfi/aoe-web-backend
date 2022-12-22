@@ -760,7 +760,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
             educationalmaterialId = parseInt(originalMaterialIdArr[0].educationalmaterialid, 10);
 
             // Pass educational material ID to the next function in request chain.
-            res.locals.edumaterialid = educationalmaterialId;
+            res.locals.id = educationalmaterialId;
         } else {
             educationalmaterialId = parseInt(materialid.materialid, 10);
         }

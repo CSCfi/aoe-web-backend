@@ -23,7 +23,10 @@ const selectWorkerFile = (req: Request): string => {
  * @param res express.Response
  */
 export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
+
+    // Interrupt analytics post processing if Kafka producer disabled in environment variables.
     if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled) return Promise.resolve(undefined);
+
     const workerData = {
         body: req.body,
         headers: req.headers,

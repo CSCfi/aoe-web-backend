@@ -13,8 +13,8 @@ const message: TypeMaterialActivity = {
     interaction: workerData.query.interaction,
 }
 
-if (workerData.query.interaction === 'view') {
-    message.eduMaterialId = workerData.params.edumaterialid;
+if (workerData.query.interaction === 'view' || workerData.query.interaction === 'load') {
+    message.eduMaterialId = workerData.locals.id;
     message.metadata = {
         created: workerData.locals.createdAt,
         updated: workerData.locals.updatedAt,
@@ -22,10 +22,6 @@ if (workerData.query.interaction === 'view') {
         educationalLevels: workerData.locals.educationalLevels?.map(obj => obj.educationallevelkey),
         educationalSubjects: workerData.locals.educationalAlignment?.map(obj => obj.objectkey),
     };
-}
-
-if (workerData.query.interaction === 'load') {
-    message.eduMaterialId = workerData.edumaterialid;
 }
 
 const produceKafkaMessage = async (): Promise<void> => {
