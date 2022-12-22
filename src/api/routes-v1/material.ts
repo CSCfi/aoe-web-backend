@@ -36,7 +36,7 @@ export default (router: Router): void => {
             });
         },
         (req: Request, res: Response) => {
-            if (req.query.interaction === 'view' && req.headers['cookie']) {
+            if (['view', 'edit', 'save'].includes(req.query.interaction as string) && req.headers['cookie']) {
                 runMessageQueueThread(req, res).then((result) => {
                     if (result) winstonLogger.debug('THREAD: Message queue publishing completed for %o', result);
                 });
