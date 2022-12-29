@@ -13,7 +13,7 @@ const message: TypeMaterialActivity = {
     interaction: workerData.query.interaction,
 }
 
-if (workerData.query.interaction === 'view' || workerData.query.interaction === 'load') {
+if (['view', 'edit', 'load'].includes(workerData.query.interaction as string)) {
     message.eduMaterialId = workerData.locals.id;
     message.metadata = {
         created: workerData.locals.createdAt,
