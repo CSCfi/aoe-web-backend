@@ -1,752 +1,752 @@
 {
-      "mappings" : {
-        "properties" : {
-          "accessibilityfeature" : {
-            "properties" : {
-              "accessibilityfeaturekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "accessibilityhazard" : {
-            "properties" : {
-              "accessibilityhazardkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "agerangemax": {
-            "type": "long"
-        },
-        "agerangemin": {
-            "type": "long"
-        },
-          "alignmentobject" : {
-            "properties" : {
-              "alignmenttype" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalframework" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "objectkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "source" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "targetname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "archivedat" : {
-            "type" : "date"
-          },
-          "author" : {
-            "properties" : {
-              "authorname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "organization" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "organizationkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "createdat" : {
-            "type" : "date"
-          },
-          "educationalaudience" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "educationalrole" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalrolekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "id" : {
-                "type" : "long"
-              }
-            }
-          },
-          "educationallevel" : {
-            "properties" : {
-              "educationallevelkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "educationaluse" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "educationalusekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "expires" : {
-            "type" : "date"
-          },
-          "id" : {
-            "type" : "long"
-          },
-          "isbasedon" : {
-            "properties" : {
-              "author" : {
-                "properties" : {
-                  "authorname" : {
-                    "type" : "text",
-                    "fields" : {
-                      "keyword" : {
-                        "type" : "keyword",
-                        "ignore_above" : 256
-                      }
+    "mappings": {
+        "properties": {
+            "accessibilityfeature": {
+                "properties": {
+                    "accessibilityfeaturekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
                     }
-                  },
-                  "id" : {
-                    "type" : "long",
-                    "fields" : {
-                      "keyword" : {
-                        "type" : "keyword",
-                        "ignore_above" : 256
-                      }
+                }
+            },
+            "accessibilityhazard": {
+                "properties": {
+                    "accessibilityhazardkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
                     }
-                  },
-                  "isbasedonid" : {
-                    "type" : "long",
-                    "fields" : {
-                      "keyword" : {
-                        "type" : "keyword",
-                        "ignore_above" : 256
-                      }
+                }
+            },
+            "agerangemax": {
+                "type": "long"
+            },
+            "agerangemin": {
+                "type": "long"
+            },
+            "alignmentobject": {
+                "properties": {
+                    "alignmenttype": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalframework": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "objectkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "source": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "targetname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
                     }
-                  }
                 }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "materialname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "url" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "keyword" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "keywordkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "learningresourcetype" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "learningresourcetypekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "license" : {
-            "properties" : {
-              "key" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "value" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "materialdescription" : {
-            "properties" : {
-              "description" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "language" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "materialname" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "language" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "materialname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "slug" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "materials" : {
-            "properties" : {
-              "filebucket" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filepath" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filesize" : {
-                "type" : "long"
-              },
-              "format" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "key" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "language" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "link" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "materialdisplayname" : {
-                "properties" : {
-                  "displayname" : {
-                    "type" : "text",
-                    "fields" : {
-                      "keyword" : {
-                        "type" : "keyword",
-                        "ignore_above" : 256
-                      }
+            },
+            "archivedat": {
+                "type": "date"
+            },
+            "author": {
+                "properties": {
+                    "authorname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "organization": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "organizationkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
                     }
-                  },
-                  "id" : {
-                    "type" : "long"
-                  },
-                  "language" : {
-                    "type" : "text",
-                    "fields" : {
-                      "keyword" : {
-                        "type" : "keyword",
-                        "ignore_above" : 256
-                      }
+                }
+            },
+            "createdat": {
+                "type": "date"
+            },
+            "educationalaudience": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "educationalrole": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalrolekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "id": {
+                        "type": "long"
                     }
-                  },
-                  "materialid" : {
-                    "type" : "long"
-                  }
                 }
-              },
-              "mimetype" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
+            },
+            "educationallevel": {
+                "properties": {
+                    "educationallevelkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
                 }
-              },
-              "obsoleted" : {
-                "type" : "long"
-              },
-              "originalfilename" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
+            },
+            "educationaluse": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "educationalusekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
                 }
-              },
-              "priority" : {
-                "type" : "long"
-              }
+            },
+            "expires": {
+                "type": "date"
+            },
+            "id": {
+                "type": "long"
+            },
+            "isbasedon": {
+                "properties": {
+                    "author": {
+                        "properties": {
+                            "authorname": {
+                                "type": "text",
+                                "fields": {
+                                    "keyword": {
+                                        "type": "keyword",
+                                        "ignore_above": 256
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "long",
+                                "fields": {
+                                    "keyword": {
+                                        "type": "keyword",
+                                        "ignore_above": 256
+                                    }
+                                }
+                            },
+                            "isbasedonid": {
+                                "type": "long",
+                                "fields": {
+                                    "keyword": {
+                                        "type": "keyword",
+                                        "ignore_above": 256
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "materialname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "url": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "keyword": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "keywordkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "learningresourcetype": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "learningresourcetypekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "license": {
+                "properties": {
+                    "key": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "value": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "materialdescription": {
+                "properties": {
+                    "description": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "language": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "materialname": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "language": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "materialname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "slug": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "materials": {
+                "properties": {
+                    "filebucket": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filepath": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filesize": {
+                        "type": "long"
+                    },
+                    "format": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "key": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "language": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "link": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "materialdisplayname": {
+                        "properties": {
+                            "displayname": {
+                                "type": "text",
+                                "fields": {
+                                    "keyword": {
+                                        "type": "keyword",
+                                        "ignore_above": 256
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "long"
+                            },
+                            "language": {
+                                "type": "text",
+                                "fields": {
+                                    "keyword": {
+                                        "type": "keyword",
+                                        "ignore_above": 256
+                                    }
+                                }
+                            },
+                            "materialid": {
+                                "type": "long"
+                            }
+                        }
+                    },
+                    "mimetype": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "obsoleted": {
+                        "type": "long"
+                    },
+                    "originalfilename": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "priority": {
+                        "type": "long"
+                    }
+                }
+            },
+            "obsoleted": {
+                "type": "long"
+            },
+            "originalpublishedat": {
+                "type": "date"
+            },
+            "owner": {
+                "properties": {
+                    "firstname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "lastname": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "popularity": {
+                "type": "float"
+            },
+            "publishedat": {
+                "type": "date"
+            },
+            "publisher": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "long"
+                    },
+                    "id": {
+                        "type": "long"
+                    },
+                    "name": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "publisherkey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    }
+                }
+            },
+            "suitsallbasicstudysubjects": {
+                "type": "boolean"
+            },
+            "suitsallbranches": {
+                "type": "boolean"
+            },
+            "suitsallearlychildhoodsubjects": {
+                "type": "boolean"
+            },
+            "suitsallpreprimarysubjects": {
+                "type": "boolean"
+            },
+            "suitsallselfmotivatedsubjects": {
+                "type": "boolean"
+            },
+            "suitsalluppersecondarysubjects": {
+                "type": "boolean"
+            },
+            "suitsalluppersecondarysubjectsnew": {
+                "type": "boolean"
+            },
+            "suitsallvocationaldegrees": {
+                "type": "boolean"
+            },
+            "thumbnail": {
+                "properties": {
+                    "educationalmaterialid": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filebucket": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filekey": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filename": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "filepath": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "id": {
+                        "type": "long",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "mimetype": {
+                        "type": "text",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            }
+                        }
+                    },
+                    "obsoleted": {
+                        "type": "long"
+                    }
+                }
+            },
+            "timerequired": {
+                "type": "text",
+                "fields": {
+                    "keyword": {
+                        "type": "keyword",
+                        "ignore_above": 256
+                    }
+                }
+            },
+            "updatedat": {
+                "type": "date"
             }
-          },
-          "obsoleted" : {
-            "type" : "long"
-          },
-          "originalpublishedat" : {
-            "type" : "date"
-          },
-          "owner" : {
-            "properties" : {
-              "firstname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "lastname" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "popularity" : {
-            "type" : "float"
-          },
-          "publishedat" : {
-            "type" : "date"
-          },
-          "publisher" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "long"
-              },
-              "id" : {
-                "type" : "long"
-              },
-              "name" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "publisherkey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              }
-            }
-          },
-          "suitsallbasicstudysubjects" : {
-            "type" : "boolean"
-          },
-          "suitsallbranches" : {
-            "type" : "boolean"
-          },
-          "suitsallearlychildhoodsubjects" : {
-            "type" : "boolean"
-          },
-          "suitsallpreprimarysubjects" : {
-            "type" : "boolean"
-          },
-          "suitsallselfmotivatedsubjects" : {
-            "type" : "boolean"
-          },
-          "suitsalluppersecondarysubjects" : {
-            "type" : "boolean"
-          },
-          "suitsalluppersecondarysubjectsnew" : {
-            "type" : "boolean"
-          },
-          "suitsallvocationaldegrees" : {
-            "type" : "boolean"
-          },
-          "thumbnail" : {
-            "properties" : {
-              "educationalmaterialid" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filebucket" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filekey" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filename" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "filepath" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "id" : {
-                "type" : "long",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "mimetype" : {
-                "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
-              },
-              "obsoleted" : {
-                "type" : "long"
-              }
-            }
-          },
-          "timerequired" : {
-            "type" : "text",
-            "fields" : {
-              "keyword" : {
-                "type" : "keyword",
-                "ignore_above" : 256
-              }
-            }
-          },
-          "updatedat" : {
-            "type" : "date"
-          }
         }
-      }
-  }
+    }
+}
   

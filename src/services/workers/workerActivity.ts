@@ -4,10 +4,10 @@ import { winstonLogger } from '../../util/winstonLogger';
 import { kafkaProducer } from '../../resources/kafka-client';
 import { TypeMaterialActivity } from '../dto/IMessageMaterialActivity';
 import moment from 'moment';
-import { createHash } from 'crypto';
+// import { createHash } from 'crypto';
 
 const message: TypeMaterialActivity = {
-    sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
+    // sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
     timestamp: moment.utc().toISOString() as string,
     eduMaterialId: null,
     interaction: workerData.query.interaction,

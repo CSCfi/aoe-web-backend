@@ -1,21 +1,26 @@
 import { getPopularityQuery } from '../queries/analyticsQueries';
 import { aoeThumbnailDownloadUrl } from '../services/urlService';
-import { getCollectionDataToEs, collectionDataToEs, collectionFromEs, getCollectionDataToUpdate } from './esCollection';
+import { collectionDataToEs, collectionFromEs, getCollectionDataToEs, getCollectionDataToUpdate } from './esCollection';
 import { ErrorHandler } from '../helpers/errorHandler';
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { AoeBody, AoeCollectionResult } from './esTypes';
 import { winstonLogger } from '../util/winstonLogger';
-import { db, pgp } from '../resources/pg-connect';
+import { db } from '../resources/pg-connect';
 import * as pgLib from 'pg-promise';
 
 const elasticsearch = require("@elastic/elasticsearch");
 const fs = require("fs");
 const index = process.env.ES_INDEX;
+
+/**
+ * Elastisearch client configuration
+ */
 const client = new elasticsearch.Client({
     node: process.env.ES_NODE,
     log: "trace",
     keepAlive: true
 });
+
 // values for index last update time
 export namespace Es {
     export const ESupdated = { value: new Date() };
@@ -30,7 +35,7 @@ const mode = new pgLib.txMode.TransactionMode({
     deferrable: true
 });
 
-export async function createEsIndex(): Promise<any> {
+export const createEsIndex = async (): Promise<any> => {
     client.ping({
         // ping usually has a 3000ms timeout
         // requestTimeout: 1000
@@ -38,10 +43,10 @@ export async function createEsIndex(): Promise<any> {
         if (error) {
             winstonLogger.error('Elasticsearch cluster is down: ' + error);
         } else {
-            const result: boolean = await indexExists(index);
-            if (result) {
-                await deleteIndex(index);
-            }
+            // Delete existing index before recreation.
+            const indexFound: boolean = await indexExists(index);
+            if (indexFound) await deleteIndex(index);
+
             const createIndexResult: boolean = await createIndex(index);
             if (createIndexResult) {
                 try {
@@ -63,21 +68,18 @@ export async function createEsIndex(): Promise<any> {
 }
 
 /**
- *
+ * Delete existing search index.
  * @param index
- * delete index if exists
  */
-export async function deleteIndex(index: string) {
-    const b = client.indices.delete({
+export const deleteIndex = async (index: string): Promise<boolean> => {
+    return client.indices.delete({
         index: index
     }).then((data: any) => {
-        return data.body;
-    })
-        .catch((error: any) => {
-            winstonLogger.error('Error in deleteIndex(): ' + error);
-            return false;
-        });
-    return b;
+        return !!data.body;
+    }).catch((error: any) => {
+        winstonLogger.error('Search index deletion failed: %o', error);
+        return false;
+    });
 }
 
 /**
@@ -98,20 +100,18 @@ export async function createIndex(index: string) {
 }
 
 /**
- *
+ * Verify that specific search engine index exists.
  * @param index
- * check if index exists
  */
-export function indexExists(index: string): boolean {
-    const b = client.indices.exists({
+export const indexExists = async (index: string): Promise<boolean> => {
+    return client.indices.exists({
         index: index
     }).then((data: any) => {
-        return data.body;
+        return !!data.body;
     }).catch((error: any) => {
         winstonLogger.error(error);
         return false;
     });
-    return b;
 }
 
 /**
@@ -248,49 +248,49 @@ export async function metadataToEs(offset: number, limit: number) {
                 }
                 return q;
             })
-            .then(t.batch)
-            .catch((error: any) => {
-                winstonLogger.error(error);
-                return error;
-            });
+                .then(t.batch)
+                .catch((error: any) => {
+                    winstonLogger.error(error);
+                    return error;
+                });
         })
-        .then(async (data: any) => {
-            // winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
-            if (data.length > 0) {
-                const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
-                // winstonLogger.debug("THIS IS BODY:");
-                // winstonLogger.debug(JSON.stringify(body));
-                const { body: bulkResponse } = await client.bulk({ refresh: true, body });
-                if (bulkResponse.errors) {
-                    const erroredDocuments = [];
-                    // The items array has the same order of the dataset we just indexed.
-                    // The presence of the `error` key indicates that the operation
-                    // that we did for the document has failed.
-                    bulkResponse.items.forEach((action, i) => {
-                        const operation = Object.keys(action)[0];
-                        if (action[operation].error) {
-                            erroredDocuments.push({
-                                // If the status is 429 it means that you can retry the document,
-                                // otherwise it's very likely a mapping error, and you should
-                                // fix the document before to try it again.
-                                status: action[operation].status,
-                                error: action[operation].error,
-                                operation: body[i * 2],
-                                document: body[i * 2 + 1]
-                            });
-                        }
-                    });
-                    winstonLogger.debug(erroredDocuments);
+            .then(async (data: any) => {
+                // winstonLogger.debug("inserting data to elastic material number: " + (offset * limit + 1));
+                if (data.length > 0) {
+                    const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
+                    // winstonLogger.debug("THIS IS BODY:");
+                    // winstonLogger.debug(JSON.stringify(body));
+                    const { body: bulkResponse } = await client.bulk({ refresh: true, body });
+                    if (bulkResponse.errors) {
+                        const erroredDocuments = [];
+                        // The items array has the same order of the dataset we just indexed.
+                        // The presence of the `error` key indicates that the operation
+                        // that we did for the document has failed.
+                        bulkResponse.items.forEach((action, i) => {
+                            const operation = Object.keys(action)[0];
+                            if (action[operation].error) {
+                                erroredDocuments.push({
+                                    // If the status is 429 it means that you can retry the document,
+                                    // otherwise it's very likely a mapping error, and you should
+                                    // fix the document before to try it again.
+                                    status: action[operation].status,
+                                    error: action[operation].error,
+                                    operation: body[i * 2],
+                                    document: body[i * 2 + 1]
+                                });
+                            }
+                        });
+                        winstonLogger.debug(erroredDocuments);
+                    }
+                    resolve(data.length);
+                } else {
+                    resolve(data.length);
                 }
-                resolve(data.length);
-            } else {
-                resolve(data.length);
-            }
-        })
-        .catch(error => {
-            winstonLogger.error(error);
-            reject();
-        });
+            })
+            .catch(error => {
+                winstonLogger.error(error);
+                reject();
+            });
     });
 }
 
@@ -437,42 +437,42 @@ export const updateEsDocument = (updateCounters?: boolean): Promise<any> => {
                 }
                 return q;
             }) // #2 async end
-            .then(t.batch) // #2 then start/end
-            .catch((error: any) => { // #2 catch start
-                winstonLogger.error(error);
-                return error;
-            }); // #2 catch end
+                .then(t.batch) // #2 then start/end
+                .catch((error: any) => { // #2 catch start
+                    winstonLogger.error(error);
+                    return error;
+                }); // #2 catch end
         }) // #1 async end
-        .then(async (data: any) => { // #1 then start
-                if (data.length > 0) {
-                    const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
-                    const { body: bulkResponse } = await client.bulk({ refresh: true, body });
-                    if (bulkResponse.errors) {
-                        winstonLogger.debug(bulkResponse.errors);
-                    } else {
-                        if (updateCounters) {
-                            Es.ESCounterUpdated.value = new Date();
+            .then(async (data: any) => { // #1 then start
+                    if (data.length > 0) {
+                        const body = data.flatMap(doc => [{ index: { _index: index, _id: doc.id } }, doc]);
+                        const { body: bulkResponse } = await client.bulk({ refresh: true, body });
+                        if (bulkResponse.errors) {
+                            winstonLogger.debug(bulkResponse.errors);
                         } else {
-                            Es.ESupdated.value = new Date();
+                            if (updateCounters) {
+                                Es.ESCounterUpdated.value = new Date();
+                            } else {
+                                Es.ESupdated.value = new Date();
+                            }
                         }
+                        resolve(data.length);
+                    } else {
+                        resolve(data.length);
                     }
-                    resolve(data.length);
-                } else {
-                    resolve(data.length);
                 }
-            }
-        ) // #1 then end
-        .catch((error) => { // #1 catch start
-            winstonLogger.debug('Search index update faild in updateEsDocument(): ' + error);
-            reject(error);
-        }); // #1 catch end
+            ) // #1 then end
+            .catch((error) => { // #1 catch start
+                winstonLogger.debug('Search index update faild in updateEsDocument(): ' + error);
+                reject(error);
+            }); // #1 catch end
     });
 };
 
 export async function createEsCollectionIndex() {
     try {
         const collectionIndex = process.env.ES_COLLECTION_INDEX;
-        const result: boolean = indexExists(collectionIndex);
+        const result: boolean = await indexExists(collectionIndex);
         // winstonLogger.debug("COLLECTION INDEX RESULT: " + result);
         if (result) {
             const deleteResult = await deleteIndex(collectionIndex);
@@ -510,7 +510,7 @@ export async function getCollectionEsData(req: Request, res: Response, next: Nex
     }
 }
 
-export async function updateEsCollectionIndex() {
+export const updateEsCollectionIndex = async (): Promise<void> => {
     try {
         const collectionIndex = process.env.ES_COLLECTION_INDEX;
         const newDate = new Date();
@@ -524,6 +524,9 @@ export async function updateEsCollectionIndex() {
     }
 }
 
+/**
+ * START POINT OF SEARCH ENGINE INDEXING
+ */
 if (process.env.CREATE_ES_INDEX) {
     createEsIndex().then();
     createEsCollectionIndex().then();

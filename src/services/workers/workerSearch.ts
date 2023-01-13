@@ -3,11 +3,11 @@ import { parentPort, workerData } from 'worker_threads';
 import { winstonLogger } from '../../util/winstonLogger';
 import { kafkaProducer } from '../../resources/kafka-client';
 import { TypeSearchRequest } from '../dto/IMessageSearchRequest';
-import { createHash } from 'crypto';
+// import { createHash } from 'crypto';
 import moment from 'moment';
 
 const message: TypeSearchRequest = {
-    sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
+    // sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
     timestamp: moment.utc().toISOString() as string,
     keywords: workerData.body.keywords,
     filters: workerData.body.filters,
