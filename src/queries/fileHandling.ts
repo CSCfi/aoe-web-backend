@@ -748,7 +748,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
     try {
         const filename: string = req.params.filename;
         const materialidQuery = "SELECT materialid FROM record WHERE filekey = $1";
-        const materialid: { materialid: string } = await db.oneOrNone(materialidQuery, [filename]);
+        const materialid = (await db.any(materialidQuery, [filename]))[0];
 
         if (!materialid) return res.status(404).end();
 
@@ -780,7 +780,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
         // return res.status(200).end();
     } catch (err) {
         if (!res.headersSent) {
-            next(new ErrorHandler(400, "Failed to download file"));
+            next(new ErrorHandler(400, err));
         }
     }
 };
@@ -885,8 +885,10 @@ export const downloadFromStorage = async (req: Request,
 
     // TODO: Move to global variables
     const configAWS: ServiceConfigurationOptions = {
-        accessKeyId: process.env.USER_KEY,
-        secretAccessKey: process.env.USER_SECRET,
+        credentials: {
+            accessKeyId: process.env.USER_KEY,
+            secretAccessKey: process.env.USER_SECRET,
+        },
         endpoint: process.env.POUTA_END_POINT,
         region: process.env.REGION
     };
@@ -923,7 +925,7 @@ export const downloadFromStorage = async (req: Request,
                     resolve(await unZipAndExtract(folderpath));
                 });
             } else {
-                res.attachment(key);
+                res.attachment(origFilename || key);
                 // res.header('Content-Disposition', contentDisposition(origFilename));
                 fileStream
                     .on('error', (error: Error) => {

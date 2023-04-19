@@ -1,4 +1,3 @@
-
 import { db } from '../resources/pg-connect';
 
 export async function updateViewCounter(id: string) {

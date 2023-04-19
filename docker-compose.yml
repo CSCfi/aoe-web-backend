@@ -10,7 +10,7 @@ services:
     ports:
       - '3000:3000'
     depends_on:
-      - aoe-postgres
+      # - aoe-postgres
       - aoe-redis-session
     environment:
       - NODE_ENV=development
@@ -56,6 +56,6 @@ services:
 
 networks:
   network-analytics:
-    external: true
+    # external: true
     name: network-analytics
 
