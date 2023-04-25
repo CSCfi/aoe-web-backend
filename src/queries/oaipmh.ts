@@ -129,6 +129,17 @@ export async function getMaterialMetaData(req: Request, res: Response): Promise<
                     response.filepath = await aoeThumbnailDownloadUrl(response.filekey);
                     q.thumbnail = response;
                 }
+
+                // Temporary query to attach URN for the OAI-PMH metadata response.
+                // TODO: Remove after the function is refactored.
+                query = `
+                    SELECT urn FROM educationalmaterialversion 
+                    WHERE educationalmaterialid = $1 AND publishedat = 
+                        (SELECT MAX(publishedat) FROM educationalmaterialversion WHERE educationalmaterialid = $1)
+                    `;
+                response = await db.oneOrNone(query, [q.id]);
+                q.urn = response || null;
+
                 return q;
             }).then(t.batch)
                 .catch((error: any) => {
