@@ -138,7 +138,7 @@ export async function getMaterialMetaData(req: Request, res: Response): Promise<
                         (SELECT MAX(publishedat) FROM educationalmaterialversion WHERE educationalmaterialid = $1)
                     `;
                 response = await db.oneOrNone(query, [q.id]);
-                q.urn = response.urn || null;
+                q.urn = response?.urn || null;
 
                 return q;
             }).then(t.batch)
