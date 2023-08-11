@@ -1,129 +1,116 @@
-import { Request, Response, NextFunction } from "express";
-import { ErrorHandler } from "./errorHandler";
-import { readStreamFromStorage, uploadFileToStorage, downloadFromStorage } from "./../queries/fileHandling";
-import { winstonLogger } from '../util/winstonLogger';
+import { NextFunction, Request, Response } from 'express';
+import fs from 'fs';
+import libre from 'libreoffice-convert';
+import { downloadFromStorage, readStreamFromStorage, uploadLocalFileToCloudStorage } from '../queries/fileHandling';
 import { db } from '../resources/pg-connect';
+import { winstonLogger } from '../util/winstonLogger';
+import { ErrorHandler } from './errorHandler';
 
-const contentDisposition = require("content-disposition");
-
-const libre = require("libreoffice-convert");
-const path = require("path");
-const fs = require("fs");
 const officeMimeTypes = [
-    // .doc
-    "application/msword",
-    // .dot
-    "application/msword",
-    // .docx
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    // .dotx
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
-    // .docm
-    "application/vnd.ms-word.document.macroEnabled.12",
-    // .dotm
-    "application/vnd.ms-word.template.macroEnabled.12",
-    // .xls
-    "application/vnd.ms-excel",
-    // .xlt
-    "application/vnd.ms-excel",
-    // .xla
-    "application/vnd.ms-excel",
-    // .xlsx
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    // .xltx
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
-    // .xlsm
-    "application/vnd.ms-excel.sheet.macroEnabled.12",
-    // .xltm
-    "application/vnd.ms-excel.template.macroEnabled.12",
-    // .xlam
-    "application/vnd.ms-excel.addin.macroEnabled.12",
-    // .xlsb
-    "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
-
-    // .ppt
-    "application/vnd.ms-powerpoint",
-    // .pot
-    "application/vnd.ms-powerpoint",
-    // .pps
-    "application/vnd.ms-powerpoint",
-    // .ppa
-    "application/vnd.ms-powerpoint",
-
-    // .pptx
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    // .potx
-    "application/vnd.openxmlformats-officedocument.presentationml.template",
-    // .ppsx
-    "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
-    // .ppam
-    "application/vnd.ms-powerpoint.addin.macroEnabled.12",
-    // .pptm
-    "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
-    // .potm
-    "application/vnd.ms-powerpoint.template.macroEnabled.12",
-    // .ppsm
-    "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",
-
-    // .mdb
-    "application/vnd.ms-access",
-// openoffice
-    "application/rtf",
-    "application/vnd.oasis.opendocument.text",
-    "application/vnd.oasis.opendocument.spreadsheet",
-    "application/vnd.oasis.opendocument.presentation",
-    "application/vnd.oasis.opendocument.graphics",
-    "application/vnd.oasis.opendocument.chart",
-    "application/vnd.oasis.opendocument.formula",
-    "application/vnd.oasis.opendocument.image",
-    "application/vnd.oasis.opendocument.text-master",
-    "application/vnd.oasis.opendocument.text-template",
-    "application/vnd.oasis.opendocument.spreadsheet-template",
-    "application/vnd.oasis.opendocument.presentation-template",
-    "application/vnd.oasis.opendocument.graphics-template",
-    "application/vnd.oasis.opendocument.chart-template",
-    "application/vnd.oasis.opendocument.formula-template",
-    "application/vnd.oasis.opendocument.image-template",
-    "application/vnd.oasis.opendocument.text-web"
+  // .doc
+  'application/msword',
+  // .dot
+  'application/msword',
+  // .docx
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  // .dotx
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+  // .docm
+  'application/vnd.ms-word.document.macroEnabled.12',
+  // .dotm
+  'application/vnd.ms-word.template.macroEnabled.12',
+  // .xls
+  'application/vnd.ms-excel',
+  // .xlt
+  'application/vnd.ms-excel',
+  // .xla
+  'application/vnd.ms-excel',
+  // .xlsx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  // .xltx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+  // .xlsm
+  'application/vnd.ms-excel.sheet.macroEnabled.12',
+  // .xltm
+  'application/vnd.ms-excel.template.macroEnabled.12',
+  // .xlam
+  'application/vnd.ms-excel.addin.macroEnabled.12',
+  // .xlsb
+  'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
+  // .ppt
+  'application/vnd.ms-powerpoint',
+  // .pot
+  'application/vnd.ms-powerpoint',
+  // .pps
+  'application/vnd.ms-powerpoint',
+  // .ppa
+  'application/vnd.ms-powerpoint',
+  // .pptx
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  // .potx
+  'application/vnd.openxmlformats-officedocument.presentationml.template',
+  // .ppsx
+  'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+  // .ppam
+  'application/vnd.ms-powerpoint.addin.macroEnabled.12',
+  // .pptm
+  'application/vnd.ms-powerpoint.presentation.macroEnabled.12',
+  // .potm
+  'application/vnd.ms-powerpoint.template.macroEnabled.12',
+  // .ppsm
+  'application/vnd.ms-powerpoint.slideshow.macroEnabled.12',
+  // .mdb
+  'application/vnd.ms-access',
+  // openoffice
+  'application/rtf',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
+  'application/vnd.oasis.opendocument.graphics',
+  'application/vnd.oasis.opendocument.chart',
+  'application/vnd.oasis.opendocument.formula',
+  'application/vnd.oasis.opendocument.image',
+  'application/vnd.oasis.opendocument.text-master',
+  'application/vnd.oasis.opendocument.text-template',
+  'application/vnd.oasis.opendocument.spreadsheet-template',
+  'application/vnd.oasis.opendocument.presentation-template',
+  'application/vnd.oasis.opendocument.graphics-template',
+  'application/vnd.oasis.opendocument.chart-template',
+  'application/vnd.oasis.opendocument.formula-template',
+  'application/vnd.oasis.opendocument.image-template',
+  'application/vnd.oasis.opendocument.text-web',
 ];
-/**
- *
- * @param s
- * check if office mime type
- */
-export async function isOfficeMimeType(s: string) {
-    if (officeMimeTypes.indexOf(s) >= 0) {
-        return true;
-    }
-    else {
-        return false;
-    }
-
-}
 
 /**
- *
- * @param req
- * @param res
- * @param next
- * download pdf from allas
+ * @param {string} s
+ * @return {boolean}
  */
-export async function downloadPdfFromAllas (req: Request, res: Response, next: NextFunction) {
-    try {
-        if (!req.params.key) {
-            next(new ErrorHandler(400, "key missing"));
-        }
-        const params = {
-            "Bucket" : process.env.PDF_BUCKET_NAME,
-            "Key" : req.params.key
-        };
-        await downloadFromStorage(req, res, next, params, req.params.key);
+export const isOfficeMimeType = (s: string) => {
+  return officeMimeTypes.indexOf(s) >= 0;
+};
+
+/**
+ * @param {e.Request} req
+ * @param {e.Response} res
+ * @param {e.NextFunction} next
+ * @return {Promise<void>}
+ */
+export const downloadPdfFromAllas = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.params.key) {
+      next(new ErrorHandler(400, 'key missing'));
     }
-    catch (error) {
-        winstonLogger.error(error);
-        next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
-    }
-}
+    const params = {
+      Bucket: process.env.PDF_BUCKET_NAME,
+      Key: req.params.key,
+    };
+    await downloadFromStorage(req, res, next, params, req.params.key);
+  } catch (error) {
+    winstonLogger.error(error);
+    next(new ErrorHandler(error.statusCode, 'Issue showing pdf'));
+  }
+};
+
 // export async function convertOfficeToPdf(req: Request, res: Response, next: NextFunction) {
 //     try {
 //         if (!req.params.key) {
@@ -145,10 +132,10 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
 //         stream.pipe(fs.createWriteStream(folderpath));
 //         stream.on("end", async function() {
 //             try {
-//             winstonLogger.debug("starting officeToPdf");
+//             winstonLogger.debug("starting convertOfficeFileToPDF");
 //             winstonLogger.debug(folderpath);
 //             winstonLogger.debug(filename);
-//             const path = await officeToPdf(folderpath, filename);
+//             const path = await convertOfficeFileToPDF(folderpath, filename);
 //             winstonLogger.debug("starting createReadStream: " + path);
 //             const readstream = fs.createReadStream(path);
 //             readstream.on("error", function(e) {
@@ -171,151 +158,111 @@ export async function downloadPdfFromAllas (req: Request, res: Response, next: N
 //         next(new ErrorHandler(error.statusCode, "Issue showing pdf"));
 //     }
 // }
+
 /**
- *
- * @param filepath
- * @param filename
- * try to convert file from filepath to pdf
+ * Convert an office format file to PDF format.
+ * @param {string} filepath File path of the original office format file.
+ * @param {string} filename File name of the original office file.
+ * @return {Promise<string>} File path of the converted PDF.
  */
-export async function officeToPdf(filepath: string, filename: string) {
-    try {
-        const extend = "pdf";
-        const file = fs.readFileSync(filepath);
-        winstonLogger.debug(filepath);
-        winstonLogger.debug(filename);
-        // const outputPath = path.join(process.env.HTMLFOLDER + filename);
-        const outputPath = process.env.HTMLFOLDER + "/" + filename;
-        const promise = new Promise<string>((resolve, reject) => {
-            libre.convert(file, extend, undefined, (err, done) => {
-                if (err) {
-                    winstonLogger.error("Error converting file:" + err);
-                    return reject(err);
-                }
-                winstonLogger.debug("officeToPdf write to file: " + outputPath);
-                fs.writeFileSync(outputPath, done);
-                winstonLogger.debug("officeToPdf writing to file done");
-                return resolve(outputPath);
-            });
-        });
-        return promise;
+export const convertOfficeFileToPDF = async (filepath: string, filename: string): Promise<string> => {
+  const extension = 'pdf';
+  const outputPath = `${process.env.HTMLFOLDER}/${filename}`;
+  try {
+    const file = fs.readFileSync(filepath);
+    libre.convert(file, extension, undefined, (err: Error, done: Buffer) => {
+      if (err) {
+        winstonLogger.error('Converting an office file to PDF failed in convertOfficeFileToPDF()');
+        return Promise.reject(err);
+      }
+      fs.writeFileSync(outputPath, done);
+      return outputPath;
+    });
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
+
+export const convertAndUpstreamOfficeFilesToCloudStorage = async (): Promise<void> => {
+  try {
+    const files = await getOfficeFiles();
+
+    for (let index = 0; index < files.length; index++) {
+      const element = files[index];
+
+      if (isOfficeMimeType(element.mimetype) && !element.pdfkey) {
+        const path: string = await downstreamAndConvertOfficeFileToPDF(element.filekey);
+        const pdfKey: string = element.filekey.substring(0, element.filekey.lastIndexOf('.')) + '.pdf';
+        const obj: any = await uploadLocalFileToCloudStorage(path, pdfKey, process.env.PDF_BUCKET_NAME);
+        await updatePdfKey(obj.Key, element.id);
+      }
     }
-    catch (error) {
-        winstonLogger.debug("officeToPdf error");
-        throw new Error(error);
-    }
-}
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
+export const getOfficeFiles = async (): Promise<any> => {
+  try {
+    return await db.task(async (t: any) => {
+      const query = 'SELECT id, filepath, mimetype, filekey, filebucket, pdfkey FROM record ORDER BY id';
+      return await t.any(query);
+    });
+  } catch (err) {
+    winstonLogger.error('Error in getOfficeFiles()');
+    throw new Error(err);
+  }
+};
+
 /**
- * send file to office bucket
+ * Downstream a stored office file from the cloud storage and convert it to PDF format.
+ * @param {string} key - File name in the cloud storage.
+ * @return {Promise<string>} File path of the converted PDF.
  */
-export async function officeFilesToAllasAsPdf() {
-    try {
-        const files = await getOfficeFiles();
-        // for (const element of files) {
-        for (let index = 0; index < files.length; index++) {
-            const element = files[index];
-            if (await isOfficeMimeType(element.mimetype) && !element.pdfkey) {
-                winstonLogger.debug("Sending pdf to allas: " + element.id);
-                try {
-                    const path = await allasFileToPdf(element.filekey);
-                    winstonLogger.debug("pdf file in path: " + path);
-                    winstonLogger.debug("officeFilesToAllasAsPdf START SENDING PDF TO ALLAS");
-                    const pdfkey = element.filekey.substring(0, element.filekey.lastIndexOf(".")) + ".pdf";
-                    const obj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
-                    await updatePdfKey(obj.Key, element.id);
-                }
-                catch (e) {
-                    winstonLogger.error(e);
-                }
-            }
+export const downstreamAndConvertOfficeFileToPDF = async (key: string): Promise<string> => {
+  return new Promise<string>(async (resolve, reject) => {
+    const params = {
+      Bucket: process.env.CLOUD_STORAGE_BUCKET,
+      Key: key,
+    };
+    const folderpath = process.env.HTMLFOLDER + '/' + key;
+    const filename = key.substring(0, key.lastIndexOf('.')) + '.pdf';
+    const stream = await readStreamFromStorage(params);
+    stream.on('error', (err) => {
+      reject(err);
+    });
+    const ws = fs
+      .createWriteStream(folderpath)
+      .on('error', (err: Error) => {
+        reject(err);
+      })
+      .on('finish', async () => {
+        try {
+          const path = await convertOfficeFileToPDF(folderpath, filename);
+          resolve(path);
+        } catch (error) {
+          reject(error);
         }
-    }
-    catch (error) {
-        winstonLogger.error(error);
-    }
-}
-/**
- * get to record table
- */
-export async function getOfficeFiles() {
-    try {
-        return await db.task(async (t: any) => {
-            const query = "select id, filepath, mimetype, filekey, filebucket, pdfkey from record order by id;";
-            winstonLogger.debug(query, [ ]);
-            return await t.any(query);
-        });
-
-    }
-    catch (error) {
-        winstonLogger.error(error);
-        throw new Error(error);
-    }
-}
-/**
- *
- * @param key
- * read allas file and convert to pdf
- */
-export async function allasFileToPdf(key: string) {
-    try {
-            return new Promise<string>(async (resolve, reject) => {
-            const params = {
-                "Bucket" : process.env.BUCKET_NAME,
-                "Key" : key
-            };
-            const folderpath = process.env.HTMLFOLDER + "/" + key;
-            const filename = key.substring(0, key.lastIndexOf(".")) + ".pdf";
-            winstonLogger.debug("filename: " + filename);
-            const stream = await readStreamFromStorage(params);
-            stream.on("error", function(e) {
-                winstonLogger.error("Error in allasFileToPdf readstream: " + e);
-                reject(e);
-            });
-
-            const ws = fs.createWriteStream(folderpath);
-            stream.pipe(ws);
-            ws.on("error", function(e) {
-                winstonLogger.error("Error in allasFileToPdf writestream: " + e);
-                reject(e);
-            });
-            ws.on("finish", async function() {
-                try {
-                    winstonLogger.debug(folderpath);
-                    winstonLogger.debug(filename);
-                    const path = await officeToPdf(folderpath, filename);
-                    winstonLogger.debug("PATH IS: " + path);
-                    resolve(path);
-                }
-                catch (error) {
-                    winstonLogger.error("allasFileToPdf error: " + error);
-                    reject(error);
-                }
-            });
-        });
-    }
-    catch (error) {
-        winstonLogger.error("allasFileToPdf error");
-        throw new Error(error);
-    }
-}
+      });
+    stream.pipe(ws);
+  });
+};
 
 /**
- *
- * @param key
- * @param id
- * update pdf key column
+ * @param {string} key
+ * @param {string} id
+ * @return {Promise<any>}
  */
-export async function updatePdfKey(key: string, id: string) {
-    try {
-        return await db.tx(async (t: any) => {
-            const query = "UPDATE record SET pdfkey = $1 where id = $2;";
-            winstonLogger.debug(query, [key, id]);
-            return await t.any(query, [key, id]);
-        });
+export const updatePdfKey = async (key: string, id: string): Promise<any> => {
+  try {
+    return await db.tx(async (t: any) => {
+      const query = 'UPDATE record SET pdfkey = $1 where id = $2';
+      winstonLogger.debug('Query in updatePdfKey(): %s %o', query, [key, id]);
 
-    }
-    catch (error) {
-        winstonLogger.error(error);
-        throw new Error(error);
-    }
-}
-
+      return await t.any(query, [key, id]);
+    });
+  } catch (error) {
+    winstonLogger.error('Error in updatePdfKey(): %o', error);
+    throw new Error(error);
+  }
+};

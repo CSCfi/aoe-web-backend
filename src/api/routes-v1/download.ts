@@ -14,30 +14,31 @@ import { getEducationalMaterialMetadata } from '../../queries/apiQueries';
  * @param router express.Router
  */
 export default (router: Router): void => {
+  // TODO: Add regex validation
+  router.get('/download/:filename', downloadPreviewFile);
 
-    // TODO: Add regex validation
-    router.get('/download/:filename', downloadPreviewFile);
+  // Single file download and save to user's workstation.
+  router.get(
+    '/download/file/:filename',
+    downloadFile,
 
-    // Single file download and save to user's workstation.
-    router.get('/download/file/:filename',
-        downloadFile,
-
-        // Attach educational material metadata to res.locals for the analytics post processing.
-        (req: Request, res: Response, next: NextFunction) => {
-            if (req.query.interaction === 'load') {
-                getEducationalMaterialMetadata(req, res, next, true).catch(() => {
-                    winstonLogger.error('Additional metadata processing failed for a single file download.');
-                });
-            } else {
-                res.status(200).end();
-            }
-        },
-        (req: Request, res: Response) => {
-            if (req.query.interaction === 'load') {
-                runMessageQueueThread(req, res).then((result) => {
-                    if (result) winstonLogger.debug('THREAD: Message queue publishing completed for %o', result);
-                });
-            }
-            res.status(200).end();
+    // Attach educational material metadata to res.locals for the analytics post processing.
+    (req: Request, res: Response, next: NextFunction) => {
+      if (req.query.interaction === 'load') {
+        getEducationalMaterialMetadata(req, res, next, true).catch(() => {
+          winstonLogger.error('Additional metadata processing failed for a single file download.');
         });
-}
+      } else {
+        res.status(200).end();
+      }
+    },
+    (req: Request, res: Response) => {
+      if (req.query.interaction === 'load') {
+        runMessageQueueThread(req, res).then((result) => {
+          if (result) winstonLogger.debug('THREAD: Message queue publishing completed for %o', result);
+        });
+      }
+      res.status(200).end();
+    },
+  );
+};

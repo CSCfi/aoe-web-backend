@@ -1,29 +1,33 @@
 {
-    "root": true,
-    "overrides": [
-        {
-            "files": [
-                "*.ts"
-            ],
-            "parserOptions": {
-                "createDefaultProgram": true,
-                "ecmaVersion": 2019,
-                "sourceType": "module",
-                "project": [
-                    "./tsconfig.json"
-                ]
-            },
-            "extends": [
-                "plugin:@typescript-eslint/recommended",
-                "plugin:@typescript-eslint/eslint-recommended"
-            ],
-            "rules": {
-                "@typescript-eslint/no-explicit-any": "off",
-                "@typescript-eslint/no-namespace": "off",
-                "@typescript-eslint/no-var-requires": "off",
-                "prefer-const": "off"
-            }
-        }
-    ],
-    "parser": "@typescript-eslint/parser"
+  "root": true,
+  "overrides": [
+    {
+      "files": [
+        "*.ts"
+      ],
+      "parserOptions": {
+        "createDefaultProgram": true,
+        "ecmaVersion": 2019,
+        "sourceType": "module",
+        "project": [
+          "./tsconfig.json"
+        ]
+      },
+      "extends": [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:prettier/recommended",
+        "prettier"
+      ],
+      "rules": {
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/no-var-requires": "off",
+        "prefer-const": "off"
+      }
+    }
+  ],
+  "parser": "@typescript-eslint/parser"
 }

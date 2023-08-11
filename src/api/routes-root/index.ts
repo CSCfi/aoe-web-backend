@@ -13,7 +13,7 @@ export { default as status } from './status';
  * @param router express.Router
  */
 export default (router: Router): void => {
-    embed(router);
-    h5p(router);
-    status(router);
-}
+  embed(router);
+  h5p(router);
+  status(router);
+};

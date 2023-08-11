@@ -5,6 +5,6 @@ export { default as pidResolutionService } from './pidResolutionService';
 export { default as streamingService } from './streamingService';
 
 export default {
-    pidResolutionService,
-    streamingService,
-}
+  pidResolutionService,
+  streamingService,
+};

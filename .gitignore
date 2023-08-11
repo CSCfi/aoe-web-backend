@@ -1,54 +1,20 @@
-lib-cov
-*.seed
-*.log
-*.csv
-*.dat
-*.out
-*.pid
-*.gz
-*.swp
-
-pids
-logs
-results
-tmp
-
 # Build
-public/css/main.css
+dist/
 
-# Coverage reports
-coverage
+# Dependency Libraries
+node_modules/
 
-# API keys and secrets
+# Environment Variables
 .env
 
-# Dependency directory
-node_modules
-bower_components
-
-# Editors
+# IDEs
+.idea/
+.vscode/
 *.iml
-.idea
-.vscode
 
-# OS metadata
-.DS_Store
-Thumbs.db
+# Test Coverage
+coverage/
 
-# Ignore built ts files
-dist/**/*
-
-# Ignore output from coverage report
-coverage
-
-# Publication files
-publications/*
-temp/*
-htmlfiles
-
-*~
-.vagrant
-id_rsa.pub
-
-# Development helper module
+# Development Helper
 dev.ts
+uploads/

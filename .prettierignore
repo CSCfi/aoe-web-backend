@@ -1,0 +1,8 @@
+cert/
+dist/
+docker/
+excel/
+h5p/
+src/elasticSearch/
+src/h5p/
+sql/

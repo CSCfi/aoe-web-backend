@@ -9,8 +9,8 @@ export { default as morganLogger } from './morganLogger';
 export { default as winstonLogger } from './winstonLogger';
 
 export default {
-    aoeScheduler,
-    invalidXMLCharValidator,
-    morganHttpLogger,
-    winstonLogger,
-}
+  aoeScheduler,
+  invalidXMLCharValidator,
+  morganHttpLogger,
+  winstonLogger,
+};

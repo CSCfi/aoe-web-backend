@@ -1,4 +1,5 @@
-FROM node:14-alpine as node_builder
+FROM node:16.20.1-alpine3.18 as node_builder
+# FROM node:14-alpine as node_builder
 WORKDIR /app
 COPY ./ /app
 ARG env=prod
@@ -7,7 +8,8 @@ ARG env=prod
 RUN npm ci && \
     npm run build -- --prod
 
-FROM centos:7
+FROM oraclelinux:8.8
+# FROM centos:7
 
 # Make directories with permissions and install required packages
 RUN groupadd --gid 5606 webapp && \
@@ -18,7 +20,8 @@ RUN groupadd --gid 5606 webapp && \
     mkdir -p /app/thumbnail && \
     mkdir -p /webdata/ && \
     chown -R node:node /app && \
-    (curl -sL https://rpm.nodesource.com/setup_14.x | bash -) && \
+    (curl -sL https://rpm.nodesource.com/setup_16.x | bash -) && \
+#   (curl -sL https://rpm.nodesource.com/setup_14.x | bash -) && \
     yum install -y nodejs && \
     npm install -g pm2@2.5.0 && \
     yum install -y libreoffice && \
