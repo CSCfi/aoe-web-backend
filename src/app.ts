@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import session from 'express-session';
 import apiRoot from './api/routes-root';
 import apiV1 from './api/routes-v1';
 import apiV2 from './api/routes-v2';
@@ -15,7 +16,7 @@ import { oidc } from './resources';
 import { aoeScheduler, morganLogger } from './util';
 import { winstonLogger } from './util/winstonLogger';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import config from './configuration';
+import config from './config';
 import { checkAuthenticated } from './services/authService';
 
 const app = express();
@@ -40,11 +41,17 @@ app.set('trust proxy', '127.0.0.1');
  * CORS Configuration
  */
 const corsOptions = {
-    allowedHeaders: ['Accept', 'Authorization', 'Content-Type', 'Origin', 'Range', 'X-Requested-With'],
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    optionsSuccessStatus: 204,
-    origin: ['https://demo.aoe.fi', 'https://aoe.fi', 'https://86.50.27.30:80', 'http://localhost:4200'],
+  allowedHeaders: ['Accept', 'Authorization', 'Content-Type', 'Origin', 'Range', 'X-Requested-With'],
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  optionsSuccessStatus: 204,
+  origin: [
+    'https://demo.aoe.fi',
+    'https://aoe.fi',
+    'https://86.50.27.30:80',
+    'http://localhost:4200',
+    'https://localhost:4200',
+  ],
 };
 app.use(cors(corsOptions));
 
@@ -54,47 +61,58 @@ app.use(morganLogger);
 
 // Add a development helper module (dev.ts) to the application if available.
 if (process.env.NODE_ENV === 'localhost') {
-    try {
-        require('./dev').devHelper(app);
-    } catch (error) {
-        winstonLogger.debug('Development helper module (dev.ts) not available.');
-    }
+  try {
+    require('./dev').devHelper(app);
+  } catch (error) {
+    winstonLogger.debug('Development helper module (dev.ts) not available.');
+  }
 }
 
 // Initialize session management and OIDC authorization
+app.use(
+  session({
+    secret: config.SESSION_CONFIG_OPTIONS.secret as string,
+    resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
+    saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
+  }),
+);
 oidc.sessionInit(app);
 oidc.authInit(app);
 
 // Handle H5P Ajax requests
 const h5pRouteOptions = {
-    handleErrors: false,
-    routeGetContentFile: true,
+  handleErrors: false,
+  routeGetContentFile: true,
 };
 app.use(
-    // server is an object initialized with express()
-    '/h5p', // the route under which all the Ajax calls will be registered
-    h5pAjaxExpressRouter(
-        h5pEditor, // an H5P.H5PEditor object
-        process.env.H5P_CORE_PATH || path.resolve('h5p/core'), // the path to the h5p core files (of the player)
-        process.env.H5P_EDITOR_PATH || path.resolve('h5p/editor'), // the path to the h5p core files (of the editor)
-        h5pRouteOptions, // the options are optional and can be left out
-        // languageOverride // (optional) can be used to override the language used by i18next http middleware
-    ),
+  // server is an object initialized with express()
+  '/h5p', // the route under which all the Ajax calls will be registered
+  h5pAjaxExpressRouter(
+    h5pEditor, // an H5P.H5PEditor object
+    process.env.H5P_CORE_PATH || path.resolve('h5p/core'), // the path to the h5p core files (of the player)
+    process.env.H5P_EDITOR_PATH || path.resolve('h5p/editor'), // the path to the h5p core files (of the editor)
+    h5pRouteOptions, // the options are optional and can be left out
+    // languageOverride // (optional) can be used to override the language used by i18next http middleware
+  ),
 );
 
 // Statistics requests forwarded to AOE Analytics Service.
 // Keep the HTTP forwarding before the body parsers to avoid request body changes the proxy cannot handle.
-app.use('/api/v2/statistics', checkAuthenticated, createProxyMiddleware({
+app.use(
+  '/api/v2/statistics',
+  checkAuthenticated,
+  createProxyMiddleware({
     target: config.SERVER_CONFIG_OPTIONS.oaipmhAnalyticsURL,
     logLevel: 'debug',
     logProvider: () => {
-        return winstonLogger;
+      return winstonLogger;
     },
     changeOrigin: true,
     pathRewrite: (path: string) => {
-        return path.replace('/v2', '');
+      return path.replace('/v2', '');
     },
-}));
+  }),
+);
 
 app.use(bodyParser.json({ limit: '1mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
@@ -105,7 +123,7 @@ app.use('/api/v2/', apiRouterV2);
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req, res) => {
-    handleError(err, res);
+  handleError(err, res);
 });
 
 // Root status page with Pug template

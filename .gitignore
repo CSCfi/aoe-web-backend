@@ -15,5 +15,7 @@ node_modules/
 # Test Coverage
 coverage/
 
-# Development Helper
+# Development Helpers
 dev.ts
+uploads/
+webdata/

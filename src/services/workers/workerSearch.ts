@@ -1,18 +1,16 @@
-import config from "../../configuration";
-import { parentPort, workerData } from "worker_threads";
-import { winstonLogger } from "../../util/winstonLogger";
-import { kafkaProducer } from "../../resources/kafka-client";
-import { TypeSearchRequest } from "../dto/IMessageSearchRequest";
+import config from '../../config';
+import { parentPort, workerData } from 'worker_threads';
+import { winstonLogger } from '../../util/winstonLogger';
+import { kafkaProducer } from '../../resources/kafka-client';
+import { TypeSearchRequest } from '../dto/IMessageSearchRequest';
 // import { createHash } from 'crypto';
-import moment from "moment";
+import moment from 'moment';
 
 const message: TypeSearchRequest = {
   // sessionId: createHash('md5').update(workerData.headers['cookie']).digest('hex') as string,
-  timestamp: workerData.body.timestamp
-    ? workerData.body.timestamp
-    : (moment.utc().toISOString() as string),
+  timestamp: workerData.body.timestamp ? workerData.body.timestamp : (moment.utc().toISOString() as string),
   keywords: workerData.body.keywords,
-  filters: workerData.body.filters
+  filters: workerData.body.filters,
 };
 
 const produceKafkaMessage = async (): Promise<void> => {
@@ -21,15 +19,13 @@ const produceKafkaMessage = async (): Promise<void> => {
     topic: config.MESSAGE_QUEUE_OPTIONS.topicSearchRequests,
     messages: [
       {
-        value: JSON.stringify(message)
-      }
-    ]
+        value: JSON.stringify(message),
+      },
+    ],
   });
   await kafkaProducer.disconnect();
 };
 
 produceKafkaMessage()
   .then(() => parentPort.postMessage(message))
-  .catch(error =>
-    winstonLogger.error("Message producer failed in workerSearch.ts: %o", error)
-  );
+  .catch((error) => winstonLogger.error('Message producer failed in workerSearch.ts: %o', error));

@@ -1,4 +1,4 @@
 interface IMessageBase {
-    sessionId: string;
-    timestamp: string;
+  sessionId: string;
+  timestamp: string;
 }

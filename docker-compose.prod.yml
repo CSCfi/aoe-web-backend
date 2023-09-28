@@ -10,12 +10,12 @@ services:
     ports:
       - '3002:3000'
     volumes:
-      - /data/thumbnail:/app/thumbnail
-      - /data/uploads:/app/uploads
-      - /webdata:/webdata
+      - /data/thumbnail/:/app/thumbnail:rw
+      - /data/uploads/:/app/uploads:rw
+      - /webdata/:/webdata:rw
       - /databackup/aoe/:/databackup/aoe/
-      - /databackup/aoethumbnail:/databackup/aoethumbnail
-      - /data/digivisio:/app/digivisio:rw
+      - /databackup/aoethumbnail/:/databackup/aoethumbnail
+      # - /data/digivisio:/app/digivisio:rw
     env_file:
       - /environment/aoe-web-backend/.env
     user: 'root:5606'

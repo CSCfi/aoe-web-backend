@@ -1,4 +1,5 @@
-FROM node:14-alpine as node_builder
+FROM node:16.20.2-alpine3.18 as node_builder
+# FROM node:14-alpine as node_builder
 WORKDIR /app
 COPY ./ /app
 ARG env=prod
@@ -7,19 +8,26 @@ ARG env=prod
 RUN npm ci && \
     npm run build -- --prod
 
-FROM centos:7
+FROM oraclelinux:8.8
+# FROM centos:7
 
 # Make directories with permissions and install required packages
 RUN groupadd --gid 5606 webapp && \
     useradd -ms /bin/false -d /app node && \
-    yum install -y epel-release && \
     mkdir -p /app/data && \
     mkdir -p /app/uploads && \
     mkdir -p /app/thumbnail && \
     mkdir -p /webdata/ && \
     chown -R node:node /app && \
-    (curl -sL https://rpm.nodesource.com/setup_14.x | bash -) && \
-    yum install -y nodejs && \
+#   Deprecated: (curl -sL https://rpm.nodesource.com/setup_14.x | bash -) && \
+#   Deprecated: (curl -sL https://rpm.nodesource.com/setup_16.x | bash -) && \
+#   Node.js download sources | see: https://github.com/nodesource/distributions#installation-instructions-1 \
+    yum update -y && \
+    yum install -y epel-release && \
+    yum install -y curl && \
+    yum install -y https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm && \
+    yum install -y nodejs --setopt=nodesource-nodejs.module_hotfixes=1 && \
+#   yum install -y nodejs && \
     npm install -g pm2@2.5.0 && \
     yum install -y libreoffice && \
     usermod -aG 5606 node && \

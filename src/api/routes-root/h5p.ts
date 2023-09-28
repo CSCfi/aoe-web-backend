@@ -8,8 +8,6 @@ import { getH5PContent, play } from '../../h5p/h5p';
  * @param router express.Router
  */
 export default (router: Router): void => {
-
-    router.get('/h5p/content/:id/:file(*)', getH5PContent);
-    router.get('/h5p/play/:contentid', play);
-
-}
+  router.get('/h5p/content/:id/:file(*)', getH5PContent);
+  router.get('/h5p/play/:contentid', play);
+};

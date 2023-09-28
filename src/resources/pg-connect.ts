@@ -16,13 +16,13 @@ const PG_URL_HOST: string = ['postgres://', PG_HOST, ':', PG_PORT].join('');
 
 // Options and error handlers for pg-promise.
 const initOptions: IInitOptions = {
-    error: (error: Error, e: IEventContext<IClient>) => {
-        if (e.cn) {
-            winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Error:', e.cn);
-            winstonLogger.error('ERROR:', error.message);
-        }
-    },
-    promiseLib: promise,
+  error: (error: Error, e: IEventContext<IClient>) => {
+    if (e.cn) {
+      winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Error:', e.cn);
+      winstonLogger.error('ERROR:', error.message);
+    }
+  },
+  promiseLib: promise,
 };
 
 // Initialize pg-promise with options.
@@ -37,14 +37,14 @@ export const db: IDatabase<any> = pgp(PG_URL_FULL);
 
 // Test DB connection
 db.connect()
-    .then((obj: IConnected<any, IClient>) => {
-        winstonLogger.debug('PG [' + PG_URL_HOST + '] Connection is operable');
-        obj.done();
-    })
-    .catch((error: Error) => {
-        winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
-    });
+  .then((obj: IConnected<any, IClient>) => {
+    winstonLogger.debug('PG [' + PG_URL_HOST + '] Connection is operable');
+    obj.done();
+  })
+  .catch((error: Error) => {
+    winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
+  });
 
-export default function getClient(): { db: IDatabase<any, IClient>, pgp: IMain<any, IClient> } {
-    return { db, pgp };
+export default function getClient(): { db: IDatabase<any, IClient>; pgp: IMain<any, IClient> } {
+  return { db, pgp };
 }

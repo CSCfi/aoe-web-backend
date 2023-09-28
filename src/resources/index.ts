@@ -1,3 +1,4 @@
+export { default as awsSDK } from './aws-sdk-clients';
 export { default as httpsClient } from './https-client';
 export { default as kafka } from './kafka-client';
 export { default as oidc } from './oidc-config';
