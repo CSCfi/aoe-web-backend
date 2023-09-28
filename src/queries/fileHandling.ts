@@ -267,6 +267,33 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
   }
 }
 
+export const uploadFileToLocalDisk = (
+  req: Request,
+  res: Response,
+): Promise<{ file: MulterFile; fileDetails: Record<string, unknown> }> => {
+  return new Promise((resolve, reject) => {
+    try {
+      upload.single('file')(req, res, (err: any) => {
+        if (err) {
+          if (err.code === 'LIMIT_FILE_SIZE') {
+            throw new ErrorHandler(413, err.message);
+          } else {
+            throw new ErrorHandler(500, `File upload to the server failed: ${err}`);
+          }
+        }
+        resolve({
+          file: req.file as MulterFile,
+          fileDetails: JSON.parse(req.body.fileDetails) as Record<string, unknown>,
+        });
+        return;
+      });
+    } catch (err) {
+      reject(err);
+      return;
+    }
+  });
+};
+
 /**
  * Upload a single file to the educational material with a multipart form upload.
  * @param {e.Request} req
@@ -275,27 +302,8 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
  * @return {Promise<void>}
  */
 export const uploadFileToMaterial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  let file: MulterFile;
-  let fileDetails;
   let materialID: string;
-
-  // Upload a file to the server file system with Multer.
-  try {
-    upload.single('file')(req, res, (err: any) => {
-      if (err) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          throw new ErrorHandler(413, err.message);
-        } else {
-          throw new ErrorHandler(500, `File upload to the server failed: ${err}`);
-        }
-      }
-      file = req.file;
-      fileDetails = JSON.parse(req.body.fileDetails);
-    });
-  } catch (err) {
-    next(err);
-    return;
-  }
+  const { file, fileDetails } = await uploadFileToLocalDisk(req, res);
 
   // Persist all details of a new file in a single transaction - rollback in case of any issues.
   await db
@@ -307,8 +315,8 @@ export const uploadFileToMaterial = async (req: Request, res: Response, next: Ne
         t,
         req.params.edumaterialid,
         '',
-        fileDetails.language,
-        fileDetails.priority,
+        (fileDetails as any).language,
+        (fileDetails as any).priority,
       );
       transactions.push(t1);
       materialID = t1.id;
@@ -1304,6 +1312,7 @@ export async function unZipAndExtract(zipFolder: any): Promise<any> {
 
 export default {
   uploadMaterial,
+  uploadFileToLocalDisk,
   uploadFileToMaterial,
   uploadFileToStorage,
   downloadPreviewFile,
