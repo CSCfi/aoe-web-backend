@@ -9,9 +9,16 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
-    depends_on:
-      # - aoe-postgres
-      - aoe-redis-session
+    # depends_on:
+    # - aoe-postgres
+    # - aoe-redis-session
+    volumes:
+      - /data/thumbnail:/app/thumbnail
+      - /data/uploads:/app/uploads
+      - /webdata:/webdata
+      - /databackup/aoe/:/databackup/aoe/
+      - /databackup/aoethumbnail:/databackup/aoethumbnail
+      - /data/digivisio:/app/digivisio:rw
     environment:
       - NODE_ENV=development
     env_file:
@@ -58,4 +65,3 @@ networks:
   network-analytics:
     # external: true
     name: network-analytics
-

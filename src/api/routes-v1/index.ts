@@ -20,10 +20,10 @@ export { default as upload } from './upload';
  * @param router express.Router
  */
 export default (router: Router): void => {
-    collection(router);
-    download(router);
-    elasticSearch(router);
-    legacy(router);
-    material(router);
-    upload(router);
-}
+  collection(router);
+  download(router);
+  elasticSearch(router);
+  legacy(router);
+  material(router);
+  upload(router);
+};

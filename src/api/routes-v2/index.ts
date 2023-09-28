@@ -18,9 +18,9 @@ export { default as search } from './search';
  * @param router express.Router
  */
 export default (router: Router): void => {
-    collection(router);
-    material(router);
-    metadata(router);
-    process(router);
-    search(router);
-}
+  collection(router);
+  material(router);
+  metadata(router);
+  process(router);
+  search(router);
+};

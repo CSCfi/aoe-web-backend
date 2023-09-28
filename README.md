@@ -6,4 +6,5 @@
 - [aoe-semantic-apis](https://github.com/CSCfi/aoe-semantic-apis)
 - [aoe-streaming-app](https://github.com/CSCfi/aoe-streaming-app)
 - aoe-web-backend
-- [aoe-web-frontend](https://github.com/CSCfi/aoe-web-frontend)
+
+# AOE Web Backend

@@ -1,0 +1,22 @@
+# Editor configuration, see https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{ts,js}]
+indent_size = 2
+ij_typescript_enforce_trailing_comma = keep
+
+[*.json]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.md]
+max_line_length = 120
+trim_trailing_whitespace = false
