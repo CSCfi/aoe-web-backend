@@ -8,6 +8,7 @@ import compression from 'compression';
 import lusca from 'lusca';
 import path from 'path';
 import flash from 'connect-flash';
+import { sequelize } from './domain/aoeModels';
 import { handleError } from './helpers/errorHandler';
 import cors from 'cors';
 import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
@@ -131,6 +132,17 @@ app.set('views', './views');
 app.set('view engine', 'pug');
 
 app.set('port', 3000);
+
+// Synchronize database with Sequelize models.
+const dbInit = async () => {
+  await sequelize.sync({
+    logging: false,
+  });
+};
+dbInit().catch((error) => {
+  winstonLogger.error('Synchronizing database with Sequelize models failed: %o', error);
+  process.exit(1);
+});
 
 // TODO: To be removed after full refectoring of aoeScheduler.ts
 require('./util/aoeScheduler');

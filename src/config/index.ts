@@ -13,6 +13,7 @@ export default {
     apiURL: process.env.CLOUD_STORAGE_API as string,
     region: process.env.CLOUD_STORAGE_REGION as string,
     bucket: process.env.CLOUD_STORAGE_BUCKET as string,
+    bucketPDF: process.env.CLOUD_STORAGE_BUCKET_PDF as string,
     bucketThumbnail: process.env.CLOUD_STORAGE_BUCKET_THUMBNAIL as string,
   },
 

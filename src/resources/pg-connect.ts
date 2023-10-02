@@ -25,6 +25,8 @@ const initOptions: IInitOptions = {
   promiseLib: promise,
 };
 
+export const pgURL = PG_URL_FULL;
+
 // Initialize pg-promise with options.
 export const pgp: IMain = pgPromise(initOptions);
 
@@ -45,6 +47,12 @@ db.connect()
     winstonLogger.error('PG [' + PG_URL_HOST + '] Connection Test Error:', error);
   });
 
-export default function getClient(): { db: IDatabase<any, IClient>; pgp: IMain<any, IClient> } {
-  return { db, pgp };
-}
+// export default function getClient(): { db: IDatabase<any, IClient>; pgp: IMain<any, IClient>; pgURL: string } {
+//   return { db, pgp, pgURL };
+// }
+
+export default {
+  db,
+  pgp,
+  pgURL,
+};

@@ -1,15 +1,15 @@
-import { Request, Response, NextFunction } from 'express';
-import { ErrorHandler } from './../helpers/errorHandler';
-import { aoeThumbnailDownloadUrl, getEduMaterialVersionURL } from './../services/urlService';
-import { hasDownloadableFiles } from './../elasticSearch/esQueries';
-import { isOfficeMimeType, convertOfficeFileToPDF } from './../helpers/officeToPdfConverter';
-import { hasAccesstoPublication } from './../services/authService';
-import { updateViewCounter, getPopularity, getPopularityQuery } from './analyticsQueries';
-import { EducationalMaterialMetadata } from './../controllers/educationalMaterial';
-import { winstonLogger } from '../util/winstonLogger';
-import { db, pgp } from '../resources/pg-connect';
+import { NextFunction, Request, Response } from 'express';
 import * as pgLib from 'pg-promise';
+import { db, pgp } from '../resources/pg-connect';
 import { removeInvalidXMLCharacters } from '../util/invalidXMLCharValidator';
+import { winstonLogger } from '../util/winstonLogger';
+import { EducationalMaterialMetadata } from '../controllers/educationalMaterial';
+import { hasDownloadableFiles } from '../elasticSearch/esQueries';
+import { ErrorHandler } from '../helpers/errorHandler';
+import { isOfficeMimeType } from '../helpers/officeToPdfConverter';
+import { hasAccesstoPublication } from '../services/authService';
+import { aoeThumbnailDownloadUrl } from '../services/urlService';
+import { updateViewCounter } from './analyticsQueries';
 
 const fh = require('./fileHandling');
 const elasticSearch = require('./../elasticSearch/es');
@@ -682,7 +682,6 @@ export const insertDataToDescription = async (
     'VALUES ($1, $2, $3) ' +
     'ON CONFLICT (language, educationalmaterialid) DO ' +
     'UPDATE SET description = $1';
-  winstonLogger.debug('Query in insertDataToDescription(): ' + query);
   if (description && educationalmaterialid) {
     if (!description.fi || description.fi === '') {
       if (!description.sv || description.sv === '') {
@@ -803,15 +802,6 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         'suitsAllBranches, suitsAllUpperSecondarySubjectsNew) = ' +
         '($1, to_timestamp($2), $3, $4, $5, $7, $8, $9, $10, $11, $12, $13, $14, $15) ' +
         'WHERE id=$6';
-      winstonLogger.debug('Query in updateMaterial(): ' + query, [
-        metadata.expires,
-        dnow,
-        metadata.timeRequired,
-        !metadata.typicalAgeRange ? undefined : metadata.typicalAgeRange.typicalAgeRangeMin,
-        !metadata.typicalAgeRange ? undefined : metadata.typicalAgeRange.typicalAgeRangeMax,
-        emid,
-        metadata.license,
-      ]);
       queries.push(
         await t.any(query, [
           metadata.expires,
@@ -857,14 +847,12 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         queries.push(response);
         for (const element of response) {
           query = 'DELETE FROM educationalaudience where id = ' + element.id + ';';
-          winstonLogger.debug('Query in updateMaterial(): ' + query);
           queries.push(await t.any(query));
         }
         for (const element of audienceArr) {
           query =
             'INSERT INTO educationalaudience (educationalrole, educationalmaterialid, educationalrolekey) VALUES ($1,$2,$3) ON CONFLICT (educationalrolekey,educationalmaterialid) DO ' +
             'UPDATE SET educationalrole = $1;';
-          winstonLogger.debug('Query in updateMaterial(): ' + query);
           queries.push(await t.any(query, [element.value, emid, element.key]));
         }
       }
@@ -1124,7 +1112,6 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
           const dnresult = await fh.insertDataToDisplayName(t, emid, element.id, element);
           queries.push(dnresult);
           query = 'UPDATE material SET materiallanguagekey = $1 WHERE id = $2 AND educationalmaterialid = $3';
-          winstonLogger.debug('update material name: ' + query, [element.language, element.id, emid]);
           queries.push(await t.any(query, [element.language, element.id, emid]));
           if (element.link) {
             query = 'UPDATE material SET link = $1 WHERE id = $2 AND educationalmaterialid = $3';
@@ -1165,7 +1152,6 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         }
       }
       // accessibilityHazards
-      winstonLogger.debug('inserting accessibilityHazards');
       params = [];
       arr = metadata.accessibilityHazards;
       if (arr == undefined || arr.length < 1) {
@@ -1197,7 +1183,6 @@ export async function updateMaterial(metadata: EducationalMaterialMetadata, emid
         }
       }
       // educationalLevels
-      winstonLogger.debug('inserting educationalLevels');
       params = [];
       arr = metadata.educationalLevels;
       if (arr == undefined || arr.length < 1) {

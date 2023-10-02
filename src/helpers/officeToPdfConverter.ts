@@ -106,7 +106,7 @@ export const downloadPdfFromAllas = async (req: Request, res: Response, next: Ne
       next(new ErrorHandler(400, 'key missing'));
     }
     const params = {
-      Bucket: process.env.PDF_BUCKET_NAME,
+      Bucket: config.CLOUD_STORAGE_CONFIG.bucketPDF,
       Key: req.params.key,
     };
     await downloadFromStorage(req, res, next, params, req.params.key);
@@ -192,18 +192,25 @@ export const convertOfficeFileToPDF = (filepath: string, filename: string): Prom
   });
 };
 
-export const convertAndUpstreamOfficeFilesToCloudStorage = async (): Promise<void> => {
+/**
+ * Scheduled process to collect the office file materials without a PDF conversion,
+ * create the missing PDF conversions and upstream them to the cloud object storage.
+ * {@link src/util/aoeScheduler.ts}
+ * @return {Promise<void>}
+ */
+export const scheduledConvertAndUpstreamOfficeFilesToCloudStorage = async (): Promise<void> => {
   try {
+    // Fetch the office files without a PDF conversion.
     const files = await getOfficeFiles();
 
     for (let index = 0; index < files.length; index++) {
-      const element = files[index];
+      const file = files[index];
 
-      if (isOfficeMimeType(element.mimetype) && !element.pdfkey) {
-        const pdfKey: string = element.filekey.substring(0, element.filekey.lastIndexOf('.')) + '.pdf';
-        downstreamAndConvertOfficeFileToPDF(element.filekey).then((path: string) => {
-          uploadFileToStorage(path, pdfKey, process.env.PDF_BUCKET_NAME).then((obj: any) => {
-            updatePdfKey(obj.Key, element.id);
+      if (isOfficeMimeType(file.mimetype) && !file.pdfkey) {
+        const pdfKey: string = file.filekey.substring(0, file.filekey.lastIndexOf('.')) + '.pdf';
+        downstreamAndConvertOfficeFileToPDF(file.filekey).then((path: string) => {
+          uploadFileToStorage(path, pdfKey, config.CLOUD_STORAGE_CONFIG.bucketPDF).then((obj: any) => {
+            updatePdfKey(obj.Key, file.id);
           });
         });
       }
@@ -216,11 +223,15 @@ export const convertAndUpstreamOfficeFilesToCloudStorage = async (): Promise<voi
 export const getOfficeFiles = async (): Promise<any> => {
   try {
     return await db.task(async (t: any) => {
-      const query = 'SELECT id, filepath, mimetype, filekey, filebucket, pdfkey FROM record ORDER BY id';
+      const query = `
+        SELECT id, filepath, mimetype, filekey, filebucket, pdfkey
+        FROM record
+        ORDER BY id
+      `;
       return await t.any(query);
     });
   } catch (err) {
-    winstonLogger.error('Error in getOfficeFiles()');
+    winstonLogger.error('Fetching office files without PDFs failed.');
     throw new Error(err);
   }
 };

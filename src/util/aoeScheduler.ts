@@ -1,7 +1,7 @@
 import { scheduleJob } from 'node-schedule';
 import { updateEsDocument } from '../elasticSearch/es';
 import { rmDir } from '../helpers/fileRemover';
-import { convertAndUpstreamOfficeFilesToCloudStorage } from '../helpers/officeToPdfConverter';
+import { scheduledConvertAndUpstreamOfficeFilesToCloudStorage } from '../helpers/officeToPdfConverter';
 import { pidResolutionService } from '../services';
 import { sendExpirationMail, sendRatingNotificationMail, sendSystemNotification } from '../services/mailService';
 import { winstonLogger } from './winstonLogger';
@@ -81,8 +81,8 @@ if (officeToPdf === 1) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   };
   sleep(10000).then(() => {
-    // winstonLogger.debug('Start convertAndUpstreamOfficeFilesToCloudStorage');
-    convertAndUpstreamOfficeFilesToCloudStorage().then();
+    // winstonLogger.debug('Start scheduledConvertAndUpstreamOfficeFilesToCloudStorage');
+    scheduledConvertAndUpstreamOfficeFilesToCloudStorage().then();
   });
 }
 

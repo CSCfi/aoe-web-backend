@@ -17,7 +17,7 @@ import fh from '../../queries/fileHandling';
 import { getMaterialMetaData } from '../../queries/oaipmh';
 import { downloadCollectionThumbnail, downloadEmThumbnail } from '../../queries/thumbnailHandler';
 import rating from '../../rating/rating';
-import ah, { hasAccessToAoe } from '../../services/authService';
+import ah, { hasAccessToAOE } from '../../services/authService';
 import { verifyEmailToken } from '../../services/mailService';
 import { aoeRoutes, isAllasEnabled } from '../../services/routeEnablerService';
 import { updateUserSettings } from '../../users/userSettings';
@@ -33,8 +33,8 @@ import {
 } from '../../util/requestValidator';
 
 export default (router: Router): void => {
-  router.get('/aoeUsers', hasAccessToAoe, getAoeUsers);
-  router.post('/changeUser', hasAccessToAoe, changeMaterialUser);
+  router.get('/aoeUsers', hasAccessToAOE, getAoeUsers);
+  router.post('/changeUser', hasAccessToAOE, changeMaterialUser);
 
   // TODO: Unused endpoint?
   router.get('/material', db.getMaterial);
@@ -78,13 +78,13 @@ export default (router: Router): void => {
     ah.checkAuthenticated,
     addMetadataExtension,
   );
-  router.get('/names/:id', hasAccessToAoe, getMaterialNames);
+  router.get('/names/:id', hasAccessToAOE, getMaterialNames);
   router.post('/oaipmh/metadata', getMaterialMetaData);
   router.get('/pdf/content/:key', downloadPdfFromAllas);
   router.get('/recentmaterial', db.getRecentMaterial);
 
   // TODO: Duplicate functionality with DELETE /material/:edumaterialid - endpoint used by administrator archiving functionality
-  router.delete('/removeMaterial/:id', hasAccessToAoe, removeEducationalMaterial);
+  router.delete('/removeMaterial/:id', hasAccessToAOE, removeEducationalMaterial);
 
   router.get('/thumbnail/:id', downloadEmThumbnail);
   router.put('/updateSettings', ah.checkAuthenticated, updateUserSettings);

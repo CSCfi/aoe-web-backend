@@ -33,7 +33,7 @@ Issuer.discover(process.env.PROXY_URI)
     passport.use(
       'oidc',
       new Strategy({ client }, (tokenset: any, userinfo: Record<string, unknown>, done: any) => {
-        ah.InsertUserToDatabase(userinfo)
+        ah.insertUserToDatabase(userinfo)
           .then(() => {
             const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
             return done(undefined, { uid: userinfo.uid, name: nameparsed });

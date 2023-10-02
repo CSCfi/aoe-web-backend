@@ -42,6 +42,4 @@ export const winstonLogger = winston.createLogger({
   ],
 });
 
-export default {
-  winstonLogger,
-};
+export default winstonLogger;

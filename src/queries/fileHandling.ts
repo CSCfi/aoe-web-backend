@@ -7,8 +7,10 @@ import fs, { WriteStream } from 'fs';
 import multer from 'multer';
 import path from 'path';
 import s3Zip from 's3-zip';
+import { Transaction } from 'sequelize';
 import stream from 'stream';
 import config from '../config';
+import { Material, MaterialDisplayName, sequelize, TemporaryRecord } from '../domain/aoeModels';
 import { ErrorHandler } from '../helpers/errorHandler';
 import { downstreamAndConvertOfficeFileToPDF, isOfficeMimeType, updatePdfKey } from '../helpers/officeToPdfConverter';
 import { db } from '../resources/pg-connect';
@@ -18,7 +20,6 @@ import { winstonLogger } from '../util/winstonLogger';
 
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
-
 import MulterFile = Express.Multer.File;
 import SendData = ManagedUpload.SendData;
 
@@ -221,7 +222,11 @@ export async function uploadMaterial(req: Request, res: Response, next: NextFunc
                         winstonLogger.debug('Convert file and send to allas');
                         const path = await downstreamAndConvertOfficeFileToPDF(obj.Key);
                         const pdfkey = obj.Key.substring(0, obj.Key.lastIndexOf('.')) + '.pdf';
-                        const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+                        const pdfobj: any = await uploadFileToStorage(
+                          path,
+                          pdfkey,
+                          config.CLOUD_STORAGE_CONFIG.bucketPDF,
+                        );
                         await updatePdfKey(pdfobj.Key, recordid);
                       }
                     } catch (e) {
@@ -302,44 +307,43 @@ export const uploadFileToLocalDisk = (
  * @return {Promise<void>}
  */
 export const uploadFileToMaterial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  let materialID: string;
   const { file, fileDetails } = await uploadFileToLocalDisk(req, res);
+  let material: Material;
 
-  // Persist all details of a new file in a single transaction - rollback in case of any issues.
-  await db
-    .tx(async (t: any) => {
-      const transactions = [];
+  const t = await sequelize.transaction({
+    isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
+  });
+  try {
+    // Save the general information of a new material entry.
+    material = await Material.create(
+      {
+        link: '',
+        educationalMaterialId: req.params.edumaterialid,
+        obsoleted: 0,
+        priority: (fileDetails as any).priority,
+        materialLanguageKey: (fileDetails as any).language,
+      },
+      {
+        transaction: t,
+      },
+    );
+    // Save the material display name with language versions.
+    await upsertMaterialDisplayName(t, req.params.edumaterialid, material.id, fileDetails);
 
-      // Partial transaction 1: Save general information of a new material entry.
-      const t1 = await insertDataToMaterialTable(
-        t,
-        req.params.edumaterialid,
-        '',
-        (fileDetails as any).language,
-        (fileDetails as any).priority,
-      );
-      transactions.push(t1);
-      materialID = t1.id;
+    // Save the file information to the temporary records until the related file processing is completed.
+    await upsertMaterialFileToTempRecords(t, file, material.id);
 
-      // Partial transaction 2: Save display name of a new material with language versions.
-      const t2 = await insertDataToDisplayName(t, req.params.edumaterialid, materialID, fileDetails);
-      transactions.push(t2);
-
-      // Partial transaction 3: Save file details to a temporary record until uploading completed.
-      const t3 = await insertDataToTempRecordTable(t, file, materialID);
-      transactions.push(t3);
-
-      return t.batch(transactions);
-    })
-    .catch((err) => {
-      next(new ErrorHandler(500, `Database transactions failed: ${err}`));
-      return;
-    });
+    // Start the transaction.
+    await t.commit();
+  } catch (err: any) {
+    await t.rollback();
+    throw new ErrorHandler(500, `Transaction for the single file upload failed: ${err}`);
+  }
 
   // 202 Accepted response to indicate the incomplete upload process.
   res.status(200).json({
     id: req.params.edumaterialid,
-    material: [{ id: materialID, createFrom: file.originalname }],
+    material: [{ id: material.id, createFrom: file.originalname }],
   });
 
   try {
@@ -350,7 +354,7 @@ export const uploadFileToMaterial = async (req: Request, res: Response, next: Ne
     );
     const recordID: string = await insertDataToRecordTable(
       file,
-      materialID,
+      material.id,
       fileS3.Key,
       fileS3.Bucket,
       fileS3.Location,
@@ -363,16 +367,18 @@ export const uploadFileToMaterial = async (req: Request, res: Response, next: Ne
       // Downstream an office file and convert to PDF in the local file system (linked disk storage).
       await downstreamAndConvertOfficeFileToPDF(fileS3.Key).then(async (pathPDF: string) => {
         // Upstream the converted PDF file to the cloud storage (dedicated PDF bucket).
-        await uploadFileToStorage(pathPDF, keyPDF, process.env.PDF_BUCKET_NAME).then(async (pdfS3: SendData) => {
-          // Save the material's PDF key to indicate the availability of a PDF version.
-          await updatePdfKey(pdfS3.Key, recordID);
-          // Remove information from incomplete file tasks.
-          await deleteDataFromTempRecordTable(file.filename, materialID);
-          // Remove the uploaded file from the local file system (linked upload directory).
-          fs.unlink(`./${file.path}`, (err: any) => {
-            if (err) winstonLogger.error('Unlink removal of a file failed: %o', err);
-          });
-        });
+        await uploadFileToStorage(pathPDF, keyPDF, config.CLOUD_STORAGE_CONFIG.bucketPDF).then(
+          async (pdfS3: SendData) => {
+            // Save the material's PDF key to indicate the availability of a PDF version.
+            await updatePdfKey(pdfS3.Key, recordID);
+            // Remove information from incomplete file tasks.
+            await deleteDataFromTempRecordTable(file.filename, material.id);
+            // Remove the uploaded file from the local file system (linked upload directory).
+            fs.unlink(`./${file.path}`, (err: any) => {
+              if (err) winstonLogger.error('Unlink removal of a file failed: %o', err);
+            });
+          },
+        );
       });
     }
   } catch (err) {
@@ -459,7 +465,7 @@ export const checkTemporaryRecordQueue = async (): Promise<void> => {
         const obj = await fileToStorage(file, record.materialid);
         const path = await downstreamAndConvertOfficeFileToPDF(obj.key);
         const pdfkey = obj.key.substring(0, obj.key.lastIndexOf('.')) + '.pdf';
-        const pdfobj: any = await uploadFileToStorage(path, pdfkey, process.env.PDF_BUCKET_NAME);
+        const pdfobj: any = await uploadFileToStorage(path, pdfkey, config.CLOUD_STORAGE_CONFIG.bucketPDF);
         await updatePdfKey(pdfobj.Key, obj.recordid);
       } catch (error) {
         winstonLogger.error(error);
@@ -511,6 +517,148 @@ export async function insertDataToEducationalMaterialTable(req: Request, t: any)
   return data;
 }
 
+/**
+ * Update or insert the file information to the temporary records when the related file processing is still in progress.
+ * Attach queries to a transaction provided.
+ * @param {Transaction} t
+ * @param {Express.Multer.File} file
+ * @param {string} materialId
+ * @return {Promise<any>}
+ */
+export const upsertMaterialFileToTempRecords = async (
+  t: Transaction,
+  file: MulterFile,
+  materialId: string,
+): Promise<any> => {
+  const temporaryRecord = await TemporaryRecord.findOne({
+    where: {
+      originalFileName: file.originalname,
+      materialId,
+    },
+    transaction: t,
+  });
+
+  await TemporaryRecord.upsert(
+    {
+      id: temporaryRecord && temporaryRecord.id, // NULL for the new entries.
+      filePath: file.path || temporaryRecord.filePath,
+      originalFileName: file.originalname || temporaryRecord.originalFileName,
+      fileSize: file.size || temporaryRecord.fileSize,
+      mimeType: file.mimetype || temporaryRecord.mimeType,
+      format: file.encoding || temporaryRecord.format,
+      fileName: file.filename || temporaryRecord.fileName,
+      materialId: materialId || temporaryRecord.materialId,
+    },
+    {
+      transaction: t,
+    },
+  );
+};
+
+/**
+ * LEGACY IMPLEMENTATION.
+ * TODO: TO BE REMOVED
+ * @param t
+ * @param {Express.Multer.File} file
+ * @param materialId
+ * @return {Promise<any>}
+ */
+export const insertDataToTempRecordTable = async (t: any, file: MulterFile, materialId: any): Promise<any> => {
+  const query = `
+    INSERT INTO temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, materialid)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING id
+  `;
+  return await t.any(query, [
+    file.filename,
+    file.path,
+    file.originalname,
+    file.size,
+    file.mimetype,
+    file.encoding,
+    materialId,
+  ]);
+};
+
+/**
+ * Update or insert a material display name with the language versions (if available) and attach to a transaction.
+ * A new implementation of the function insertDataToDisplayName() below.
+ * @param {Transaction} t
+ * @param {string} educationalMaterialId
+ * @param {string} materialId
+ * @param fileDetails
+ * @return {Promise<any>}
+ */
+export const upsertMaterialDisplayName = async (
+  t: Transaction,
+  educationalMaterialId: string,
+  materialId: string,
+  fileDetails: any,
+): Promise<void> => {
+  const materialDisplayNameEN = await MaterialDisplayName.findOne({
+    where: { language: 'en', materialId },
+    transaction: t,
+  });
+  const materialDisplayNameFI = await MaterialDisplayName.findOne({
+    where: { language: 'fi', materialId },
+    transaction: t,
+  });
+  const materialDisplayNameSV = await MaterialDisplayName.findOne({
+    where: { language: 'sv', materialId },
+    transaction: t,
+  });
+
+  const missingLang: string = fileDetails.displayName.en || fileDetails.displayName.fi || fileDetails.displayName.sv;
+
+  await MaterialDisplayName.upsert(
+    {
+      id: materialDisplayNameEN && materialDisplayNameEN.id,
+      displayName:
+        fileDetails.displayName.en || (materialDisplayNameEN && materialDisplayNameEN.displayName) || missingLang,
+      language: 'en',
+      materialId: materialId || materialDisplayNameEN.materialId,
+    },
+    {
+      transaction: t,
+    },
+  );
+
+  await MaterialDisplayName.upsert(
+    {
+      id: materialDisplayNameFI && materialDisplayNameFI.id,
+      displayName:
+        fileDetails.displayName.fi || (materialDisplayNameFI && materialDisplayNameFI.displayName) || missingLang,
+      language: 'fi',
+      materialId: materialId || materialDisplayNameFI.materialId,
+    },
+    {
+      transaction: t,
+    },
+  );
+
+  await MaterialDisplayName.upsert(
+    {
+      id: materialDisplayNameSV && materialDisplayNameSV.id,
+      displayName:
+        fileDetails.displayName.sv || (materialDisplayNameSV && materialDisplayNameSV.displayName) || missingLang,
+      language: 'sv',
+      materialId: materialId || materialDisplayNameSV.materialId,
+    },
+    {
+      transaction: t,
+    },
+  );
+};
+
+/**
+ * LEGACY IMPLEMENTATION.
+ * TODO: TO BE REMOVED
+ * @param t
+ * @param educationalmaterialid
+ * @param {string} materialid
+ * @param fileDetails
+ * @return {Promise<any>}
+ */
 export async function insertDataToDisplayName(
   t: any,
   educationalmaterialid,
@@ -716,23 +864,6 @@ export const insertDataToRecordTable = async (
   } catch (err) {
     throw new Error(err);
   }
-};
-
-export const insertDataToTempRecordTable = async (t: any, file: MulterFile, materialId: any): Promise<any> => {
-  const query = `
-    INSERT INTO temporaryrecord (filename, filepath, originalfilename, filesize, mimetype, format, materialid)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id
-  `;
-  return await t.any(query, [
-    file.filename,
-    file.path,
-    file.originalname,
-    file.size,
-    file.mimetype,
-    file.encoding,
-    materialId,
-  ]);
 };
 
 export const deleteDataFromTempRecordTable = async (filename: any, materialId: any): Promise<any> => {
@@ -1325,6 +1456,8 @@ export default {
   uploadAttachmentToMaterial,
   checkTemporaryAttachmentQueue,
   insertDataToDisplayName,
+  upsertMaterialDisplayName,
+  upsertMaterialFileToTempRecords,
   downloadFromStorage,
   readStreamFromStorage,
 };

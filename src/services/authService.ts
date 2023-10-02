@@ -1,69 +1,78 @@
 import { Request, Response, NextFunction } from 'express';
+import { ErrorHandler } from '../helpers/errorHandler';
 import { winstonLogger } from '../util/winstonLogger';
 import { db } from '../resources/pg-connect';
 
-export function checkAuthenticated(req: Request, res: Response, next: NextFunction): void {
-  if (req.isAuthenticated()) {
-    return next();
-  } else {
-    res.sendStatus(401);
-  }
-}
+export const checkAuthenticated = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.isAuthenticated()) return next();
+  res.sendStatus(401).end();
+};
 
-export async function getUserData(req: Request, res: Response): Promise<any> {
-  const query =
-    'SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer FROM users WHERE username = $1;';
-  const data = await db.oneOrNone(query, [req.session.passport.user.uid]);
+export const getUserData = async (req: Request, res: Response): Promise<any> => {
+  const query = `
+    SELECT termsofusage, email, verifiedemail, newratings, almostexpired, termsupdated, allowtransfer
+    FROM users
+    WHERE username = $1
+  `;
+  const userInfo = await db.oneOrNone(query, [req.session.passport.user.uid]);
   res.setHeader('Cache-Control', 'private, max-age=0');
   res.status(200).json({
     userdata: req.session.passport.user,
-    email: data.email,
-    termsofusage: data.termsofusage,
-    verifiedEmail: data.verifiedemail,
-    newRatings: data.newratings,
-    almostExpired: data.almostexpired,
-    termsUpdated: data.termsupdated,
-    allowTransfer: data.allowtransfer,
+    email: userInfo.email,
+    termsofusage: userInfo.termsofusage,
+    verifiedEmail: userInfo.verifiedemail,
+    newRatings: userInfo.newratings,
+    almostExpired: userInfo.almostexpired,
+    termsUpdated: userInfo.termsupdated,
+    allowTransfer: userInfo.allowtransfer,
   });
-  //  winstonLogger.debug("The req session in getuserdata: " + JSON.stringify(req.session));
-}
+};
 
-export async function hasAccesstoPublication(id: number, req: Request): Promise<any> {
-  // Tähän tulee se query, en ihan tiedä miten tää haku menee, mutta vanhan kuvan mukaan näin
-  // Mulla ei oo sama possu versio niin saaattaa olla että jotain meni väärin, en pysty testailla lokaalisti
+export const hasAccesstoPublication = async (id: number, req: Request): Promise<any> => {
+  if (!req.session.passport) return false;
   try {
-    if (!req.session.passport) {
-      return false;
-    }
     const params = { id: id };
-    const query = 'SELECT UsersUserName from EducationalMaterial WHERE id = $1';
+    const query = `
+      SELECT usersusername
+      FROM educationalmaterial
+      WHERE id = $1
+    `;
     const result = await db.oneOrNone(query, params.id);
-    if (req.session.passport.user.uid === result) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error) {
-    throw new Error('Error in hasAccesstoPublication(): ' + error);
+    return req.session.passport.user.uid === result;
+  } catch (err) {
+    throw new Error(`Checking user\'s ownership failed: ${err}`);
   }
-}
+};
 
-export const InsertUserToDatabase = async (userinfo: Record<string, unknown>): Promise<any> => {
-  winstonLogger.debug('Userinfo at InsertUserToDatabase(): %s', JSON.stringify(userinfo));
+/**
+ * Save a new authenticated user to service users.
+ * TODO: Add a return value to verify the user registration.
+ * @param {Record<string, unknown>} userinfo
+ * @return {Promise<void>}
+ */
+export const insertUserToDatabase = async (userinfo: Record<string, unknown>): Promise<void> => {
   try {
     const uid: string = userinfo['uid'] as string;
-    const query = 'SELECT exists (SELECT 1 FROM users WHERE username = $1 LIMIT 1)';
-    const data = await db.oneOrNone(query, [uid]);
-    if (!data.exists) {
-      const query =
-        'INSERT INTO users ' +
-        '(firstname, lastname, username, preferredlanguage, preferredtargetname, preferredalignmenttype) ' +
-        "VALUES ($1, $2, $3, 'fi', '', '')";
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM users
+        WHERE username = $1
+      )
+    `;
+    const result = await db.oneOrNone(query, [uid]);
+    if (!result.exists) {
+      const query = `
+        INSERT INTO users
+          (firstname, lastname, username, preferredlanguage, preferredtargetname, preferredalignmenttype)
+        VALUES ($1, $2, $3, 'fi', '', '')
+      `;
       await db.none(query, [userinfo['given_name'], userinfo['family_name'], uid]);
     }
-  } catch (e) {
-    winstonLogger.error('Error in InsertUserToDatabase(): ' + e);
-    return Promise.reject(e);
+  } catch (err) {
+    winstonLogger.error('Saving a new user failed: %o', err);
+    winstonLogger.debug('USER: %o', userinfo);
+    throw new Error(err);
   }
 };
 
@@ -76,131 +85,141 @@ export async function hasAccessToPublicatication(req: Request, res: Response, ne
   res.sendStatus(401);
 }
 
-export async function hasAccessToMaterial(req: Request, res: Response, next: NextFunction): Promise<any> {
-  let id = req.params.materialId;
+export const hasAccessToMaterial = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  let id;
   if (req.params.materialId) {
     id = req.params.materialId;
   } else if (req.params.fileid) {
     id = req.params.fileid;
+  } else {
+    res.status(400).end();
+    return;
   }
-  const query =
-    'Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = $1';
+  const query = `
+    SELECT em.usersusername
+    FROM educationalmaterial em
+    INNER JOIN material m ON m.educationalmaterialid = em.id
+    WHERE material.id = $1
+  `;
   const result = await db.oneOrNone(query, [id]);
-  winstonLogger.debug('User UID: %s', req.session.passport.user.uid);
-  if (!result) {
-    winstonLogger.debug('No result found for id ' + id);
-    return res.sendStatus(401);
+  if (!result.usersusername) {
+    res.sendStatus(401).end();
+    return;
   }
   if (req.session.passport.user.uid === result.usersusername) {
-    return next();
-  } else {
-    res.sendStatus(401);
+    next();
+    return;
   }
-}
-
-export async function hasAccessToAttachmentFile(req: Request, res: Response, next: NextFunction): Promise<any> {
-  const id = req.params.attachmentid;
-  const query =
-    'Select usersusername from material inner join educationalmaterial on educationalmaterialid = educationalmaterial.id where material.id = ' +
-    '(select materialid from attachment where attachment.id =$1);';
-  const result = await db.oneOrNone(query, [id]);
-  winstonLogger.debug('User UID: %s', req.session.passport.user.uid);
-  if (!result) {
-    winstonLogger.debug('No result found for id ' + id);
-    return res.sendStatus(401);
-  }
-  if (req.session.passport.user.uid === result.usersusername) {
-    return next();
-  } else {
-    res.sendStatus(401);
-  }
-}
-
-export async function hasAccessToCollection(req: Request, res: Response, next: NextFunction): Promise<any> {
-  const id = req.body.collectionId;
-  const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
-  if (!result) {
-    winstonLogger.debug('No result found for ' + [id, req.session.passport.user.uid]);
-    return res.sendStatus(401);
-  } else {
-    return next();
-  }
-}
-
-export async function hasAccessToCollectionParams(req: Request, res: Response, next: NextFunction): Promise<any> {
-  const id = req.params.collectionid;
-  const result = await hasAccessToCollectionId(id, req.session.passport.user.uid);
-  if (!result) {
-    winstonLogger.debug('No result found for ' + [id, req.session.passport.user.uid]);
-    return res.sendStatus(401);
-  } else {
-    return next();
-  }
-}
-
-export async function hasAccessToCollectionId(id: string, username: string): Promise<any> {
-  const query = 'Select usersusername from userscollection where collectionid = $1 and usersusername = $2;';
-  const result = await db.oneOrNone(query, [id, username]);
-  if (!result) {
-    winstonLogger.debug('No result found for ' + [id, username]);
-    return false;
-  } else {
-    return true;
-  }
-}
-
-export async function hasAccessToAoe(req: Request, res: Response, next: NextFunction): Promise<any> {
-  try {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-    const result = await hasAoeAccess(req.session.passport.user.uid);
-    if (!result) {
-      winstonLogger.error('Unauthorized process request by ', [req.session.passport.user.uid]);
-      return res.sendStatus(401);
-    } else {
-      return next();
-    }
-  } catch (error) {
-    winstonLogger.error('Authorization failed in hasAccessToAoe(): ' + error);
-    return res.sendStatus(500);
-  }
-}
-
-export async function userInfo(req: Request, res: Response): Promise<any> {
-  try {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(404);
-    }
-    const result = await hasAoeAccess(req.session.passport.user.uid);
-    if (!result) {
-      winstonLogger.debug('No Aoe result found for ' + [req.session.passport.user.uid]);
-      return res.sendStatus(404);
-    } else {
-      return res.sendStatus(200);
-    }
-  } catch (e) {
-    winstonLogger.error(e);
-    return res.sendStatus(404);
-  }
-}
-
-export const hasAoeAccess = async (username: string): Promise<boolean> => {
-  const query = 'SELECT username ' + 'FROM aoeuser ' + 'WHERE username = $1';
-  const result = await db.oneOrNone(query, [username]);
-  return !!result;
+  res.sendStatus(401).end();
+  return;
 };
 
-// export function logout(req: Request, res: Response): void {
-//     req.logout();
-//     res.status(200).json({"status": "ok"});
-// }
+export const hasAccessToAttachmentFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const id = req.params.attachmentid;
+  const query = `
+    SELECT em.usersusername
+    FROM educationalmaterial em
+    INNER JOIN material m ON m.educationalmaterialid = em.id
+    WHERE material.id = (
+      SELECT a.materialid
+      FROM attachment a
+      WHERE a.id = $1
+    )
+  `;
+  const result = await db.oneOrNone(query, [id]);
+  if (!result.usersusername) {
+    res.sendStatus(401).end();
+    return;
+  }
+  if (req.session.passport.user.uid === result.usersusername) {
+    next();
+    return;
+  }
+  res.sendStatus(401).end();
+  return;
+};
+
+export const hasAccessToCollection = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const id = req.body.collectionId;
+  const result = await hasAccessToCollectionID(id, req.session.passport.user.uid);
+  if (!result) {
+    res.sendStatus(401).end();
+    return;
+  }
+  next();
+  return;
+};
+
+export const hasAccessToCollectionParams = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const id = req.params.collectionid;
+  const hasAccess: boolean = await hasAccessToCollectionID(id, req.session.passport.user.uid);
+  if (!hasAccess) {
+    res.sendStatus(401).end();
+    return;
+  }
+  next();
+  return;
+};
+
+export const hasAccessToCollectionID = async (id: string, username: string): Promise<boolean> => {
+  const query = `
+    SELECT uc.usersusername
+    FROM userscollection uc
+    WHERE uc.collectionid = $1 AND uc.usersusername = $2
+  `;
+  return !!(await db.oneOrNone(query, [id, username]));
+};
+
+export const hasAccessToAOE = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(401).end();
+      return;
+    }
+    const result = await hasAoeAccess(req.session.passport.user.uid);
+    if (!result) {
+      res.sendStatus(401).end();
+      return;
+    }
+    next();
+    return;
+  } catch (err) {
+    throw new ErrorHandler(500, `Checking user's access rights failed: ${err}`);
+  }
+};
+
+export const userInfo = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.isAuthenticated()) {
+      res.sendStatus(404).end();
+      return;
+    }
+    const hasAccess: boolean = await hasAoeAccess(req.session.passport.user.uid);
+    if (!hasAccess) {
+      res.sendStatus(404).end();
+      return;
+    }
+    res.sendStatus(200);
+    return;
+  } catch (err) {
+    throw new ErrorHandler(500, `Checking user's access rights failed: ${err}`);
+  }
+};
+
+export const hasAoeAccess = async (username: string): Promise<boolean> => {
+  const query = `
+    SELECT au.username
+    FROM aoeuser au
+    WHERE au.username = $1
+  `;
+  return !!(await db.oneOrNone(query, [username]));
+};
 
 export default {
   getUserData,
   // hasAccesstoPublication,
   checkAuthenticated,
-  InsertUserToDatabase,
+  insertUserToDatabase,
   hasAccessToPublicatication,
   // logout,
   hasAccessToMaterial,
