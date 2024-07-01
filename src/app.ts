@@ -3,7 +3,7 @@ import apiV1 from '@api/routes-v1';
 import apiV2 from '@api/routes-v2';
 import oidc from '@resource/oidcConfig';
 import { checkAuthenticated } from '@services/authService';
-import { initializeH5P, userH5P } from '@services/h5pService';
+import { initializeH5P } from '@services/h5pService';
 import aoeScheduler from '@util/aoeScheduler';
 import morganLogger from '@util/morganLogger';
 import winstonLogger from '@util/winstonLogger';
