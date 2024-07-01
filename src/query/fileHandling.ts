@@ -1179,7 +1179,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
     await downloadFileFromStorage(req, res, next);
     //if (!data) return res.end();
 
-    // Increase download counter unless the userH5P is the owner of the material.
+    // Increase download counter unless the user is the owner of the material.
     if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
       try {
         await updateDownloadCounter(educationalmaterialId.toString());

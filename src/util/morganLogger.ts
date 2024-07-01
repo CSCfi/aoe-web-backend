@@ -2,7 +2,7 @@ import morgan from 'morgan';
 import { Request, Response } from 'express';
 import winstonLogger from '@util/winstonLogger';
 
-export default morgan(':status :method :url :req[accept] HTTP/:http-version :remote-addr :userH5P-agent', {
+export default morgan(':status :method :url :req[accept] HTTP/:http-version :remote-addr :user-agent', {
   skip: (req: Request, res: Response): boolean => {
     const { path, method }: { path: string; method: string } = req;
     if (/\/userdata$/.test(path) && method === 'GET') {

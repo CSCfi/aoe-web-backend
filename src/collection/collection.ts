@@ -157,7 +157,7 @@ export async function getUserCollections(req: Request, res: Response, next: Next
  * @param req
  * @param res
  * @param next
- * get collection data for authenticated userH5P
+ * get collection data for authenticated user
  */
 export async function getCollection(req: Request, res: Response, next: NextFunction): Promise<any> {
   try {

@@ -43,8 +43,8 @@ export const initializeH5P = async (): Promise<void> => {
   }
 };
 
-// Anonymous user for unauthenticated users.
-export const userH5P: IUser = {
+// Anonymous user applied for unauthenticated client users.
+export const user: IUser = {
   email: config.MEDIA_FILE_PROCESS.h5pUserEmail,
   id: 'anonymous',
   name: 'anonymous',
@@ -77,7 +77,7 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
       installedLibraries: ILibraryInstallResult[];
       metadata?: IContentMetadata;
       parameters?: any;
-    } = await h5pEditor.uploadPackage(buffer, userH5P, options);
+    } = await h5pEditor.uploadPackage(buffer, user, options);
 
     // Update H5P application with the metadata and return a content ID.
     let mainlib: ILibraryName;
@@ -91,7 +91,7 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
       result.parameters,
       result.metadata,
       LibraryName.toUberName(mainlib, { useWhitespace: true }),
-      userH5P,
+      user,
     );
 
     // Delete the downloaded H5P archive file in HTML directory.
@@ -102,7 +102,7 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
     });
 
     // Render HTML content of the application.
-    const htmlH5P: string = await h5pPlayer.render(savedContentId, userH5P, 'en', { ignoreUserPermissions: true });
+    const htmlH5P: string = await h5pPlayer.render(savedContentId, user, 'en', { ignoreUserPermissions: true });
     res.status(200).send(htmlH5P).end();
   } catch (err: unknown) {
     winstonLogger.error('Processing or rendering H5P failed: %o', err);

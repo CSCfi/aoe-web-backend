@@ -1321,7 +1321,7 @@ export async function createUser(req: Request, res: Response, next: NextFunction
     res.status(200).json(data);
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue creating userH5P'));
+    next(new ErrorHandler(500, 'Issue creating user'));
   }
 }
 
@@ -1339,10 +1339,10 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       req.body.preferredalignmenttype,
       req.session.passport.user.uid,
     ]);
-    res.status(200).json('userH5P updated');
+    res.status(200).json('user updated');
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue updating userH5P'));
+    next(new ErrorHandler(500, 'Issue updating user'));
   }
 }
 
@@ -1364,7 +1364,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     res.status(200).json(data);
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue processing get userH5P request'));
+    next(new ErrorHandler(500, 'Issue processing get user request'));
   }
 }
 

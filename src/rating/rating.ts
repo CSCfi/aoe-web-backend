@@ -52,7 +52,7 @@ export async function getRating(req: Request, res: Response, next: NextFunction)
 }
 
 /**
- * Get educational material ratings for a userH5P.
+ * Get educational material ratings for a user.
  *
  * @param req  Request<any>
  * @param res  Response<any>
@@ -68,7 +68,7 @@ export async function getUserRating(req: Request, res: Response, next: NextFunct
     }
   } catch (error) {
     winstonLogger.error(error);
-    next(new ErrorHandler(500, 'Issue getting userH5P rating'));
+    next(new ErrorHandler(500, 'Issue getting user rating'));
   }
 }
 

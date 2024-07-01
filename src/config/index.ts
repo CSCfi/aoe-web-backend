@@ -135,7 +135,7 @@ export default {
     secret: process.env.SESSION_SECRET as string,
   } as const,
 
-  // Session cookie options to initialize and terminate sessions for a userH5P.
+  // Session cookie options to initialize and terminate sessions for a user.
   SESSION_COOKIE_OPTIONS: {
     domain: process.env.SESSION_COOKIE_DOMAIN as string,
     httpOnly: (process.env.SESSION_COOKIE_HTTP_ONLY.toLowerCase() === 'true') as boolean,

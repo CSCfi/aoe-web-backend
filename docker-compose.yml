@@ -43,7 +43,7 @@ services:
       - POSTGRES_PASSWORD=aoe_secret
       - POSTGRES_USER=aoe_admin
     volumes:
-      - ./docker/aoe-postgres/init-userH5P-db.sh:/docker-entrypoint-initdb.d/init-userH5P-db.sh
+      - ./docker/aoe-postgres/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
       - ./docker/aoe-postgres/aoe-db-dump.sql:/docker-entrypoint-initdb.d/aoe-db-dump.sql
     networks:
       - network-development

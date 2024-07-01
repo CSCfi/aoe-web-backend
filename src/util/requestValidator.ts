@@ -134,7 +134,7 @@ export async function validateRatingUser(req: Request, res: Response, next: Next
       error: {
         status: 400,
         message: 'Bad Request',
-        description: 'Rating userH5P same as educational material owner',
+        description: 'Rating user same as educational material owner',
       },
     });
   }

@@ -39,8 +39,8 @@ Issuer.discover(process.env.PROXY_URI)
             return done(undefined, { uid: userinfo.uid, name: nameparsed });
           })
           .catch((err: Error) => {
-            winstonLogger.error('Saving userH5P information failed: %s', err);
-            return done('Saving userH5P information failed', undefined);
+            winstonLogger.error('Saving user information failed: %s', err);
+            return done('Saving user information failed', undefined);
           });
       }),
     );

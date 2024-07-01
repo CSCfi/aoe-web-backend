@@ -72,7 +72,7 @@ export async function deleteEducationalMaterialFromCollection(collection: Collec
 /**
  *
  * @param username
- * get collection for userH5P
+ * get collection for user
  */
 export async function userCollections(username: string) {
   try {
