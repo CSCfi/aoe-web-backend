@@ -2,7 +2,7 @@ export {};
 
 /**
  * Declare TypeScript types and relations between imported JavaScript modules that are not covered by installed @types
- * packages. Declaration file assists TypeScript interpreter to validate e.g. chains like req.session.passport.user
+ * packages. Declaration file assists TypeScript interpreter to validate e.g. chains like req.session.passport.userH5P
  * which consists of Request<any> [express], Session & Partial<SessionData> [express-session], Passport [passport] and
  * User [express], each from a different 3rd party JS source library.
  *
@@ -16,9 +16,11 @@ declare module 'express-session' {
   interface SessionData {
     passport: Passport;
   }
+
   interface Passport {
     user: User;
   }
+
   interface User {
     uid: string;
   }

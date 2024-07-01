@@ -1,5 +1,5 @@
 /* global H5PUtils */
-var H5PDataView = (function ($) {
+var H5PDataView = (function($) {
 
   /**
    * Initialize a new H5P data view.
@@ -60,8 +60,7 @@ var H5PDataView = (function ($) {
     if (H5PIntegration.user && parseInt(H5PIntegration.user.canToggleViewOthersH5PContents) === 1) {
       self.updateTable([]);
       self.filterByFacet(self.columnIdAuthor, H5PIntegration.user.id, H5PIntegration.user.name || '');
-    }
-    else {
+    } else {
       self.loadData();
     }
   }
@@ -69,7 +68,7 @@ var H5PDataView = (function ($) {
   /**
    * Load data from source URL.
    */
-  H5PDataView.prototype.loadData = function () {
+  H5PDataView.prototype.loadData = function() {
     var self = this;
 
     // Throbb
@@ -108,15 +107,14 @@ var H5PDataView = (function ($) {
     $.ajax({
       dataType: 'json',
       cache: true,
-      url: url
-    }).fail(function () {
+      url: url,
+    }).fail(function() {
       // Error handling
-      self.setMessage($('<p/>', {text: self.l10n.ajaxFailed}));
-    }).done(function (data) {
+      self.setMessage($('<p/>', { text: self.l10n.ajaxFailed }));
+    }).done(function(data) {
       if (!data.rows.length) {
-        self.setMessage($('<p/>', {text: filtering ? self.l10n.noData : self.l10n.empty}));
-      }
-      else {
+        self.setMessage($('<p/>', { text: filtering ? self.l10n.noData : self.l10n.empty }));
+      } else {
         // Update table data
         self.updateTable(data.rows);
       }
@@ -131,17 +129,16 @@ var H5PDataView = (function ($) {
   };
 
   /**
-   * Display the given message to the user.
+   * Display the given message to the userH5P.
    *
    * @param {jQuery} $message wrapper with message
    */
-  H5PDataView.prototype.setMessage = function ($message) {
+  H5PDataView.prototype.setMessage = function($message) {
     var self = this;
 
     if (self.table === undefined) {
       self.$container.html('').append($message);
-    }
-    else {
+    } else {
       self.table.setBody($message);
     }
   };
@@ -151,7 +148,7 @@ var H5PDataView = (function ($) {
    *
    * @param {Array} rows
    */
-  H5PDataView.prototype.updateTable = function (rows) {
+  H5PDataView.prototype.updateTable = function(rows) {
     var self = this;
 
     if (self.table === undefined) {
@@ -163,19 +160,19 @@ var H5PDataView = (function ($) {
 
       // Add toggler for others' content
       if (H5PIntegration.user && parseInt(H5PIntegration.user.canToggleViewOthersH5PContents) > 0) {
-        // canToggleViewOthersH5PContents = 1 is setting for only showing current user's contents
+        // canToggleViewOthersH5PContents = 1 is setting for only showing current userH5P's contents
         self.addOthersContentToggler(parseInt(H5PIntegration.user.canToggleViewOthersH5PContents) === 1);
       }
 
       // Add facets
       self.$facets = $('<div/>', {
         'class': 'h5p-facet-wrapper',
-        appendTo: self.$container
+        appendTo: self.$container,
       });
 
       // Create new table
       self.table = new H5PUtils.Table(self.classes, self.headers);
-      self.table.setHeaders(self.headers, function (order) {
+      self.table.setHeaders(self.headers, function(order) {
         // Sorting column or direction has changed.
         self.order = order;
         self.loadData();
@@ -197,10 +194,10 @@ var H5PDataView = (function ($) {
     var $tbody = self.table.setRows(rows);
 
     // Add event handlers for facets
-    $('.h5p-facet', $tbody).click(function () {
+    $('.h5p-facet', $tbody).click(function() {
       var $facet = $(this);
       self.filterByFacet($facet.data('col'), $facet.data('id'), $facet.text());
-    }).keypress(function (event) {
+    }).keypress(function(event) {
       if (event.which === 32) {
         var $facet = $(this);
         self.filterByFacet($facet.data('col'), $facet.data('id'), $facet.text());
@@ -214,7 +211,7 @@ var H5PDataView = (function ($) {
    * @param (object|Array) input
    * @param number col ID of column
    */
-  H5PDataView.prototype.createFacets = function (input, col) {
+  H5PDataView.prototype.createFacets = function(input, col) {
     var facets = '';
 
     if (input instanceof Array) {
@@ -225,8 +222,7 @@ var H5PDataView = (function ($) {
         }
         facets += '<span class="h5p-facet" role="button" tabindex="0" data-id="' + input[i].id + '" data-col="' + col + '">' + input[i].title + '</span>';
       }
-    }
-    else {
+    } else {
       // Single value facet filtering
       facets += '<span class="h5p-facet" role="button" tabindex="0" data-id="' + input.id + '" data-col="' + col + '">' + input.title + '</span>';
     }
@@ -241,7 +237,7 @@ var H5PDataView = (function ($) {
    * @param number id ID to filter on
    * @param string text Human readable label for the filter
    */
-  H5PDataView.prototype.filterByFacet = function (col, id, text) {
+  H5PDataView.prototype.filterByFacet = function(col, id, text) {
     var self = this;
 
     if (self.facets[col] !== undefined) {
@@ -260,17 +256,17 @@ var H5PDataView = (function ($) {
         'class': 'h5p-facet-tag',
         text: text,
         appendTo: self.$facets,
-      })
+      }),
     };
     /**
      * Callback for removing filter.
      *
      * @private
      */
-    var remove = function () {
+    var remove = function() {
       // Uncheck toggler for others' H5P contents
-      if ( self.$othersContentToggler && self.facets.hasOwnProperty( self.columnIdAuthor ) ) {
-        self.$othersContentToggler.prop('checked', false );
+      if (self.$othersContentToggler && self.facets.hasOwnProperty(self.columnIdAuthor)) {
+        self.$othersContentToggler.prop('checked', false);
       }
 
       self.facets[col].$tag.remove();
@@ -287,12 +283,12 @@ var H5PDataView = (function ($) {
       title: self.l10n.remove,
       on: {
         click: remove,
-        keypress: function (event) {
+        keypress: function(event) {
           if (event.which === 32) {
             remove();
           }
-        }
-      }
+        },
+      },
     });
 
     // Load data with new filter
@@ -304,7 +300,7 @@ var H5PDataView = (function ($) {
    *
    * @param {Number} num size of data collection
    */
-  H5PDataView.prototype.updatePagination = function (num) {
+  H5PDataView.prototype.updatePagination = function(num) {
     var self = this;
 
     if (self.pagination === undefined) {
@@ -314,8 +310,8 @@ var H5PDataView = (function ($) {
       }
 
       // Create new widget
-      var $pagerContainer = $('<div/>', {'class': 'h5p-pagination'});
-      self.pagination = new H5PUtils.Pagination(num, self.limit, function (offset) {
+      var $pagerContainer = $('<div/>', { 'class': 'h5p-pagination' });
+      self.pagination = new H5PUtils.Pagination(num, self.limit, function(offset) {
         // Handle page changes in pagination widget
         self.offset = offset;
         self.loadData();
@@ -323,8 +319,7 @@ var H5PDataView = (function ($) {
 
       self.pagination.appendTo($pagerContainer);
       self.table.setFoot($pagerContainer);
-    }
-    else {
+    } else {
       // Update existing widget
       self.pagination.update(num, self.limit);
     }
@@ -333,7 +328,7 @@ var H5PDataView = (function ($) {
   /**
    * Add filters.
    */
-  H5PDataView.prototype.addFilters = function () {
+  H5PDataView.prototype.addFilters = function() {
     var self = this;
 
     for (var i = 0; i < self.filters.length; i++) {
@@ -349,14 +344,14 @@ var H5PDataView = (function ($) {
    *
    * @param {Number} col
    */
-  H5PDataView.prototype.addTextFilter = function (col) {
+  H5PDataView.prototype.addTextFilter = function(col) {
     var self = this;
 
     /**
      * Find input value and filter on it.
      * @private
      */
-    var search = function () {
+    var search = function() {
       var filterOn = $input.val().replace(/^\s+|\s+$/g, '');
       if (filterOn === '') {
         filterOn = undefined;
@@ -373,24 +368,23 @@ var H5PDataView = (function ($) {
       type: 'text',
       placeholder: self.l10n.search,
       on: {
-        'blur': function () {
+        'blur': function() {
           clearTimeout(typing);
           search();
         },
-        'keyup': function (event) {
+        'keyup': function(event) {
           if (event.keyCode === 13) {
             clearTimeout(typing);
             search();
             return false;
-          }
-          else {
+          } else {
             clearTimeout(typing);
-            typing = setTimeout(function () {
+            typing = setTimeout(function() {
               search();
             }, 500);
           }
-        }
-      }
+        },
+      },
     }).appendTo(self.$container);
   };
 
@@ -398,7 +392,7 @@ var H5PDataView = (function ($) {
    * Add toggle for others' H5P content.
    * @param {boolean} [checked=false] Initial check setting.
    */
-  H5PDataView.prototype.addOthersContentToggler = function (checked) {
+  H5PDataView.prototype.addOthersContentToggler = function(checked) {
     var self = this;
 
     checked = (typeof checked === 'undefined') ? false : checked;
@@ -409,31 +403,30 @@ var H5PDataView = (function ($) {
       'class': 'h5p-others-contents-toggler',
       'id': 'h5p-others-contents-toggler',
       'checked': checked,
-      'click': function () {
-        if ( this.checked ) {
-          // Add filter on current user
-          self.filterByFacet( self.columnIdAuthor, H5PIntegration.user.id, H5PIntegration.user.name );
-        }
-        else {
+      'click': function() {
+        if (this.checked) {
+          // Add filter on current userH5P
+          self.filterByFacet(self.columnIdAuthor, H5PIntegration.user.id, H5PIntegration.user.name);
+        } else {
           // Remove facet indicator and reload full data view
-          if ( self.facets.hasOwnProperty( self.columnIdAuthor ) && self.facets[self.columnIdAuthor].$tag ) {
+          if (self.facets.hasOwnProperty(self.columnIdAuthor) && self.facets[self.columnIdAuthor].$tag) {
             self.facets[self.columnIdAuthor].$tag.remove();
           }
           delete self.facets[self.columnIdAuthor];
           self.loadData();
         }
-      }
+      },
     });
 
     // Label
     var $label = $('<label>', {
       'class': 'h5p-others-contents-toggler-label',
       'text': this.l10n.showOwnContentOnly,
-      'for': 'h5p-others-contents-toggler'
+      'for': 'h5p-others-contents-toggler',
     }).prepend(this.$othersContentToggler);
 
     $('<div>', {
-      'class': 'h5p-others-contents-toggler-wrapper'
+      'class': 'h5p-others-contents-toggler-wrapper',
     }).append($label)
       .appendTo(this.$container);
   };

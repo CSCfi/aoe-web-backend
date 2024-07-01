@@ -1,23 +1,23 @@
 /* global H5PAdminIntegration*/
 var H5PUtils = H5PUtils || {};
 
-(function ($) {
+(function($) {
   /**
    * Generic function for creating a table including the headers
    *
    * @param {array} headers List of headers
    */
-  H5PUtils.createTable = function (headers) {
+  H5PUtils.createTable = function(headers) {
     var $table = $('<table class="h5p-admin-table' + (H5PAdminIntegration.extraTableClasses !== undefined ? ' ' + H5PAdminIntegration.extraTableClasses : '') + '"></table>');
 
     if (headers) {
       var $thead = $('<thead></thead>');
       var $tr = $('<tr></tr>');
 
-      $.each(headers, function (index, value) {
+      $.each(headers, function(index, value) {
         if (!(value instanceof Object)) {
           value = {
-            html: value
+            html: value,
           };
         }
 
@@ -35,13 +35,13 @@ var H5PUtils = H5PUtils || {};
    *
    * @param {array} rows Value list. Object name is used as class name in <TD>
    */
-  H5PUtils.createTableRow = function (rows) {
+  H5PUtils.createTableRow = function(rows) {
     var $tr = $('<tr></tr>');
 
-    $.each(rows, function (index, value) {
+    $.each(rows, function(index, value) {
       if (!(value instanceof Object)) {
         value = {
-          html: value
+          html: value,
         };
       }
 
@@ -57,7 +57,7 @@ var H5PUtils = H5PUtils || {};
    * @param {string} label The label displayed in front of the value
    * @param {string} value The value
    */
-  H5PUtils.createLabeledField = function (label, value) {
+  H5PUtils.createLabeledField = function(label, value) {
     var $field = $('<div class="h5p-labeled-field"></div>');
 
     $field.append('<div class="h5p-label">' + label + '</div>');
@@ -72,9 +72,9 @@ var H5PUtils = H5PUtils || {};
    * @param {string} template The translation template string in the following format: "$name is a $sex"
    * @param {array} replacors An js object with key and values. Eg: {'$name': 'Frode', '$sex': 'male'}
    */
-  H5PUtils.translateReplace = function (template, replacors) {
-    $.each(replacors, function (key, value) {
-      template = template.replace(new RegExp('\\'+key, 'g'), value);
+  H5PUtils.translateReplace = function(template, replacors) {
+    $.each(replacors, function(key, value) {
+      template = template.replace(new RegExp('\\' + key, 'g'), value);
     });
     return template;
   };
@@ -85,10 +85,10 @@ var H5PUtils = H5PUtils || {};
    * @param {String} text
    * @returns {$}
    */
-  H5PUtils.throbber = function (text) {
+  H5PUtils.throbber = function(text) {
     return $('<div/>', {
       class: 'h5p-throbber',
-      text: text
+      text: text,
     });
   };
 
@@ -97,27 +97,26 @@ var H5PUtils = H5PUtils || {};
    * @param {Object} notCached
    * @returns {$}
    */
-  H5PUtils.getRebuildCache = function (notCached) {
+  H5PUtils.getRebuildCache = function(notCached) {
     var $container = $('<div class="h5p-admin-rebuild-cache"><p class="message">' + notCached.message + '</p><p class="progress">' + notCached.progress + '</p></div>');
-    var $button = $('<button>' + notCached.button + '</button>').appendTo($container).click(function () {
-      var $spinner = $('<div/>', {class: 'h5p-spinner'}).replaceAll($button);
+    var $button = $('<button>' + notCached.button + '</button>').appendTo($container).click(function() {
+      var $spinner = $('<div/>', { class: 'h5p-spinner' }).replaceAll($button);
       var parts = ['|', '/', '-', '\\'];
       var current = 0;
-      var spinning = setInterval(function () {
+      var spinning = setInterval(function() {
         $spinner.text(parts[current]);
         current++;
         if (current === parts.length) current = 0;
       }, 100);
 
       var $counter = $container.find('.progress');
-      var build = function () {
-        $.post(notCached.url, function (left) {
+      var build = function() {
+        $.post(notCached.url, function(left) {
           if (left === '0') {
             clearInterval(spinning);
             $container.remove();
             location.reload();
-          }
-          else {
+          } else {
             var counter = $counter.text().split(' ');
             counter[0] = left;
             $counter.text(counter.join(' '));
@@ -139,7 +138,7 @@ var H5PUtils = H5PUtils || {};
    *   Custom html classes to use on elements.
    *   e.g. {tableClass: 'fixed'}.
    */
-  H5PUtils.Table = function (classes) {
+  H5PUtils.Table = function(classes) {
     var numCols;
     var sortByCol;
     var $sortCol;
@@ -164,15 +163,14 @@ var H5PUtils = H5PUtils || {};
      * @param {(String|Object)} col Column properties
      * @param {Number} id Used to seperate the columns
      */
-    var addCol = function ($tr, col, id) {
+    var addCol = function($tr, col, id) {
       var options = {
-        on: {}
+        on: {},
       };
 
       if (!(col instanceof Object)) {
         options.text = col;
-      }
-      else {
+      } else {
         if (col.text !== undefined) {
           options.text = col.text;
         }
@@ -199,10 +197,10 @@ var H5PUtils = H5PUtils || {};
             }
           }
 
-          options.on.click = function () {
+          options.on.click = function() {
             sort($th, id);
           };
-          options.on.keypress = function (event) {
+          options.on.keypress = function(event) {
             if ((event.charCode || event.keyCode) === 32) { // Space
               sort($th, id);
             }
@@ -225,19 +223,17 @@ var H5PUtils = H5PUtils || {};
      * @param {jQuery} $th Table header
      * @param {Number} id Used to seperate the columns
      */
-    var sort = function ($th, id) {
+    var sort = function($th, id) {
       if (id === sortCol) {
         // Change sorting direction
         if (sortDir === 0) {
           sortDir = 1;
           $th.addClass('h5p-reverse');
-        }
-        else {
+        } else {
           sortDir = 0;
           $th.removeClass('h5p-reverse');
         }
-      }
-      else {
+      } else {
         // Change sorting column
         $sortCol.removeClass('h5p-sort').removeClass('h5p-reverse');
         $sortCol = $th.addClass('h5p-sort');
@@ -247,7 +243,7 @@ var H5PUtils = H5PUtils || {};
 
       sortByCol({
         by: sortCol,
-        dir: sortDir
+        dir: sortDir,
       });
     };
 
@@ -262,7 +258,7 @@ var H5PUtils = H5PUtils || {};
      * @param {Function} sort Callback which is runned when sorting changes
      * @param {Object} [order]
      */
-    this.setHeaders = function (cols, sort, order) {
+    this.setHeaders = function(cols, sort, order) {
       numCols = cols.length;
       sortByCol = sort;
 
@@ -289,7 +285,7 @@ var H5PUtils = H5PUtils || {};
      * @public
      * @param {Array} rows Table rows with cols: [[1,'hello',3],[2,'asd',6]]
      */
-    this.setRows = function (rows) {
+    this.setRows = function(rows) {
       var $newTbody = $('<tbody/>');
 
       for (var i = 0; i < rows.length; i++) {
@@ -297,7 +293,7 @@ var H5PUtils = H5PUtils || {};
 
         for (var j = 0; j < rows[i].length; j++) {
           $('<td>', {
-            html: rows[i][j]
+            html: rows[i][j],
           }).appendTo($tr);
         }
       }
@@ -315,11 +311,11 @@ var H5PUtils = H5PUtils || {};
      * @public
      * @param {jQuery} $content Custom content
      */
-    this.setBody = function ($content) {
+    this.setBody = function($content) {
       var $newTbody = $('<tbody/>');
       var $tr = $('<tr/>').appendTo($newTbody);
       $('<td>', {
-        colspan: numCols
+        colspan: numCols,
       }).append($content).appendTo($tr);
       $tbody.replaceWith($newTbody);
       $tbody = $newTbody;
@@ -332,11 +328,11 @@ var H5PUtils = H5PUtils || {};
      * @public
      * @param {jQuery} $content Custom content
      */
-    this.setFoot = function ($content) {
+    this.setFoot = function($content) {
       var $newTfoot = $('<tfoot/>');
       var $tr = $('<tr/>').appendTo($newTfoot);
       $('<td>', {
-        colspan: numCols
+        colspan: numCols,
       }).append($content).appendTo($tr);
       $tfoot.replaceWith($newTfoot);
     };
@@ -348,7 +344,7 @@ var H5PUtils = H5PUtils || {};
      * @public
      * @param {jQuery} $container
      */
-    this.appendTo = function ($container) {
+    this.appendTo = function($container) {
       $table.appendTo($container);
     };
   };
@@ -360,7 +356,7 @@ var H5PUtils = H5PUtils || {};
    * @param {Number} num Total number of items to pagiate.
    * @param {Number} limit Number of items to dispaly per page.
    * @param {Function} goneTo
-   *   Callback which is fired when the user wants to go to another page.
+   *   Callback which is fired when the userH5P wants to go to another page.
    * @param {Object} l10n
    *   Localization / translations. e.g.
    *   {
@@ -369,7 +365,7 @@ var H5PUtils = H5PUtils || {};
    *     previousPage: 'Previous page'
    *   }
    */
-  H5PUtils.Pagination = function (num, limit, goneTo, l10n) {
+  H5PUtils.Pagination = function(num, limit, goneTo, l10n) {
     var current = 0;
     var pages = Math.ceil(num / limit);
 
@@ -379,13 +375,13 @@ var H5PUtils = H5PUtils || {};
     var $left = $('<button/>', {
       html: '&lt;',
       'class': 'button',
-      title: l10n.previousPage
-    }).click(function () {
+      title: l10n.previousPage,
+    }).click(function() {
       goTo(current - 1);
     });
 
     // Current page text
-    var $text = $('<span/>').click(function () {
+    var $text = $('<span/>').click(function() {
       $input.width($text.width()).show().val(current + 1).focus();
       $text.hide();
     });
@@ -393,36 +389,36 @@ var H5PUtils = H5PUtils || {};
     // Jump to page input
     var $input = $('<input/>', {
       type: 'number',
-      min : 1,
+      min: 1,
       max: pages,
       on: {
-        'blur': function () {
+        'blur': function() {
           gotInput();
         },
-        'keyup': function (event) {
+        'keyup': function(event) {
           if (event.keyCode === 13) {
             gotInput();
             return false;
           }
-        }
-      }
+        },
+      },
     }).hide();
 
     // Next button
     var $right = $('<button/>', {
       html: '&gt;',
       'class': 'button',
-      title: l10n.nextPage
-    }).click(function () {
+      title: l10n.nextPage,
+    }).click(function() {
       goTo(current + 1);
     });
 
     /**
-     * Check what page the user has typed in and jump to it.
+     * Check what page the userH5P has typed in and jump to it.
      *
      * @private
      */
-    var gotInput = function () {
+    var gotInput = function() {
       var page = parseInt($input.hide().val());
       if (!isNaN(page)) {
         goTo(page - 1);
@@ -435,7 +431,7 @@ var H5PUtils = H5PUtils || {};
      *
      * @private
      */
-    var updateUI = function () {
+    var updateUI = function() {
       var next = current + 1;
 
       // Disable or enable buttons
@@ -452,7 +448,7 @@ var H5PUtils = H5PUtils || {};
      * @private
      * @param {Number} page
      */
-    var goTo = function (page) {
+    var goTo = function(page) {
       if (page === current || page < 0 || page >= pages) {
         return; // Invalid page number
       }
@@ -471,7 +467,7 @@ var H5PUtils = H5PUtils || {};
      * @param {Number} newNum Total number of items to pagiate.
      * @param {Number} newLimit Number of items to dispaly per page.
      */
-    this.update = function (newNum, newLimit) {
+    this.update = function(newNum, newLimit) {
       if (newNum !== num || newLimit !== limit) {
         // Update num and limit
         num = newNum;
@@ -495,7 +491,7 @@ var H5PUtils = H5PUtils || {};
      * @public
      * @param {jQuery} $container
      */
-    this.appendTo = function ($container) {
+    this.appendTo = function($container) {
       $left.add($text).add($input).add($right).appendTo($container);
     };
 

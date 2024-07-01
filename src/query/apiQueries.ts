@@ -1,3 +1,4 @@
+import config from '@/config';
 import { EducationalMaterialMetadata } from '@/controllers/educationalMaterial';
 import { ErrorHandler } from '@/helpers/errorHandler';
 import { isOfficeMimeType } from '@/helpers/officeToPdfConverter';
@@ -320,16 +321,12 @@ export const getEducationalMaterialMetadata = async (
             jsonObj.materials[i]['originalfilename'].lastIndexOf('.'),
             jsonObj.materials[i]['originalfilename'].length,
           );
-          // if (ext === ".h5p") {
-          //     req.params.key = jsonObj.materials[i].filekey;
-          //     winstonLogger.debug("h5p file found !!!!!!");
-          //     const result = await fh.downloadFileFromStorage(req, res, next, true);
-          //     winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
-          // }
         }
         if (ext === '.h5p') {
           jsonObj.materials[i]['mimetype'] = 'text/html';
-          jsonObj.materials[i]['filepath'] = process.env.H5P_PLAYER_URL + jsonObj.materials[i]['filekey'];
+          jsonObj.materials[i][
+            'filepath'
+          ] = `${config.MEDIA_FILE_PROCESS.h5pPlayApi}${jsonObj.materials[i]['filekey']}`;
         } else if (
           jsonObj.materials[i] &&
           jsonObj.materials[i]['pdfkey'] &&
@@ -1324,7 +1321,7 @@ export async function createUser(req: Request, res: Response, next: NextFunction
     res.status(200).json(data);
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue creating user'));
+    next(new ErrorHandler(500, 'Issue creating userH5P'));
   }
 }
 
@@ -1342,10 +1339,10 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
       req.body.preferredalignmenttype,
       req.session.passport.user.uid,
     ]);
-    res.status(200).json('user updated');
+    res.status(200).json('userH5P updated');
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue updating user'));
+    next(new ErrorHandler(500, 'Issue updating userH5P'));
   }
 }
 
@@ -1367,7 +1364,7 @@ export async function getUser(req: Request, res: Response, next: NextFunction) {
     res.status(200).json(data);
   } catch (err) {
     winstonLogger.error(err);
-    next(new ErrorHandler(500, 'Issue processing get user request'));
+    next(new ErrorHandler(500, 'Issue processing get userH5P request'));
   }
 }
 

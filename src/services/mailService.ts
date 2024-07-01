@@ -78,7 +78,6 @@ export async function sendRatingNotificationMail() {
   try {
     const emails = await getNewRatings();
     const emailArray = emails.filter((m) => m.email != undefined).map((m) => m.email);
-    winstonLogger.debug('emailArray: ' + emailArray);
     const holder = {};
     emails.forEach(function (d) {
       if (holder.hasOwnProperty(d.email)) {

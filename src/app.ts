@@ -3,6 +3,7 @@ import apiV1 from '@api/routes-v1';
 import apiV2 from '@api/routes-v2';
 import oidc from '@resource/oidcConfig';
 import { checkAuthenticated } from '@services/authService';
+import { initializeH5P, userH5P } from '@services/h5pService';
 import aoeScheduler from '@util/aoeScheduler';
 import morganLogger from '@util/morganLogger';
 import winstonLogger from '@util/winstonLogger';
@@ -12,13 +13,10 @@ import flash from 'connect-flash';
 import cors from 'cors';
 import express, { NextFunction, Request, Response, Router } from 'express';
 import session from 'express-session';
-import h5pAjaxExpressRouter from 'h5p-nodejs-library/build/src/adapters/H5PAjaxRouter/H5PAjaxExpressRouter';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import lusca from 'lusca';
-import path from 'path';
 import config from './config';
 import { sequelize } from './domain/aoeModels';
-import { h5pEditor } from './h5p/h5p';
 import { handleError } from './helpers/errorHandler';
 
 const app = express();
@@ -79,22 +77,10 @@ app.use(
 oidc.sessionInit(app);
 oidc.authInit(app);
 
-// Handle H5P Ajax requests
-const h5pRouteOptions = {
-  handleErrors: false,
-  routeGetContentFile: true,
-};
-app.use(
-  // server is an object initialized with express()
-  '/h5p', // the route under which all the Ajax calls will be registered
-  h5pAjaxExpressRouter(
-    h5pEditor, // an H5P.H5PEditor object
-    process.env.H5P_CORE_PATH || path.resolve('h5p/core'), // the path to the h5p core files (of the player)
-    process.env.H5P_EDITOR_PATH || path.resolve('h5p/editor'), // the path to the h5p core files (of the editor)
-    h5pRouteOptions, // the options are optional and can be left out
-    // languageOverride // (optional) can be used to override the language used by i18next http middleware
-  ),
-);
+// Initialize H5P editor
+initializeH5P().catch((err: unknown): void => {
+  winstonLogger.error('Initialization of H5P editor failed: %o', err);
+});
 
 // Statistics requests forwarded to AOE Analytics Service.
 // Keep the HTTP forwarding before the body parsers to avoid request body changes the proxy cannot handle.
@@ -116,6 +102,11 @@ app.use('/favicon.ico', express.static('./views/favicon.ico'));
 app.use('/', apiRouterRoot);
 app.use('/api/v1/', apiRouterV1);
 app.use('/api/v2/', apiRouterV2);
+app.use('/h5p/content', express.static('/webdata/h5p/content'));
+app.use('/h5p/core', express.static('/webdata/h5p/core'));
+app.use('/h5p/editor', express.static('/webdata/h5p/editor'));
+app.use('/h5p/libraries', express.static('/webdata/h5p/libraries'));
+
 app.use(lusca.xframe('SAMEORIGIN'));
 app.use(lusca.xssProtection);
 app.use((err, req: Response, res: NextFunction): void => {
@@ -134,13 +125,13 @@ const dbInit = async (): Promise<void> => {
     logging: false,
   });
 };
-dbInit().catch((error): void => {
-  winstonLogger.error('Synchronizing database with Sequelize models failed: %o', error);
+dbInit().catch((err: unknown): void => {
+  winstonLogger.error('Synchronizing database with Sequelize models failed: %o', err);
   process.exit(1);
 });
 
-// TODO: To be removed after full refectoring of aoeScheduler.ts
-require('./util/aoeScheduler');
+// TODO: To be removed after full refactoring of aoeScheduler.ts
+require('@util/aoeScheduler');
 
 // Start scheduled maintenance processes
 aoeScheduler.startScheduledCleaning();

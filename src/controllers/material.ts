@@ -22,7 +22,7 @@ export async function removeEducationalMaterial(req: Request, res: Response, nex
       return res.sendStatus(404);
     }
     winstonLogger.debug(
-      'removeEducationalMaterial: user ' +
+      'removeEducationalMaterial: userH5P ' +
         req.session.passport.user.uid +
         ' deleting educational material ' +
         req.params.id,
@@ -59,7 +59,7 @@ export async function getAoeUsers(req: Request, res: Response, next: NextFunctio
  * @param req
  * @param res
  * @param next
- * change user for educationalmaterial
+ * change userH5P for educationalmaterial
  */
 export async function changeMaterialUser(req: Request, res: Response, next: NextFunction) {
   try {
@@ -67,11 +67,11 @@ export async function changeMaterialUser(req: Request, res: Response, next: Next
       return res.sendStatus(404);
     }
     winstonLogger.debug(
-      'changeMaterialUser user: ' +
+      'changeMaterialUser userH5P: ' +
         req.session.passport.user.uid +
         ' changing educational material ' +
         req.body.materialid +
-        ' user to ' +
+        ' userH5P to ' +
         req.body.materialid,
     );
     const users = await changeEducationalMaterialUser(req.body.materialid, req.body.userid);

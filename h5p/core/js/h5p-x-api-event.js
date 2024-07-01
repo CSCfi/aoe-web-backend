@@ -6,8 +6,8 @@ var H5P = window.H5P = window.H5P || {};
  * @class
  * @extends H5P.Event
  */
-H5P.XAPIEvent = function () {
-  H5P.Event.call(this, 'xAPI', {'statement': {}}, {bubbles: true, external: true});
+H5P.XAPIEvent = function() {
+  H5P.Event.call(this, 'xAPI', { 'statement': {} }, { bubbles: true, external: true });
 };
 
 H5P.XAPIEvent.prototype = Object.create(H5P.Event.prototype);
@@ -22,18 +22,17 @@ H5P.XAPIEvent.prototype.constructor = H5P.XAPIEvent;
  * @param {boolean} completion
  * @param {boolean} success
  */
-H5P.XAPIEvent.prototype.setScoredResult = function (score, maxScore, instance, completion, success) {
+H5P.XAPIEvent.prototype.setScoredResult = function(score, maxScore, instance, completion, success) {
   this.data.statement.result = {};
 
   if (typeof score !== 'undefined') {
     if (typeof maxScore === 'undefined') {
-      this.data.statement.result.score = {'raw': score};
-    }
-    else {
+      this.data.statement.result.score = { 'raw': score };
+    } else {
       this.data.statement.result.score = {
         'min': 0,
         'max': maxScore,
-        'raw': score
+        'raw': score,
       };
       if (maxScore > 0) {
         this.data.statement.result.score.scaled = Math.round(score / maxScore * 10000) / 10000;
@@ -43,8 +42,7 @@ H5P.XAPIEvent.prototype.setScoredResult = function (score, maxScore, instance, c
 
   if (typeof completion === 'undefined') {
     this.data.statement.result.completion = (this.getVerb() === 'completed' || this.getVerb() === 'answered');
-  }
-  else {
+  } else {
     this.data.statement.result.completion = completion;
   }
 
@@ -53,7 +51,7 @@ H5P.XAPIEvent.prototype.setScoredResult = function (score, maxScore, instance, c
   }
 
   if (instance && instance.activityStartTime) {
-    var duration = Math.round((Date.now() - instance.activityStartTime ) / 10) / 100;
+    var duration = Math.round((Date.now() - instance.activityStartTime) / 10) / 100;
     // xAPI spec allows a precision of 0.01 seconds
 
     this.data.statement.result.duration = 'PT' + duration + 'S';
@@ -68,16 +66,15 @@ H5P.XAPIEvent.prototype.setScoredResult = function (score, maxScore, instance, c
  *   {@link http://adlnet.gov/expapi/verbs/|ADL xAPI Vocabulary}
  *
  */
-H5P.XAPIEvent.prototype.setVerb = function (verb) {
+H5P.XAPIEvent.prototype.setVerb = function(verb) {
   if (H5P.jQuery.inArray(verb, H5P.XAPIEvent.allowedXAPIVerbs) !== -1) {
     this.data.statement.verb = {
       'id': 'http://adlnet.gov/expapi/verbs/' + verb,
       'display': {
-        'en-US': verb
-      }
+        'en-US': verb,
+      },
     };
-  }
-  else if (verb.id !== undefined) {
+  } else if (verb.id !== undefined) {
     this.data.statement.verb = verb;
   }
 };
@@ -91,15 +88,14 @@ H5P.XAPIEvent.prototype.setVerb = function (verb) {
  * @returns {string}
  *   Verb or null if no verb with an id has been defined
  */
-H5P.XAPIEvent.prototype.getVerb = function (full) {
+H5P.XAPIEvent.prototype.getVerb = function(full) {
   var statement = this.data.statement;
   if ('verb' in statement) {
     if (full === true) {
       return statement.verb;
     }
     return statement.verb.id.slice(31);
-  }
-  else {
+  } else {
     return null;
   }
 };
@@ -112,36 +108,34 @@ H5P.XAPIEvent.prototype.getVerb = function (full) {
  * @param {Object} instance
  *   The H5P instance
  */
-H5P.XAPIEvent.prototype.setObject = function (instance) {
+H5P.XAPIEvent.prototype.setObject = function(instance) {
   if (instance.contentId) {
     this.data.statement.object = {
       'id': this.getContentXAPIId(instance),
       'objectType': 'Activity',
       'definition': {
         'extensions': {
-          'http://h5p.org/x-api/h5p-local-content-id': instance.contentId
-        }
-      }
+          'http://h5p.org/x-api/h5p-local-content-id': instance.contentId,
+        },
+      },
     };
     if (instance.subContentId) {
       this.data.statement.object.definition.extensions['http://h5p.org/x-api/h5p-subContentId'] = instance.subContentId;
       // Don't set titles on main content, title should come from publishing platform
       if (typeof instance.getTitle === 'function') {
         this.data.statement.object.definition.name = {
-          "en-US": instance.getTitle()
+          'en-US': instance.getTitle(),
         };
       }
-    }
-    else {
+    } else {
       var content = H5P.getContentForInstance(instance.contentId);
       if (content && content.metadata && content.metadata.title) {
         this.data.statement.object.definition.name = {
-          "en-US": H5P.createTitle(content.metadata.title)
+          'en-US': H5P.createTitle(content.metadata.title),
         };
       }
     }
-  }
-  else {
+  } else {
     // Content types view always expect to have a contentId when they are displayed.
     // This is not the case if they are displayed in the editor as part of a preview.
     // The fix is to set an empty object with definition for the xAPI event, so all
@@ -150,7 +144,7 @@ H5P.XAPIEvent.prototype.setObject = function (instance) {
     // but since there are no scripts that catch these events in the editor,
     // this is not a problem.
     this.data.statement.object = {
-      definition: {}
+      definition: {},
     };
   }
 };
@@ -161,28 +155,28 @@ H5P.XAPIEvent.prototype.setObject = function (instance) {
  * @param {Object} instance
  *   The H5P instance
  */
-H5P.XAPIEvent.prototype.setContext = function (instance) {
+H5P.XAPIEvent.prototype.setContext = function(instance) {
   if (instance.parent && (instance.parent.contentId || instance.parent.subContentId)) {
     this.data.statement.context = {
-      "contextActivities": {
-        "parent": [
+      'contextActivities': {
+        'parent': [
           {
-            "id": this.getContentXAPIId(instance.parent),
-            "objectType": "Activity"
-          }
-        ]
-      }
+            'id': this.getContentXAPIId(instance.parent),
+            'objectType': 'Activity',
+          },
+        ],
+      },
     };
   }
   if (instance.libraryInfo) {
     if (this.data.statement.context === undefined) {
-      this.data.statement.context = {"contextActivities":{}};
+      this.data.statement.context = { 'contextActivities': {} };
     }
     this.data.statement.context.contextActivities.category = [
       {
-        "id": "http://h5p.org/libraries/" + instance.libraryInfo.versionedNameNoSpaces,
-        "objectType": "Activity"
-      }
+        'id': 'http://h5p.org/libraries/' + instance.libraryInfo.versionedNameNoSpaces,
+        'objectType': 'Activity',
+      },
     ];
   }
 };
@@ -190,35 +184,32 @@ H5P.XAPIEvent.prototype.setContext = function (instance) {
 /**
  * Set the actor. Email and name will be added automatically.
  */
-H5P.XAPIEvent.prototype.setActor = function () {
+H5P.XAPIEvent.prototype.setActor = function() {
   if (H5PIntegration.user !== undefined) {
     this.data.statement.actor = {
       'name': H5PIntegration.user.name,
       'mbox': 'mailto:' + H5PIntegration.user.mail,
-      'objectType': 'Agent'
+      'objectType': 'Agent',
     };
-  }
-  else {
+  } else {
     var uuid;
     try {
       if (localStorage.H5PUserUUID) {
         uuid = localStorage.H5PUserUUID;
-      }
-      else {
+      } else {
         uuid = H5P.createUUID();
         localStorage.H5PUserUUID = uuid;
       }
-    }
-    catch (err) {
-      // LocalStorage and Cookies are probably disabled. Do not track the user.
+    } catch (err) {
+      // LocalStorage and Cookies are probably disabled. Do not track the userH5P.
       uuid = 'not-trackable-' + H5P.createUUID();
     }
     this.data.statement.actor = {
       'account': {
         'name': uuid,
-        'homePage': H5PIntegration.siteUrl
+        'homePage': H5PIntegration.siteUrl,
       },
-      'objectType': 'Agent'
+      'objectType': 'Agent',
     };
   }
 };
@@ -229,7 +220,7 @@ H5P.XAPIEvent.prototype.setActor = function () {
  * @returns {number}
  *   The max score, or null if not defined
  */
-H5P.XAPIEvent.prototype.getMaxScore = function () {
+H5P.XAPIEvent.prototype.getMaxScore = function() {
   return this.getVerifiedStatementValue(['result', 'score', 'max']);
 };
 
@@ -239,7 +230,7 @@ H5P.XAPIEvent.prototype.getMaxScore = function () {
  * @returns {number}
  *   The score, or null if not defined
  */
-H5P.XAPIEvent.prototype.getScore = function () {
+H5P.XAPIEvent.prototype.getScore = function() {
   return this.getVerifiedStatementValue(['result', 'score', 'raw']);
 };
 
@@ -249,12 +240,12 @@ H5P.XAPIEvent.prototype.getScore = function () {
  * @param {Object} instance
  *   The H5P instance
  */
-H5P.XAPIEvent.prototype.getContentXAPIId = function (instance) {
+H5P.XAPIEvent.prototype.getContentXAPIId = function(instance) {
   var xAPIId;
   if (instance.contentId && H5PIntegration && H5PIntegration.contents && H5PIntegration.contents['cid-' + instance.contentId]) {
-    xAPIId =  H5PIntegration.contents['cid-' + instance.contentId].url;
+    xAPIId = H5PIntegration.contents['cid-' + instance.contentId].url;
     if (instance.subContentId) {
-      xAPIId += '?subContentId=' +  instance.subContentId;
+      xAPIId += '?subContentId=' + instance.subContentId;
     }
   }
   return xAPIId;
@@ -265,7 +256,7 @@ H5P.XAPIEvent.prototype.getContentXAPIId = function (instance) {
  *
  * @return {Boolean}
  */
-H5P.XAPIEvent.prototype.isFromChild = function () {
+H5P.XAPIEvent.prototype.isFromChild = function() {
   var parentId = this.getVerifiedStatementValue(['context', 'contextActivities', 'parent', 0, 'id']);
   return !parentId || parentId.indexOf('subContentId') === -1;
 };
@@ -279,7 +270,7 @@ H5P.XAPIEvent.prototype.isFromChild = function () {
  * @returns {*}
  *   The value of the property if it is set, null otherwise.
  */
-H5P.XAPIEvent.prototype.getVerifiedStatementValue = function (keys) {
+H5P.XAPIEvent.prototype.getVerifiedStatementValue = function(keys) {
   var val = this.data.statement;
   for (var i = 0; i < keys.length; i++) {
     if (val[keys[i]] === undefined) {
@@ -327,5 +318,5 @@ H5P.XAPIEvent.allowedXAPIVerbs = [
   'copied',
   'accessed-reuse',
   'accessed-embed',
-  'accessed-copyright'
+  'accessed-copyright',
 ];

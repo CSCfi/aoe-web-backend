@@ -1,3 +1,4 @@
+import config from '@/config';
 import { scheduleJob } from 'node-schedule';
 import { updateEsDocument } from '@search/es';
 import { rmDir } from '@/helpers/fileRemover';
@@ -12,9 +13,9 @@ export const startScheduledCleaning = (): void => {
     // Remove temporary content from the resource directories (H5P, HTML).
     try {
       rmDir(process.env.HTML_FOLDER, false);
-      rmDir(process.env.H5PFOLDER + '/content', false);
-      rmDir(process.env.H5PFOLDER + '/libraries', false);
-      rmDir(process.env.H5PFOLDER + '/temporary-storage', false);
+      rmDir(config.MEDIA_FILE_PROCESS.h5pPathContent, false);
+      rmDir(config.MEDIA_FILE_PROCESS.h5pPathLibraries, false);
+      rmDir(config.MEDIA_FILE_PROCESS.h5pPathTemporaryStorage, false);
       winstonLogger.debug('Scheduled removal for temporary H5P and HTML content completed.');
     } catch (error) {
       winstonLogger.error('Scheduled removal for temporary H5P and HTML content failed: %o', error);

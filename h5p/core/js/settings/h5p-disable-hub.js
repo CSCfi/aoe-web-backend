@@ -16,12 +16,12 @@
  *
  */
 /**
- * Utility that makes it possible to force the user to confirm that he really
+ * Utility that makes it possible to force the userH5P to confirm that he really
  * wants to use the H5P hub without proper server settings.
  */
-(function ($) {
+(function($) {
 
-  $(document).on('ready', function () {
+  $(document).on('ready', function() {
 
     // No data found
     if (!H5PDisableHubData) {
@@ -47,19 +47,19 @@
       headerText: H5PDisableHubData.header,
       dialogText: dialogHtml,
       cancelText: H5PDisableHubData.cancelLabel,
-      confirmText: H5PDisableHubData.confirmLabel
+      confirmText: H5PDisableHubData.confirmLabel,
     }).appendTo($(H5PDisableHubData.overlaySelector).get(0));
 
-    confirmationDialog.on('confirmed', function () {
+    confirmationDialog.on('confirmed', function() {
       enableButton.get(0).checked = true;
     });
 
-    confirmationDialog.on('canceled', function () {
+    confirmationDialog.on('canceled', function() {
       enableButton.get(0).checked = false;
     });
 
     var enableButton = $(H5PDisableHubData.selector);
-    enableButton.change(function () {
+    enableButton.change(function() {
       if ($(this).is(':checked')) {
         confirmationDialog.show(enableButton.offset().top);
       }

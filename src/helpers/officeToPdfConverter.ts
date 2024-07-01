@@ -129,7 +129,7 @@ export const downloadPdfFromAllas = async (req: Request, res: Response, next: Ne
 //         const folderpath = process.env.HTML_FOLDER + "/" + req.params.key;
 //         const filename = req.params.key.substring(0, req.params.key.lastIndexOf(".")) + ".pdf";
 //         winstonLogger.debug("filename: " + filename);
-//         const stream = await readStreamFromStorage(params);
+//         const stream = await directoryDownloadFromStorage(params);
 //         stream.on("error", function(e) {
 //             winstonLogger.error(e);
 //             next(new ErrorHandler(e.statusCode, e.message || "Error in download"));

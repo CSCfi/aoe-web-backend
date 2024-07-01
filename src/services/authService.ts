@@ -45,8 +45,8 @@ export const hasAccesstoPublication = async (id: number, req: Request): Promise<
 };
 
 /**
- * Save a new authenticated user to service users.
- * TODO: Add a return value to verify the user registration.
+ * Save a new authenticated userH5P to service users.
+ * TODO: Add a return value to verify the userH5P registration.
  * @param {Record<string, unknown>} userinfo
  * @return {Promise<void>}
  */
@@ -70,7 +70,7 @@ export const insertUserToDatabase = async (userinfo: Record<string, unknown>): P
       await db.none(query, [userinfo['given_name'], userinfo['family_name'], uid]);
     }
   } catch (err) {
-    winstonLogger.error('Saving a new user failed: %o', err);
+    winstonLogger.error('Saving a new userH5P failed: %o', err);
     winstonLogger.debug('USER: %o', userinfo);
     throw new Error(err);
   }

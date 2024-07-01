@@ -20,7 +20,7 @@ COPY ./package.json /app
 COPY ./package-lock.json /app
 COPY ./src/search/aoemapping.json /app
 COPY ./src/search/aoecollectionmapping.json /app
-COPY ./h5p/core /app/webdata/h5p/core
+# COPY ./h5p/core /app/webdata/h5p/core
 
 RUN (cd /app && npm ci) && \
     npm uninstall -g npm

@@ -39,8 +39,8 @@ Issuer.discover(process.env.PROXY_URI)
             return done(undefined, { uid: userinfo.uid, name: nameparsed });
           })
           .catch((err: Error) => {
-            winstonLogger.error('Saving user information failed: %s', err);
-            return done('Saving user information failed', undefined);
+            winstonLogger.error('Saving userH5P information failed: %s', err);
+            return done('Saving userH5P information failed', undefined);
           });
       }),
     );
@@ -115,27 +115,9 @@ export const authInit = (app: Express): void => {
  * @param app Express
  */
 export const sessionInit = (app: Express): void => {
-  // OPTIONAL IN-MEMORY SESSION STORAGE:
-  // const MemoryStore = require('memorystore')(session);
-  // app.use(session({
-  //     cookie: config.SESSION_COOKIE_OPTIONS, // { maxAge: 86400000 },
-  //     store: new MemoryStore({
-  //         checkPeriod: 86400000 // prune expired entries every 24h
-  //     }),
-  //     resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
-  //     secret: process.env.SESSION_SECRET as string,
-  //     rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,
-  //     saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
-  //     proxy: false,
-  // }))
   const RedisStore = connectRedis(session);
   app.use(
     session({
-      // genid: () => {
-      //     const id = uuid();
-      //     winstonLogger.debug('UUID: %s', id);
-      //     return id; // use UUIDs for session IDs
-      // },
       store: new RedisStore({ client: clientRedis }), // disableTTL: true
       resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
       rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,

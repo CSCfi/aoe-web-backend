@@ -17,7 +17,7 @@ export default (router: Router): void => {
   // TODO: Add regex validation
   router.get('/download/:filename', downloadPreviewFile);
 
-  // Single file download and save to user's workstation.
+  // Single file download and save to userH5P's workstation.
   router.get(
     '/download/file/:filename',
     downloadFile,

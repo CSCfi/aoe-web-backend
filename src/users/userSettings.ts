@@ -30,7 +30,7 @@ export async function updateUserSettings(req: Request, res: Response, next: Next
     return res.status(200).json({ status: 'ok' });
   } catch (error) {
     winstonLogger.error(error);
-    next(new ErrorHandler(500, 'Issue updating user settings'));
+    next(new ErrorHandler(500, 'Issue updating userH5P settings'));
   }
 }
 

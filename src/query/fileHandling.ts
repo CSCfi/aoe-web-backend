@@ -1,3 +1,4 @@
+import config from '@/config';
 import {
   EducationalMaterial,
   Material,
@@ -15,7 +16,7 @@ import { requestRedirected } from '@services/streamingService';
 import winstonLogger from '@util/winstonLogger';
 import ADMzip from 'adm-zip';
 import { EntryData } from 'archiver';
-import AWS, { S3 } from 'aws-sdk';
+import AWS, { AWSError, S3 } from 'aws-sdk';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { NextFunction, Request, Response } from 'express';
@@ -27,23 +28,22 @@ import { ColumnSet } from 'pg-promise';
 import s3Zip, { ArchiveOptions } from 's3-zip';
 import { Error, Transaction } from 'sequelize';
 import stream, { PassThrough, Readable } from 'stream';
-import config from '@/config';
+import { promisify } from 'node:util';
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import MulterFile = Express.Multer.File;
 import SendData = ManagedUpload.SendData;
 
-// TODO: Remove legacy dependencies
-// import { ReadStream } from "fs";
-// const AWS = require("aws-sdk");
-// const s3Zip = require("s3-zip");
-// const globalLog = require("global-request-logger");
-// globalLog.initialize();
-// const ADMzip = require("adm-zip");
-// const fs = require("fs");
-// const path = require("path");
-// const contentDisposition = require("content-disposition");
-// const multer = require("multer");
+// AWS and S3 configurations.
+const configAWS: ServiceConfigurationOptions = {
+  credentials: {
+    accessKeyId: process.env.CLOUD_STORAGE_ACCESS_KEY,
+    secretAccessKey: process.env.CLOUD_STORAGE_ACCESS_SECRET,
+  },
+  endpoint: process.env.CLOUD_STORAGE_API,
+  region: process.env.CLOUD_STORAGE_REGION,
+};
+AWS.config.update(configAWS);
 
 // define multer storage
 const storage: StorageEngine = multer.diskStorage({
@@ -1179,7 +1179,7 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
     await downloadFileFromStorage(req, res, next);
     //if (!data) return res.end();
 
-    // Increase download counter unless the user is the owner of the material.
+    // Increase download counter unless the userH5P is the owner of the material.
     if (!req.isAuthenticated() || !(await hasAccesstoPublication(educationalmaterialId, req))) {
       try {
         await updateDownloadCounter(educationalmaterialId.toString());
@@ -1259,76 +1259,109 @@ export const downloadFileFromStorage = async (
 };
 
 /**
- * @param params
- * readstream from allas. params object: bucket name and allas filekey
+ * Download a single file to a given directory.
+ * Wait for download to complete before resolving the promise function.
+ * @param {{Bucket: string, Key: string}} paramsS3
+ * @param {string} targetPath
+ * @return {Promise<void>}
  */
-export async function readStreamFromStorage(params: { Bucket: string; Key: string }): Promise<any> {
-  try {
-    const config = {
-      accessKeyId: process.env.CLOUD_STORAGE_ACCESS_KEY,
-      secretAccessKey: process.env.CLOUD_STORAGE_ACCESS_SECRET,
-      endpoint: process.env.CLOUD_STORAGE_API,
-      region: process.env.CLOUD_STORAGE_REGION,
-    };
-    AWS.config.update(config);
-    const s3 = new AWS.S3();
-    winstonLogger.debug('Returning stream');
-    return s3.getObject(params).createReadStream();
-  } catch (err) {
-    winstonLogger.debug('throw readStreamFromStorage error');
-    throw err;
-  }
-}
+export const directoryDownloadFromStorage = async (
+  paramsS3: {
+    Bucket: string;
+    Key: string;
+  },
+  targetPath: string,
+): Promise<void> => {
+  const s3: S3 = new AWS.S3();
+  const streamS3: Readable = s3
+    .getObject(paramsS3)
+    .createReadStream()
+    .once('error', (err: AWSError): void => {
+      if (err.name === 'NoSuchKey') {
+        winstonLogger.debug('S3 requested key [%s] not found.', paramsS3.Key);
+        return;
+      } else if (err.name === 'TimeoutError') {
+        winstonLogger.debug('S3 connection closed by timeout event.');
+        return;
+      } else {
+        throw err;
+      }
+    });
+  const writeStream: WriteStream = fs.createWriteStream(targetPath);
+  const pipeline = promisify(stream.pipeline);
+  await pipeline(streamS3, writeStream);
+};
 
 /**
- * Download an original or compressed (zip) file from the cloud object storage.
- * In case of a download error try to download from the local backup directory.
+ * API function to download an original or compressed (zip) file from the cloud object storage.
  * @param req          express.Request
  * @param res          express.Response
  * @param next         express.NextFunction
- * @param s3params     GetRequestObject (aws-sdk/clients/s3)
+ * @param paramsS3     GetRequestObject (aws-sdk/clients/s3)
  * @param origFilename string Original file name without storage ID
  * @param isZip        boolean Indicator for the need of decompression
  */
-export const downloadFromStorage = async (
+export const downloadFromStorage = (
   req: Request,
   res: Response,
   next: NextFunction,
-  s3params: { Bucket: string; Key: string },
+  paramsS3: { Bucket: string; Key: string },
   origFilename: string,
   isZip?: boolean,
 ): Promise<any> => {
-  const configAWS: ServiceConfigurationOptions = {
-    credentials: {
-      accessKeyId: process.env.CLOUD_STORAGE_ACCESS_KEY,
-      secretAccessKey: process.env.CLOUD_STORAGE_ACCESS_SECRET,
-    },
-    endpoint: process.env.CLOUD_STORAGE_API,
-    region: process.env.CLOUD_STORAGE_REGION,
-  };
-  AWS.config.update(configAWS);
   const s3: S3 = new AWS.S3();
-  const key: string = s3params.Key;
-
+  const key: string = paramsS3.Key;
   return new Promise(async (resolve, reject): Promise<any> => {
     try {
-      const fileStream: Readable = s3.getObject(s3params).createReadStream();
+      const fileStream: Readable = s3
+        .getObject(paramsS3)
+        .on('error', (err: AWSError): void => {
+          throw err;
+        })
+        .createReadStream();
       if (isZip) {
         const folderpath = `${process.env.HTML_FOLDER}/${origFilename}`;
-        const zipStream: WriteStream = fileStream
-          .on('error', (err: Error): void => {
-            throw err;
+        fileStream
+          .once('error', (err: AWSError): void => {
+            if (err.name === 'NoSuchKey') {
+              winstonLogger.debug('Requested file %s not found.', origFilename);
+              res.status(404);
+              resolve(null);
+            } else if (err.name === 'TimeoutError') {
+              winstonLogger.debug('Connection closed by timeout event.');
+              res.end();
+              resolve(null);
+            } else {
+              winstonLogger.debug('S3 connection failed: %s.', JSON.stringify(err));
+              reject(err);
+              throw err;
+            }
           })
+          // Wait for 'finish' event for writable stream.
+          .once('finish', async (): Promise<any> => {
+            resolve(await unZipAndExtract(folderpath));
+          })
+          // Write the compressed file to the host directory.
           .pipe(fs.createWriteStream(folderpath));
-        zipStream.once('finish', async (): Promise<any> => {
-          resolve(await unZipAndExtract(folderpath));
-        });
       } else {
         res.attachment(origFilename || key);
         fileStream
-          .on('error', (err: Error): void => {
-            throw err;
+          .once('error', (err: AWSError): void => {
+            if (err.name === 'NoSuchKey') {
+              winstonLogger.debug('Requested file %s not found.', origFilename);
+              res.status(404);
+              resolve(null);
+            } else if (err.name === 'TimeoutError') {
+              winstonLogger.debug('Connection closed by timeout event.');
+              res.end();
+              resolve(null);
+            } else {
+              winstonLogger.debug('S3 connection failed: %s.', JSON.stringify(err));
+              reject(err);
+              throw err;
+            }
           })
+          // Wait for 'end' event for readable stream.
           .once('end', (): void => {
             resolve(null);
           })
@@ -1536,5 +1569,5 @@ export default {
   upsertMaterialDisplayName,
   upsertMaterialFileToTempRecords,
   downloadFromStorage,
-  readStreamFromStorage,
+  directoryDownloadFromStorage,
 };
