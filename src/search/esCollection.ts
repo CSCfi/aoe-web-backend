@@ -46,9 +46,6 @@ export async function collectionFromEs(obj: any) {
       'size': size,
       'body': body
     };
-
-    winstonLogger.debug('Elasticsearch query: ' + JSON.stringify(query));
-
     const result: ApiResponse<SearchResponse<AoeCollectionResult>> = await client.search(query);
     return await aoeCollectionResponseMapper(result);
   } catch (error) {

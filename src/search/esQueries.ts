@@ -209,9 +209,6 @@ export const elasticSearchQuery = async (req: Request, res: Response, next: Next
       'size': size,
       'body': body
     };
-
-    winstonLogger.info('Elasticsearch query: ' + JSON.stringify(query));
-
     const result: ApiResponse<SearchResponse<Source>> = await client.search(query);
     const responseBody: AoeBody<AoeResult> = await aoeResponseMapper(result);
     res.status(200).json(responseBody);
