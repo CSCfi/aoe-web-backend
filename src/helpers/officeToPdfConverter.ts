@@ -201,12 +201,12 @@ export const convertOfficeFileToPDF = (filepath: string, filename: string): Prom
 export const scheduledConvertAndUpstreamOfficeFilesToCloudStorage = async (): Promise<void> => {
   try {
     // Fetch the office files without a PDF conversion.
-    const files = await getOfficeFiles();
+    const files = await getFilesWithoutPDF();
 
     for (let index = 0; index < files.length; index++) {
       const file = files[index];
 
-      if (isOfficeMimeType(file.mimetype) && !file.pdfkey) {
+      if (isOfficeMimeType(file.mimetype)) {
         const pdfKey: string = file.filekey.substring(0, file.filekey.lastIndexOf('.')) + '.pdf';
         downstreamAndConvertOfficeFileToPDF(file.filekey).then((path: string) => {
           uploadFileToStorage(path, pdfKey, config.CLOUD_STORAGE_CONFIG.bucketPDF).then((obj: any) => {
@@ -220,19 +220,20 @@ export const scheduledConvertAndUpstreamOfficeFilesToCloudStorage = async (): Pr
   }
 };
 
-export const getOfficeFiles = async (): Promise<any> => {
+export const getFilesWithoutPDF = async (): Promise<any> => {
   try {
     return await db.task(async (t: any) => {
       const query = `
         SELECT id, filepath, mimetype, filekey, filebucket, pdfkey
         FROM record
+        WHERE filekey IS NOT NULL AND pdfkey IS NULL
         ORDER BY id
       `;
       return await t.any(query);
     });
-  } catch (err) {
-    winstonLogger.error('Fetching office files without PDFs failed.');
-    throw new Error(err);
+  } catch (err: unknown) {
+    winstonLogger.error('Fetching files without PDFs failed: %o', err);
+    throw err;
   }
 };
 
