@@ -3,6 +3,7 @@ import { downloadFromStorage, uploadFileToStorage } from '@query/fileHandling';
 import { s3 } from '@resource/awsClient';
 import { db } from '@resource/postgresClient';
 import winstonLogger from '@util/winstonLogger';
+import { AWSError } from 'aws-sdk';
 import { NextFunction, Request, Response } from 'express';
 import fs, { WriteStream } from 'fs';
 import fsPromise from 'fs/promises';
@@ -254,7 +255,20 @@ export const downstreamAndConvertOfficeFileToPDF = (key: string): Promise<string
       .createReadStream();
     const ws: WriteStream = fs
       .createWriteStream(folderpath)
-      .on('close', async (): Promise<void> => {
+      .once('error', (err: AWSError): void => {
+        if (err.name === 'NoSuchKey') {
+          winstonLogger.debug('Requested file [%s] not found.', key);
+          resolve(null);
+        } else if (err.name === 'TimeoutError') {
+          winstonLogger.debug('Connection closed by timeout event.');
+          resolve(null);
+        } else {
+          winstonLogger.debug('S3 connection failed: %s.', JSON.stringify(err));
+          reject(err);
+          throw err;
+        }
+      })
+      .once('close', async (): Promise<void> => {
         try {
           const path: string = await convertOfficeFileToPDF(folderpath, filename);
           return resolve(path);
@@ -262,9 +276,6 @@ export const downstreamAndConvertOfficeFileToPDF = (key: string): Promise<string
           winstonLogger.error('Error catch when trying to convertOfficeFileToPDF()');
           return reject(e);
         }
-      })
-      .on('error', (err: Error): void => {
-        reject(err);
       });
     stream
       .on('error', (err): void => {
