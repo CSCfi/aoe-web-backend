@@ -22,13 +22,13 @@ import { ServiceConfigurationOptions } from 'aws-sdk/lib/service';
 import { NextFunction, Request, Response } from 'express';
 import fs, { WriteStream } from 'fs';
 import multer, { DiskStorageOptions, Multer, StorageEngine } from 'multer';
+import { promisify } from 'node:util';
 import path from 'path';
 import pdfParser from 'pdf-parse';
 import { ColumnSet } from 'pg-promise';
 import s3Zip, { ArchiveOptions } from 's3-zip';
 import { Error, Transaction } from 'sequelize';
 import stream, { PassThrough, Readable } from 'stream';
-import { promisify } from 'node:util';
 import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import MulterFile = Express.Multer.File;
@@ -1313,12 +1313,7 @@ export const downloadFromStorage = (
   const key: string = paramsS3.Key;
   return new Promise(async (resolve, reject): Promise<any> => {
     try {
-      const fileStream: Readable = s3
-        .getObject(paramsS3)
-        .on('error', (err: AWSError): void => {
-          throw err;
-        })
-        .createReadStream();
+      const fileStream: Readable = s3.getObject(paramsS3).createReadStream();
       if (isZip) {
         const folderpath = `${process.env.HTML_FOLDER}/${origFilename}`;
         fileStream
