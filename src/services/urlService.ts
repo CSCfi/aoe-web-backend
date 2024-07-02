@@ -1,3 +1,5 @@
+import config from '@/config';
+
 export async function aoeFileDownloadUrl(key: string) {
   return !key ? undefined : process.env.FILE_DOWNLOAD_URL + key;
 }
@@ -11,7 +13,7 @@ export async function aoeCollectionThumbnailDownloadUrl(id: string) {
 }
 
 export async function aoePdfDownloadUrl(key: string) {
-  return !key ? undefined : process.env.OFFICE_TO_PDF_URL + key;
+  return !key ? undefined : config.MEDIA_FILE_PROCESS.conversionToPdfApi + key;
 }
 
 export const getEduMaterialVersionURL = async (id: string, date: string): Promise<string | undefined> => {

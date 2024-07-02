@@ -332,7 +332,8 @@ export const getEducationalMaterialMetadata = async (
           jsonObj.materials[i]['pdfkey'] &&
           isOfficeMimeType(jsonObj.materials[i]['mimetype'])
         ) {
-          jsonObj.materials[i]['filepath'] = process.env.OFFICE_TO_PDF_URL + jsonObj.materials[i]['pdfkey'];
+          jsonObj.materials[i]['filepath'] =
+            config.MEDIA_FILE_PROCESS.conversionToPdfApi + jsonObj.materials[i]['pdfkey'];
         } else if (
           jsonObj.materials[i] &&
           (jsonObj.materials[i]['mimetype'] === 'application/zip' ||
