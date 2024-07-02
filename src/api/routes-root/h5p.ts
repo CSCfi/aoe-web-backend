@@ -1,4 +1,4 @@
-import { downloadAndRenderH5P, user } from '@services/h5pService';
+import { downloadAndRenderH5P } from '@services/h5pService';
 import { Router } from 'express';
 import { Request, Response } from 'express';
 

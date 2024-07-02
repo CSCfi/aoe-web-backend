@@ -29,7 +29,7 @@ export const initializeH5P = async (): Promise<void> => {
   try {
     h5pConfig = new H5PConfig(
       new fsImplementations.JsonStorage(path.resolve(config.MEDIA_FILE_PROCESS.h5pJsonConfiguration)),
-    ); // 'dist/services/config/h5p.json'
+    );
     await h5pConfig.load();
     h5pEditor = fs(
       h5pConfig,
@@ -44,7 +44,7 @@ export const initializeH5P = async (): Promise<void> => {
 };
 
 // Anonymous user applied for unauthenticated client users.
-export const user: IUser = {
+export const userH5P: IUser = {
   email: config.MEDIA_FILE_PROCESS.h5pUserEmail,
   id: 'anonymous',
   name: 'anonymous',
@@ -77,11 +77,11 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
       installedLibraries: ILibraryInstallResult[];
       metadata?: IContentMetadata;
       parameters?: any;
-    } = await h5pEditor.uploadPackage(buffer, user, options);
+    } = await h5pEditor.uploadPackage(buffer, userH5P, options);
 
     // Update H5P application with the metadata and return a content ID.
     let mainlib: ILibraryName;
-    for (const lib of result.metadata.preloadedDependencies) {
+    for (const lib of result.metadata.preloadedDependencies as ILibraryName[]) {
       if (lib.machineName == result.metadata.mainLibrary) {
         mainlib = lib;
       }
@@ -91,21 +91,21 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
       result.parameters,
       result.metadata,
       LibraryName.toUberName(mainlib, { useWhitespace: true }),
-      user,
+      userH5P,
     );
 
-    // Delete the downloaded H5P archive file in HTML directory.
-    fsNode.unlink(targetPath, (err: unknown): void => {
-      if (err) {
-        winstonLogger.error('Deleting the H5P archive file failed: %o', err);
-      }
-    });
-
     // Render HTML content of the application.
-    const htmlH5P: string = await h5pPlayer.render(savedContentId, user, 'en', { ignoreUserPermissions: true });
+    const htmlH5P: string = await h5pPlayer.render(savedContentId, userH5P, 'en', { ignoreUserPermissions: true });
     res.status(200).send(htmlH5P).end();
   } catch (err: unknown) {
     winstonLogger.error('Processing or rendering H5P failed: %o', err);
     throw err;
   }
+
+  // Delete the downloaded H5P archive file in HTML directory.
+  fsNode.unlink(targetPath, (err: unknown): void => {
+    if (err) {
+      winstonLogger.error('Deleting the H5P archive file failed: %o', err);
+    }
+  });
 };
