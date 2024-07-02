@@ -1,3 +1,6 @@
+import config from '@/config';
+import { sequelize } from '@/domain/aoeModels';
+import { handleError } from '@/helpers/errorHandler';
 import apiRoot from '@api/routes-root';
 import apiV1 from '@api/routes-v1';
 import apiV2 from '@api/routes-v2';
@@ -10,16 +13,16 @@ import winstonLogger from '@util/winstonLogger';
 import bodyParser from 'body-parser';
 import compression from 'compression';
 import flash from 'connect-flash';
-import cors from 'cors';
-import express, { NextFunction, Request, Response, Router } from 'express';
-import session from 'express-session';
+import cors, { CorsOptions } from 'cors';
+import express, { Express, NextFunction, Request, Response, Router } from 'express';
+import session, { SessionOptions } from 'express-session';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import lusca from 'lusca';
-import config from './config';
-import { sequelize } from './domain/aoeModels';
-import { handleError } from './helpers/errorHandler';
+import memorystore from 'memorystore';
 
-const app = express();
+const app: Express = express();
+const MemoryStore = memorystore(session);
+
 app.disable('x-powered-by');
 
 // Load API root modules
@@ -43,23 +46,24 @@ if (['development', 'localhost'].includes(process.env.NODE_ENV as string)) {
     res.header('Referrer-Policy', 'no-referrer');
     next();
   });
-  const corsOptions = {
-    allowedHeaders: ['Accept', 'Authorization', 'Content-Type', 'Origin', 'Range', 'X-Requested-With'],
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
-    optionsSuccessStatus: 204,
-    origin: true,
-  };
-  app.use(cors(corsOptions));
+  app.use(
+    cors({
+      allowedHeaders: ['Accept', 'Authorization', 'Content-Type', 'Origin', 'Range', 'X-Requested-With'],
+      credentials: true,
+      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+      optionsSuccessStatus: 204,
+      origin: true,
+    } as CorsOptions),
+  );
 }
 
 app.use(compression());
 app.use(flash());
 app.use(morganLogger);
 
-// Add a development helper module (dev.ts) to the application if available.
 if (process.env.NODE_ENV === 'localhost') {
   try {
+    // Add a development helper module (dev.ts).
     require('./dev').devHelper(app);
   } catch (error) {
     winstonLogger.debug('Development helper module (dev.ts) not available.');
@@ -69,10 +73,11 @@ if (process.env.NODE_ENV === 'localhost') {
 // Initialize session management and OIDC authorization
 app.use(
   session({
-    secret: config.SESSION_CONFIG_OPTIONS.secret as string,
     resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
     saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
-  }),
+    secret: config.SESSION_CONFIG_OPTIONS.secret as string,
+    store: new MemoryStore({ checkPeriod: 86400000 }), // Prune expired entries every 24h
+  } as SessionOptions),
 );
 oidc.sessionInit(app);
 oidc.authInit(app);

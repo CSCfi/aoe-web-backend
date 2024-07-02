@@ -1,7 +1,7 @@
-import redis, { createClient } from 'redis';
-import winstonLogger from '@util/winstonLogger';
 import config from '@/config';
 import { RedisClientOptions } from '@redis/client';
+import winstonLogger from '@util/winstonLogger';
+import { createClient } from 'redis';
 
 const redisHost: string = config.REDIS_OPTIONS.host;
 const redisPort: number = config.REDIS_OPTIONS.port;

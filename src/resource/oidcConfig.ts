@@ -1,14 +1,13 @@
-import ah from '@services/authService';
-import connectRedis from 'connect-redis';
 import config from '@/config';
-import { CookieOptions, Express, Request, Response } from 'express';
-import session, { Cookie } from 'express-session';
-import openidClient, { custom, HttpOptions } from 'openid-client';
-import passport from 'passport';
-import clientRedis from './redisClient';
+import ah from '@services/authService';
 import { isLoginEnabled } from '@services/routeEnablerService';
 import winstonLogger from '@util/winstonLogger';
-// import uuid from 'uuid/v4';
+import connectRedis, { RedisStore } from 'connect-redis';
+import { CookieOptions, Express, Request, Response } from 'express';
+import session, { Cookie, SessionOptions } from 'express-session';
+import openidClient, { Client, custom, HttpOptions } from 'openid-client';
+import passport from 'passport';
+import clientRedis from './redisClient';
 
 const Issuer = openidClient.Issuer;
 const Strategy = openidClient.Strategy;
@@ -16,15 +15,15 @@ const Strategy = openidClient.Strategy;
 /**
  * Configuration for OpenID Connect Authorization Management
  */
-passport.serializeUser((user, done) => {
+passport.serializeUser((user: Express.User, done): void => {
   done(undefined, user);
 });
-passport.deserializeUser((userinfo: Record<string, unknown>, done) => {
+passport.deserializeUser((userinfo: Record<string, unknown>, done): void => {
   done(undefined, { user: userinfo.id });
 });
 Issuer.discover(process.env.PROXY_URI)
-  .then((oidcIssuer: InstanceType<typeof Issuer>) => {
-    const client = new oidcIssuer.Client({
+  .then((oidcIssuer: InstanceType<typeof Issuer>): void => {
+    const client: Client = new oidcIssuer.Client({
       client_id: process.env.CLIENT_ID,
       client_secret: process.env.CLIENT_SECRET,
       redirect_uri: process.env.REDIRECT_URI,
@@ -32,10 +31,10 @@ Issuer.discover(process.env.PROXY_URI)
     });
     passport.use(
       'oidc',
-      new Strategy({ client }, (_tokenset: any, userinfo: Record<string, unknown>, done: any) => {
+      new Strategy({ client }, (_tokenset: any, userinfo: Record<string, unknown>, done: any): void => {
         ah.insertUserToDatabase(userinfo)
           .then(() => {
-            const nameparsed = userinfo.given_name + ' ' + userinfo.family_name;
+            const nameparsed: string = userinfo.given_name + ' ' + userinfo.family_name;
             return done(undefined, { uid: userinfo.uid, name: nameparsed });
           })
           .catch((err: Error) => {
@@ -45,7 +44,7 @@ Issuer.discover(process.env.PROXY_URI)
       }),
     );
   })
-  .catch((error: any) => {
+  .catch((error: any): void => {
     winstonLogger.error(error);
   });
 
@@ -54,12 +53,11 @@ Issuer.discover(process.env.PROXY_URI)
  * @param app Express
  */
 export const authInit = (app: Express): void => {
-  const httpOptions: HttpOptions = {
+  custom.setHttpOptionsDefaults({
     timeout: Number(process.env.HTTP_OPTIONS_TIMEOUT) || 5000,
     retry: Number(process.env.HTTP_OPTIONS_RETRY) || 2,
     // clock_tolerance: Number(process.env.HTTP_OPTIONS_CLOCK_TOLERANCE) || 5,
-  };
-  custom.setHttpOptionsDefaults(httpOptions);
+  } as HttpOptions);
 
   app.use(passport.initialize());
   app.use(passport.session());
@@ -76,7 +74,7 @@ export const authInit = (app: Express): void => {
     }),
   );
 
-  app.post('/api/logout', (req: Request, res: Response) => {
+  app.post('/api/logout', (req: Request, res: Response): void => {
     const cookieRef: Cookie = req.session.cookie;
     const deleteCookie: CookieOptions = {
       maxAge: -1,
@@ -89,7 +87,7 @@ export const authInit = (app: Express): void => {
       sameSite: cookieRef.sameSite,
     };
     req.logout((done) => done());
-    req.session.destroy((error) => {
+    req.session.destroy((error): void => {
       winstonLogger.debug('Logout request /logout | session termination errors: %o', error);
       // res.setHeader('Cache-Control', 'no-store');
       res.clearCookie('connect.sid', deleteCookie);
@@ -111,21 +109,20 @@ export const authInit = (app: Express): void => {
 
 /**
  * Initialize session and cookie management with Redis storage.
- *
  * @param app Express
  */
 export const sessionInit = (app: Express): void => {
-  const RedisStore = connectRedis(session);
+  const RedisStore: RedisStore = connectRedis(session);
   app.use(
     session({
       store: new RedisStore({ client: clientRedis }), // disableTTL: true
       resave: config.SESSION_CONFIG_OPTIONS.resave as boolean,
       rolling: config.SESSION_CONFIG_OPTIONS.rolling as boolean,
       saveUninitialized: config.SESSION_CONFIG_OPTIONS.saveUninitialized as boolean,
-      secret: process.env.SESSION_SECRET as string,
+      secret: config.SESSION_CONFIG_OPTIONS.secret as string,
       proxy: config.SESSION_CONFIG_OPTIONS.proxy,
       cookie: config.SESSION_COOKIE_OPTIONS,
-    }),
+    } as SessionOptions),
   );
 };
 
