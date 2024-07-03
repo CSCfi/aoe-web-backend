@@ -1,7 +1,6 @@
-import { AlignmentObject, MetadataResponse } from '@aoe/util/metadataModifier';
+import { MetadataResponse } from '@aoe/util/metadataModifier';
 import { db } from '@resource/postgresClient';
 import { aoeFileDownloadUrl, aoePdfDownloadUrl, aoeThumbnailDownloadUrl } from '@services/urlService';
-import { modifyEducationalSubjectAndObjectiveURL } from '@util/metadataModifer';
 import winstonLogger from '@util/winstonLogger';
 import { Request, Response } from 'express';
 
@@ -13,6 +12,13 @@ import { Request, Response } from 'express';
  * @return {Promise<void>}
  */
 export const getMaterialMetaData = async (req: Request, res: Response): Promise<void> => {
+  winstonLogger.debug(
+    'OAI-PMH: dateMin=%s, dateMax=%s, materialPerPage=%d, pageNumber=%d',
+    req.body.dateMin,
+    req.body.dateMax,
+    req.body.materialPerPage,
+    req.body.pageNumber,
+  );
   if (!req.body.dateMin || !req.body.dateMax || req.body.materialPerPage < 1 || req.body.pageNumber < 0) {
     res
       .status(400)
@@ -55,12 +61,13 @@ export const getMaterialMetaData = async (req: Request, res: Response): Promise<
     LEFT JOIN record r ON m.id = r.materialid
     WHERE m.educationalmaterialid = $1 AND m.obsoleted = 0
   `;
-  const dateMin = req.body.dateMin;
-  const dateMax = req.body.dateMax;
-  const materialPerPage = req.body.materialPerPage;
-  const pageNumber = req.body.pageNumber;
+  const dateMin: string = req.body.dateMin;
+  const dateMax: string = req.body.dateMax;
+  const materialPerPage: number = req.body.materialPerPage;
+  const pageNumber: number = req.body.pageNumber;
   try {
-    const { completeListSize } = await db.oneOrNone(countQueryWithTimeRange, [dateMin, dateMax]);
+    const result = await db.oneOrNone(countQueryWithTimeRange, [dateMin, dateMax]);
+    const completeListSize: number = result ? parseInt(result.count, 10) : 0;
     const pageTotal: number = Math.ceil(completeListSize / materialPerPage);
 
     db.task(async (t: any): Promise<any> => {
@@ -130,11 +137,11 @@ export const getMaterialMetaData = async (req: Request, res: Response): Promise<
             query = 'SELECT * FROM alignmentobject WHERE educationalmaterialid = $1';
             response = await t.any(query, [q.id]);
             // TODO: Modify the target URLs before passing alignment objects to the response.
-            if (response) {
-              response.forEach((alignmentObject: AlignmentObject): void => {
-                alignmentObject.targeturl && modifyEducationalSubjectAndObjectiveURL(alignmentObject);
-              });
-            }
+            // if (response) {
+            //   response.forEach((alignmentObject: AlignmentObject): void => {
+            //     alignmentObject.targeturl && modifyEducationalSubjectAndObjectiveURL(alignmentObject);
+            //   });
+            // }
             q.alignmentobject = response;
 
             query = `
