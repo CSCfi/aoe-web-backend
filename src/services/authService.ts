@@ -163,7 +163,7 @@ export const hasAccessToAOE = async (req: Request, res: Response, next: NextFunc
       res.sendStatus(401).end();
       return;
     }
-    const result = await hasAoeAccess(req.session.passport.user.uid);
+    const result: boolean = await hasAoeAccess(req.session.passport.user.uid);
     if (!result) {
       res.sendStatus(401).end();
       return;

@@ -1,20 +1,38 @@
 import clientPostgres from '@resource/postgresClient';
+import { isEncoded } from '@util/requestValidator';
 import winstonLogger from '@util/winstonLogger';
 import { DataTypes, ModelAttributes, ModelOptions, Sequelize } from 'sequelize';
+import config from '@/config';
 
 export const sequelize: Sequelize = new Sequelize(clientPostgres.pgURL, {
   dialect: 'postgres',
-  logging: (sql: string) => {
-    winstonLogger.debug(sql);
-  },
+  logging:
+    config.APPLICATION_CONFIG.nodeEnv === 'production'
+      ? false
+      : (sql: string): void => {
+          winstonLogger.debug(sql);
+        },
 });
 
-const commonSettings = {
+export const commonSettings: ModelOptions = {
   freezeTableName: true,
   timestamps: false,
 };
 
-const EducationalMaterial = <EducationalMaterialType>sequelize.define(
+export const AOEUser = <AOEUserType>sequelize.define(
+  'aoeuser',
+  {
+    username: {
+      field: 'username',
+      type: DataTypes.STRING(255),
+      primaryKey: true,
+      allowNull: false,
+    },
+  } as ModelAttributes<AOEUser, unknown>,
+  commonSettings as ModelOptions,
+);
+
+export const EducationalMaterial = <EducationalMaterialType>sequelize.define(
   'educationalmaterial',
   {
     id: {
@@ -168,7 +186,7 @@ const EducationalMaterial = <EducationalMaterialType>sequelize.define(
   commonSettings as ModelOptions,
 );
 
-const Material = <MaterialType>sequelize.define(
+export const Material = <MaterialType>sequelize.define(
   'material',
   {
     id: {
@@ -212,7 +230,7 @@ const Material = <MaterialType>sequelize.define(
   commonSettings as ModelOptions,
 );
 
-const MaterialDisplayName = <MaterialDisplayNameType>sequelize.define(
+export const MaterialDisplayName = <MaterialDisplayNameType>sequelize.define(
   'materialdisplayname',
   {
     id: {
@@ -244,7 +262,79 @@ const MaterialDisplayName = <MaterialDisplayNameType>sequelize.define(
   commonSettings as ModelOptions,
 );
 
-const Record = <RecordType>sequelize.define(
+export const Notification = <NotificationType>sequelize.define(
+  'notification',
+  {
+    id: {
+      field: 'nf_id',
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    text: {
+      field: 'nf_text',
+      type: DataTypes.STRING(1500),
+      allowNull: false,
+    },
+    type: {
+      field: 'nf_type',
+      type: DataTypes.STRING,
+      validate: {
+        isIn: {
+          args: [['ERROR', 'INFO']],
+        },
+      },
+      allowNull: false,
+    },
+    createdAt: {
+      field: 'nf_created_at',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    showSince: {
+      field: 'nf_show_since',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    showUntil: {
+      field: 'nf_show_until',
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    disabled: {
+      field: 'nf_disabled',
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
+    username: {
+      field: 'nf_username',
+      type: DataTypes.STRING(255),
+      allowNull: false,
+      references: {
+        model: AOEUser,
+        key: 'username',
+      },
+      onUpdate: 'CASCADE',
+      onDelete: 'NO ACTION',
+    },
+  } as ModelAttributes<Notification, unknown>,
+  {
+    hooks: {
+      beforeCreate: (notification: Notification): void => {
+        if (!isEncoded(notification.text)) {
+          notification.text = encodeURIComponent(notification.text);
+        }
+      },
+      beforeValidate: (notification: Notification): void => {
+        notification.text = decodeURIComponent(notification.text);
+      },
+    },
+    ...commonSettings,
+  } as ModelOptions,
+  // commonSettings as ModelOptions,
+);
+
+export const Record = <RecordType>sequelize.define(
   'record',
   {
     id: {
@@ -265,7 +355,7 @@ const Record = <RecordType>sequelize.define(
     },
     fileSize: {
       field: 'filesize',
-      type: DataTypes.INTEGER,
+      type: DataTypes.BIGINT,
       allowNull: false,
     },
     mimeType: {
@@ -301,7 +391,7 @@ const Record = <RecordType>sequelize.define(
   commonSettings as ModelOptions,
 );
 
-const TemporaryRecord = <TemporaryRecordType>sequelize.define(
+export const TemporaryRecord = <TemporaryRecordType>sequelize.define(
   'temporaryrecord',
   {
     id: {
@@ -354,6 +444,14 @@ const TemporaryRecord = <TemporaryRecordType>sequelize.define(
   commonSettings as ModelOptions,
 );
 
+// AOEUser <=> Notification
+AOEUser.hasMany(Notification, {
+  foreignKey: 'username',
+});
+Notification.belongsTo(AOEUser, {
+  foreignKey: 'username',
+});
+
 // EducationalMaterial <=> Material
 EducationalMaterial.hasMany(Material, {
   foreignKey: 'educationalMaterialId',
@@ -371,5 +469,3 @@ Material.hasMany(MaterialDisplayName, {
 MaterialDisplayName.belongsTo(Material, {
   foreignKey: 'materialId',
 });
-
-export { EducationalMaterial, Material, MaterialDisplayName, Record, TemporaryRecord };

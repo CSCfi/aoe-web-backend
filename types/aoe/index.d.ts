@@ -5,6 +5,15 @@ import { BuildOptions, Model } from 'sequelize';
  * Data model structures of AOE domain are listed in alphabetical order below.
  */
 declare global {
+  // AOEUser
+  interface AOEUser extends Model {
+    username: string;
+  }
+
+  type AOEUserType = typeof Model & {
+    new (values?: Record<string, unknown>, options?: BuildOptions): AOEUser;
+  };
+
   // EducationalMaterial
   interface EducationalMaterial extends Model {
     // Removed extension IEducationalMaterial
@@ -42,6 +51,7 @@ declare global {
     // Reference Information
     materials?: Material[];
   }
+
   type EducationalMaterialType = typeof Model & {
     new (values?: Record<string, unknown>, options?: BuildOptions): EducationalMaterial;
   };
@@ -60,6 +70,7 @@ declare global {
     temporaryRecords?: TemporaryRecord[];
     // records: Record[];
   }
+
   type MaterialType = typeof Model & {
     new (values?: Record<string, unknown>, options?: BuildOptions): Material;
   };
@@ -71,8 +82,30 @@ declare global {
     language: string;
     materialId: string;
   }
+
   type MaterialDisplayNameType = typeof Model & {
     new (values?: Record<string, unknown>, options?: BuildOptions): MaterialDisplayName;
+  };
+
+  // Notification
+  enum NotificationEnum {
+    ERROR,
+    INFO,
+  }
+
+  interface Notification extends Model {
+    id?: number;
+    text: string;
+    type: NotificationEnum;
+    createdAt?: string;
+    showSince?: string;
+    showUntil?: string;
+    disabled?: boolean;
+    username?: string;
+  }
+
+  type NotificationType = typeof Model<Notification> & {
+    new (values?: Record<string, unknown>, options?: BuildOptions): Notification;
   };
 
   // Record
@@ -88,6 +121,7 @@ declare global {
     fileBucket?: string;
     pdfKey?: string;
   }
+
   type RecordType = typeof Model & {
     new (values?: Record<string, unknown>, options?: BuildOptions): IRecord;
   };
@@ -104,6 +138,7 @@ declare global {
     materialId: string;
     createdAt: Date;
   }
+
   type TemporaryRecordType = typeof Model & {
     new (values?: Record<string, unknown>, options?: BuildOptions): TemporaryRecord;
   };

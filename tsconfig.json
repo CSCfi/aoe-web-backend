@@ -15,6 +15,7 @@
       "@aoe/*": ["../types/aoe/*"],
       "@api/*": ["api/*"],
       "@config/*": ["config/*"],
+      "@domain/*": ["domain/*"],
       "@query/*": ["query/*"],
       "@resource/*": ["resource/*"],
       "@search/*": ["search/*"],
