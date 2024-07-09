@@ -1,8 +1,14 @@
 import { db } from '@resource/postgresClient';
 import winstonLogger from '@util/winstonLogger';
 import { NextFunction, Request, Response } from 'express';
-import { body, header, ValidationChain, validationResult } from 'express-validator';
+import { body, header, Result, ValidationChain, ValidationError, validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
+
+// DOMPurify hook to add opening and security attributes for links embedded in notifications.
+DOMPurify.addHook('afterSanitizeAttributes', (element: Element): void => {
+  if (element.tagName === 'A' && !element.hasAttribute('target')) element.setAttribute('target', '_blank');
+  if (element.tagName === 'A' && !element.hasAttribute('rel')) element.setAttribute('rel', 'noopener noreferrer');
+});
 
 export const addCollectionValidationRules = (): ValidationChain[] => {
   return [
@@ -78,12 +84,12 @@ export const removeCollectionValidationRules = (): ValidationChain[] => {
 };
 
 export const rulesValidate = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const errors = validationResult(req);
+  const errors: Result<ValidationError> = validationResult(req);
   if (errors.isEmpty()) {
     return next();
   }
-  const extractedErrors = [];
-  errors.array().map((err) => extractedErrors.push({ [err.param]: err.msg }));
+  const extractedErrors: any[] = [];
+  errors.array().map((err: ValidationError) => extractedErrors.push({ [err.param]: err.msg }));
   winstonLogger.debug('body: ', req.body, 'validation errors: ', extractedErrors);
   return res.status(422).send({
     errors: extractedErrors,
@@ -144,8 +150,8 @@ export const validateNotification = (): ValidationChain[] => {
       .customSanitizer((text: string) => {
         const decoded: string = isEncoded(text) ? decodeURIComponent(text) : text;
         return DOMPurify.sanitize(decoded, {
+          ALLOWED_ATTR: ['href', 'rel', 'target'],
           ALLOWED_TAGS: ['a', 'b', 'i'],
-          ALLOWED_ATTR: ['href', 'style', 'target'],
         });
       })
       .isLength({ max: 500, min: 1 })
@@ -168,7 +174,7 @@ export const validateNotificationUpdate = (): ValidationChain[] => {
       .customSanitizer((text: string) => {
         const decoded: string = isEncoded(text) ? decodeURIComponent(text) : text;
         return DOMPurify.sanitize(decoded, {
-          ALLOWED_ATTR: ['href', 'target'],
+          ALLOWED_ATTR: ['href', 'rel', 'target'],
           ALLOWED_TAGS: ['a', 'b', 'i'],
         });
       })
