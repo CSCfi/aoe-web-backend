@@ -27,7 +27,7 @@ export default (router: Router): void => {
       next();
     },
     (req: Request, res: Response, next: NextFunction): void => {
-      getScheduledNotifications(req, res).catch((err: Error): void => {
+      getScheduledNotifications(req, res).catch((err: unknown): void => {
         next(err);
       });
     },
@@ -44,7 +44,7 @@ export default (router: Router): void => {
       next();
     },
     (req: Request, res: Response, next: NextFunction): void => {
-      getScheduledNotificationsAll(req, res).catch((err: Error): void => {
+      getScheduledNotificationsAll(req, res).catch((err: unknown): void => {
         next(err);
       });
     },
@@ -63,7 +63,7 @@ export default (router: Router): void => {
     validateNotification(),
     requestErrorHandler,
     (req: Request, res: Response, next: NextFunction): void => {
-      setScheduledNotification(req, res).catch((err: Error): void => {
+      setScheduledNotification(req, res).catch((err: unknown): void => {
         next(err);
       });
     },

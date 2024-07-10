@@ -1,6 +1,6 @@
 # [AOE - Library of Open Educational Resources](https://github.com/CSCfi/aoe)
 
-## Service Component Links in GitHub (mirrored)
+## Service Component Links in GitHub (mirror)
 
 - [aoe-data-analytics](https://github.com/CSCfi/aoe-data-analytics)
 - [aoe-data-services](https://github.com/CSCfi/aoe-data-services)

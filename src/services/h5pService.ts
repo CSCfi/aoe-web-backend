@@ -1,12 +1,11 @@
 import config from '@/config';
+import { H5PUploadResult } from '@aoe/services/h5pService';
 import {
   fs,
   fsImplementations,
   H5PConfig,
   H5PEditor,
   H5PPlayer,
-  IContentMetadata,
-  ILibraryInstallResult,
   ILibraryName,
   IUser,
   LibraryName,
@@ -38,7 +37,7 @@ export const initializeH5P = async (): Promise<void> => {
       path.resolve(config.MEDIA_FILE_PROCESS.h5pPathContent),
     );
     h5pPlayer = new H5PPlayer(h5pEditor.libraryStorage, h5pEditor.contentStorage, h5pConfig);
-  } catch (err) {
+  } catch (err: unknown) {
     throw err;
   }
 };
@@ -73,11 +72,7 @@ export const downloadAndRenderH5P = async (req: Request, res: Response): Promise
     const buffer: Buffer = await promises.readFile(targetPath);
 
     // Install H5P application and needed library dependencies.
-    const result: {
-      installedLibraries: ILibraryInstallResult[];
-      metadata?: IContentMetadata;
-      parameters?: any;
-    } = await h5pEditor.uploadPackage(buffer, userH5P, options);
+    const result: H5PUploadResult = await h5pEditor.uploadPackage(buffer, userH5P, options);
 
     // Update H5P application with the metadata and return a content ID.
     let mainlib: ILibraryName;
