@@ -15,17 +15,17 @@ export default (router: Router): void => {
   // router.get('/h5p/content/:id/:file(*)', getH5PContent);
 
   // H5P application state not supported for anonymous users in AOE.
-  router.get(`${moduleRoot}/contentUserData/:contentID/state/:stateID`, (req: Request, res: Response): void => {
+  router.get(`${moduleRoot}/contentUserData/:contentID/state/:stateID`, (_req: Request, res: Response): void => {
     res.status(204).end();
   });
 
   // H5P application state not supported for anonymous users in AOE.
-  router.post(`${moduleRoot}/contentUserData/:contentID/state/:stateID`, (req: Request, res: Response): void => {
+  router.post(`${moduleRoot}/contentUserData/:contentID/state/:stateID`, (_req: Request, res: Response): void => {
     res.status(204).end();
   });
 
   // H5P download link currently not supported in AOE.
-  router.get(`${moduleRoot}/download/:contentID`, (req: Request, res: Response): void => {
+  router.get(`${moduleRoot}/download/:contentID`, (_req: Request, res: Response): void => {
     res.status(204).end();
   });
 };

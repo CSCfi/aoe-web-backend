@@ -10,7 +10,7 @@ import { validateNotification } from '@util/requestValidator';
 import { NextFunction, Request, Response, Router } from 'express';
 
 /**
- * API version 2.0 for requesting application processes.
+ * API version 2.0 for requesting application system processes.
  * This module is a collection of endpoints starting with /process/.
  * @param router express.Router
  */

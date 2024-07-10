@@ -4,7 +4,7 @@ import { NextFunction, Request, Response } from 'express';
 import { body, header, Result, ValidationChain, ValidationError, validationResult } from 'express-validator';
 import DOMPurify from 'isomorphic-dompurify';
 
-// DOMPurify hook to add opening and security attributes for links embedded in notifications.
+// DOMPurify hook to add opening target and security attributes for the links embedded in notifications.
 DOMPurify.addHook('afterSanitizeAttributes', (element: Element): void => {
   if (element.tagName === 'A' && !element.hasAttribute('target')) element.setAttribute('target', '_blank');
   if (element.tagName === 'A' && !element.hasAttribute('rel')) element.setAttribute('rel', 'noopener noreferrer');
