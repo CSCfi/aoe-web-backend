@@ -108,8 +108,6 @@ export const getScheduledNotificationsAll = async (_req: Request, res: Response)
  * @return {Promise<void>}
  */
 export const setScheduledNotification = async (req: Request, res: Response): Promise<void> => {
-  // const now: Date = new Date();
-  // const utc: number = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1, 0, 0, 0, 0);
   const t: Transaction = await sequelize.transaction({
     isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE,
   });
@@ -133,7 +131,9 @@ export const setScheduledNotification = async (req: Request, res: Response): Pro
     await t.rollback();
     throw err;
   }
-  res.status(201).json(notification);
+  const response = notification.toJSON(); // Convert Sequelize instance to a plain object.
+  delete response.username;
+  res.status(201).json(response);
 };
 
 /**
