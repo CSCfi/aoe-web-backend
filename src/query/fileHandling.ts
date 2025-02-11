@@ -14,7 +14,6 @@ import { db, pgp } from '@resource/postgresClient';
 import { hasAccesstoPublication } from '@services/authService';
 import { requestRedirected } from '@services/streamingService';
 import winstonLogger from '@util/winstonLogger';
-import ADMzip from 'adm-zip';
 import { EntryData } from 'archiver';
 import AWS, { AWSError, S3 } from 'aws-sdk';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
@@ -33,6 +32,7 @@ import { updateDownloadCounter } from './analyticsQueries';
 import { insertEducationalMaterialName } from './apiQueries';
 import MulterFile = Express.Multer.File;
 import SendData = ManagedUpload.SendData;
+import StreamZip from 'node-stream-zip';
 
 // AWS and S3 configurations.
 const configAWS: ServiceConfigurationOptions = {
@@ -1308,14 +1308,21 @@ export const downloadFromStorage = (
   paramsS3: { Bucket: string; Key: string },
   origFilename: string,
   isZip?: boolean,
-): Promise<any> => {
+): Promise<string | boolean> => {
   const s3: S3 = new AWS.S3();
   const key: string = paramsS3.Key;
-  return new Promise(async (resolve, reject): Promise<any> => {
+  return new Promise((resolve, reject): void => {
     try {
+      const folderpath = `${process.env.HTML_FOLDER}/${origFilename}`;
       const fileStream: Readable = s3.getObject(paramsS3).createReadStream();
+      const writeStream: WriteStream = fs
+        .createWriteStream(folderpath)
+        // Wait for 'finish' event for writable stream.
+        .once('finish', async (): Promise<void> => {
+          const response: string | boolean = await unZipAndExtract(folderpath);
+          resolve(response);
+        });
       if (isZip) {
-        const folderpath = `${process.env.HTML_FOLDER}/${origFilename}`;
         fileStream
           .once('error', (err: AWSError): void => {
             if (err.name === 'NoSuchKey') {
@@ -1332,12 +1339,8 @@ export const downloadFromStorage = (
               throw err;
             }
           })
-          // Wait for 'finish' event for writable stream.
-          .once('finish', async (): Promise<any> => {
-            resolve(await unZipAndExtract(folderpath));
-          })
           // Write the compressed file to the host directory.
-          .pipe(fs.createWriteStream(folderpath));
+          .pipe(writeStream);
       } else {
         res.attachment(origFilename || key);
         fileStream
@@ -1480,24 +1483,25 @@ export const downloadAndZipFromStorage = (
   });
 };
 
-export async function unZipAndExtract(zipFolder: any): Promise<any> {
-  const searchRecursive = function (dir, pattern) {
+/**
+ * Function to decompress a HTML archive file and locate an index file in the target directory.
+ * @param {string} zipFilePath
+ * @returns {Promise<boolean | string>}
+ */
+export const unZipAndExtract = async (zipFilePath: string): Promise<boolean | string> => {
+  const searchRecursive = (dir: string, pattern: string) => {
     // This is where we store pattern matches of all files inside the directory
     let results = [];
-
     // Read contents of directory
-    fs.readdirSync(dir).forEach(function (dirInner) {
+    fs.readdirSync(dir).forEach((dirInner) => {
       // Obtain absolute path
       dirInner = path.resolve(dir, dirInner);
-
       // Get stats to determine if path is a directory or a file
       const stat = fs.statSync(dirInner);
-
       // If path is a directory, scan it and combine results
       if (stat.isDirectory()) {
         results = results.concat(searchRecursive(dirInner, pattern));
       }
-
       // If path is a file and ends with pattern then push it onto results
       if (stat.isFile() && dirInner.endsWith(pattern)) {
         results.push(dirInner);
@@ -1505,46 +1509,29 @@ export async function unZipAndExtract(zipFolder: any): Promise<any> {
     });
     return results;
   };
-
   try {
-    // We unzip the file that is received to the function
-    // We unzip the file to the folder specified in the env variables, + filename
-    winstonLogger.debug('The folderpath that came to the unZipandExtract function: ' + zipFolder);
-    // const filenameParsed = zipFolder.substring(0, zipFolder.lastIndexOf("/"));
-    const filenameParsedNicely = zipFolder.slice(0, -4);
-    winstonLogger.debug('Hopefully the filename is parsed corectly: ' + filenameParsedNicely);
-    // winstonLogger.debug("The filenameParsed: " + filenameParsed);
-    winstonLogger.debug('Does the file exist? : ' + fs.existsSync(zipFolder));
-    const zip = new ADMzip(zipFolder);
-    // Here we remove the ext from the file, eg. python.zip --> python, so that we can name the folder correctly
-    // const folderPath = process.env.HTML_FOLDER + "/" + filename;
-    // Here we finally extract the zipped file to the folder we just specified.
-    // const zipEntries = zip.getEntries();
-    // zipEntries.forEach(function (zipEntry) {
-    //     winstonLogger.debug(zipEntry.getData().toString("utf8"));
-    // });
-    zip.extractAllTo(filenameParsedNicely, true);
-
-    const pathToReturn = zipFolder + '/index.html';
-    winstonLogger.debug('The pathtoreturn: ' + pathToReturn);
-    const results = searchRecursive(filenameParsedNicely, 'index.html');
-    if (Array.isArray(results) && results.length) {
-      winstonLogger.debug('The results: ' + results);
-      return results[0];
+    const targetUnzipFolder = zipFilePath.slice(0, -4);
+    const zip = new StreamZip.async({ file: zipFilePath });
+    await zip.extract(null, targetUnzipFolder);
+    await zip.close();
+    // After the decompression search recursively for index.html in the target unzip folder.
+    // Return the full path of index.html.
+    const indexHtmlPaths: string[] = searchRecursive(targetUnzipFolder, 'index.html');
+    if (Array.isArray(indexHtmlPaths) && indexHtmlPaths.length) {
+      return indexHtmlPaths[0];
     }
-    const resultshtm = searchRecursive(filenameParsedNicely, 'index.htm');
-    if (Array.isArray(resultshtm) && resultshtm.length) {
-      winstonLogger.debug('The resultshtm: ' + resultshtm);
-      return resultshtm[0];
-    } else {
-      winstonLogger.debug('the unzipandextract returns false');
-      return false;
+    // If index.html not found, search recursively for index.htm in the target unzip folder.
+    const indexHtmPaths = searchRecursive(targetUnzipFolder, 'index.htm');
+    if (Array.isArray(indexHtmPaths) && indexHtmPaths.length) {
+      return indexHtmPaths[0];
     }
+    // The web site is not functional without an index file => return false.
+    return false;
   } catch (err) {
-    winstonLogger.debug('The error in unzipAndExtract function for HTML zip: ' + err);
+    winstonLogger.debug('Decompression of a HTML archive in unzipAndExtract() failed: %o', err);
     return false;
   }
-}
+};
 
 export default {
   uploadMaterial,

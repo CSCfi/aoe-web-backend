@@ -266,8 +266,7 @@ export const getEducationalMaterialMetadata = async (
     // const popularity = await t.one(getPopularityQuery, [eduMaterialId]);
     // queries.push(popularity);
     if (req.params.publishedat) {
-      query =
-        'SELECT urn ' + 'FROM educationalmaterialversion ' + 'WHERE educationalmaterialid = $1 AND publishedat = $2';
+      query = 'SELECT urn FROM educationalmaterialversion WHERE educationalmaterialid = $1 AND publishedat = $2';
       response = await t.oneOrNone(query, [eduMaterialId, req.params.publishedat]);
       queries.push(response);
     } else {
@@ -337,13 +336,16 @@ export const getEducationalMaterialMetadata = async (
         } else if (
           jsonObj.materials[i] &&
           (jsonObj.materials[i]['mimetype'] === 'application/zip' ||
-            jsonObj.materials[i].mimetype === 'text/html' ||
+            jsonObj.materials[i]['mimetype'] === 'text/html' ||
             jsonObj.materials[i]['mimetype'] === 'application/x-zip-compressed')
         ) {
           req.params.key = jsonObj.materials[i].filekey;
-          // winstonLogger.debug("The req.params.key before it is being sent to DownloadFIleFromStorage functiuon: " + req.params.key);
+          winstonLogger.debug(
+            'The req.params.key before it is being sent to DownloadFIleFromStorage function: %s',
+            req.params.key,
+          );
           const result = await fh.downloadFileFromStorage(req, res, next, true);
-          // winstonLogger.debug("The result from fh.downloadFile with isZip True value: " + result);
+          winstonLogger.debug('The result from fh.downloadFile with isZip True value: %o', result);
           if (
             result != false &&
             (jsonObj.materials[i]['mimetype'] === 'application/zip' ||

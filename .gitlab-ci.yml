@@ -8,9 +8,24 @@ variables:
 image: docker:24.0.6
 
 stages:
+  - test
   - build
   - deploy
   - cleanup
+
+test_test:
+  stage: test
+  image: node:18.18.2
+  script:
+    - npm ci
+    - npm run test
+  cache:
+    paths:
+      - node_modules/
+  only:
+    - test
+  tags:
+    - test-apps
 
 build_test:
   stage: build
@@ -42,6 +57,20 @@ cleanup_test:
     - test
   tags:
     - test-apps
+
+test_prod:
+  stage: test
+  image: node:18.18.2
+  script:
+    - npm ci
+    - npm run test
+  cache:
+    paths:
+      - node_modules/
+  only:
+    - main
+  tags:
+    - prod
 
 build_prod:
   stage: build

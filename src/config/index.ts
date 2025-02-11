@@ -27,6 +27,7 @@ process.env.H5P_USER_EMAIL || missingEnvs.push('H5P_USER_EMAIL');
 process.env.HTML_FOLDER || missingEnvs.push('HTML_FOLDER');
 process.env.MATERIAL_FILE_UPLOAD_FOLDER || missingEnvs.push('MATERIAL_FILE_UPLOAD_FOLDER');
 process.env.KAFKA_ENABLED || missingEnvs.push('KAFKA_ENABLED');
+process.env.KAFKA_EXCLUDED_AGENT_IDENTIFIERS || missingEnvs.push('KAFKA_EXCLUDED_AGENT_IDENTIFIERS');
 process.env.KAFKA_BROKER_SERVERS || missingEnvs.push('KAFKA_BROKER_SERVERS');
 process.env.KAFKA_BROKER_TOPIC_MATERIAL_ACTIVITY || missingEnvs.push('KAFKA_BROKER_TOPIC_MATERIAL_ACTIVITY');
 process.env.KAFKA_BROKER_TOPIC_SEARCH_REQUESTS || missingEnvs.push('KAFKA_BROKER_TOPIC_SEARCH_REQUESTS');
@@ -100,6 +101,7 @@ export default {
 
   // Configuration for the client of Kafka message queue system.
   MESSAGE_QUEUE_OPTIONS: {
+    kafkaExcludedAgentIdentifiers: (process.env.KAFKA_EXCLUDED_AGENT_IDENTIFIERS as string).split(',') as string[],
     kafkaProducerEnabled: (process.env.KAFKA_ENABLED === '1') as boolean,
     brokerServers: process.env.KAFKA_BROKER_SERVERS as string,
     topicMaterialActivity: process.env.KAFKA_BROKER_TOPIC_MATERIAL_ACTIVITY as string,

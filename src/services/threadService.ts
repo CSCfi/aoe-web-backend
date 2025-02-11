@@ -1,7 +1,7 @@
-import { Worker, WorkerOptions } from 'worker_threads';
-import path from 'path';
-import { Request, Response } from 'express';
 import config from '@/config';
+import { Request, Response } from 'express';
+import path from 'path';
+import { Worker, WorkerOptions } from 'worker_threads';
 
 const selectWorkerFile = (req: Request): string => {
   // Compile the worker file with .import.js in localhost environment for Nodemon project execution.
@@ -15,15 +15,26 @@ const selectWorkerFile = (req: Request): string => {
 };
 
 /**
+ * Function to exclude some external requests from analytics data collection by User-Agent identifier.
+ * @param {e.Request} req
+ * @return {boolean}
+ */
+export const hasExcludedAgents = (req: Request): boolean => {
+  const userAgent: string = req.headers['user-agent'] || '';
+  const searchIDs: string[] = config.MESSAGE_QUEUE_OPTIONS.kafkaExcludedAgentIdentifiers;
+  const regexRule = new RegExp(searchIDs.join('|'), 'i');
+  return regexRule.test(userAgent);
+};
+
+/**
  * Worker creation function to execute a process in a new thread in parallel to main process.
  * Request data is enriched and sent to the message queue system for further analysis.
- *
  * @param req express.Request
  * @param res express.Response
  */
 export function runMessageQueueThread(req: Request, res?: Response): Promise<any> {
-  // Interrupt analytics post processing if Kafka producer disabled in environment variables.
-  if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled) return Promise.resolve(undefined);
+  // Interrupt analytics processing if Kafka producer is disabled or excluded clients are involved.
+  if (!config.MESSAGE_QUEUE_OPTIONS.kafkaProducerEnabled || hasExcludedAgents(req)) return Promise.resolve(undefined);
 
   const workerData = {
     body: req.body,
